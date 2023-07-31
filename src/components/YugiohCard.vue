@@ -26,6 +26,7 @@
 </template>
 
 <script setup>
+  import { Icon } from '@iconify/vue';
   import { ref } from 'vue';
 
   function toGithub() {
