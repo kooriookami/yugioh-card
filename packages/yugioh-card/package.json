@@ -1,0 +1,24 @@
+{
+  "name": "yugioh-card",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kooriookami/yugioh-designer"
+  },
+  "keywords": [
+    "yugioh-card",
+    "yugioh",
+    "rush-duel",
+    "ygo",
+    "leafer"
+  ],
+  "author": "kooriookami",
+  "license": "ISC",
+  "dependencies": {
+    "leafer-compress-text": "^1.0.7",
+    "leafer-ui": "^1.0.0-beta.7",
+    "lodash": "^4.17.21"
+  }
+}

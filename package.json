@@ -1,0 +1,52 @@
+{
+  "name": "yugioh-card",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:lib": "vite build -- lib",
+    "preview": "vite preview",
+    "publish": "npm publish dist/ --registry https://registry.npmjs.org",
+    "lint": "eslint ./src --ext .vue,.js,.ts,.jsx,.tsx",
+    "lint-fix": "eslint --fix ./src --ext .vue,.js,.ts,.jsx,.tsx"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kooriookami/yugioh-card"
+  },
+  "keywords": [
+    "yugioh-card",
+    "yugioh",
+    "rush-duel",
+    "ygo",
+    "leafer"
+  ],
+  "author": "kooriookami",
+  "license": "ISC",
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.1.0",
+    "element-plus": "^2.3.8",
+    "leafer-compress-text": "^1.0.7",
+    "leafer-ui": "^1.0.0-beta.7",
+    "lodash": "^4.17.21",
+    "normalize.css": "^8.0.1",
+    "vue": "^3.3.4",
+    "yugioh-card": "workspace:*"
+  },
+  "devDependencies": {
+    "@iconify/vue": "^4.1.1",
+    "@vitejs/plugin-vue": "^4.2.3",
+    "eslint": "^8.46.0",
+    "eslint-define-config": "^1.22.0",
+    "eslint-plugin-vue": "^9.16.1",
+    "jsonfile": "^6.1.0",
+    "rollup-plugin-copy": "^3.4.0",
+    "sass": "^1.64.1",
+    "vite": "^4.4.7"
+  }
+}
