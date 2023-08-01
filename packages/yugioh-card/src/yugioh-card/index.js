@@ -1,7 +1,7 @@
 import { Card } from '../card';
 import { Group, Image, ImageEvent, Text } from 'leafer-ui';
 import { CompressText } from 'leafer-compress-text';
-import { loadCSS, numberToFull } from '../utils';
+import { numberToFull } from '../utils';
 import scStyle from './style/sc-style';
 import tcStyle from './style/tc-style';
 import jpStyle from './style/jp-style';
@@ -77,8 +77,6 @@ export class YugiohCard extends Card {
       scale: 1,
     };
 
-    loadCSS(`${this.resourcePath}/yugioh/font/ygo-font.css`);
-    loadCSS(`${this.resourcePath}/yugioh/custom-font/ygo-custom-font.css`);
     this.initData(data);
     this.initLeafer();
     this.initDraw();
@@ -147,6 +145,7 @@ export class YugiohCard extends Card {
       height: 200,
       x: 116,
       y: name.top,
+      key: this.key,
       zIndex: 10,
     });
   }
@@ -258,6 +257,7 @@ export class YugiohCard extends Card {
       wordSpacing,
       scaleY: spellTrap.scaleY || 1,
       y: spellTrap.top,
+      key: this.key,
     });
     const rightBounds = rightText.bounds;
     rightText.x = this.cardWidth - spellTrap.right - rightBounds.width;
@@ -279,6 +279,7 @@ export class YugiohCard extends Card {
       rtTop: spellTrap.rtTop,
       rtFontScaleX: spellTrap.rtFontScaleX || 1,
       y: spellTrap.top,
+      key: this.key,
     });
     const leftBounds = leftText.bounds;
     leftText.x = spellTrapIcon.x - (this.data.icon ? (icon.marginLeft || 0) : 0) - leftBounds.width;
@@ -391,6 +392,7 @@ export class YugiohCard extends Card {
       height: 230,
       x: 221,
       y: pendulumDescription.top,
+      key: this.key,
       visible: this.data.type === 'pendulum',
       zIndex: 30,
     });
@@ -409,6 +411,7 @@ export class YugiohCard extends Card {
       color: this.data.type === 'monster' && this.data.cardType === 'xyz' ? 'white' : 'black',
       textAlign: this.data.type === 'pendulum' ? 'left' : 'right',
       y: this.data.type === 'pendulum' ? 1859 : 1455,
+      key: this.key,
       zIndex: 30,
     });
     if (this.data.type === 'pendulum') {
@@ -492,6 +495,7 @@ export class YugiohCard extends Card {
       height: 100,
       x: 109 + (effect.textIndent || 0),
       y: effect.top,
+      key: this.key,
       visible: this.showEffect,
       zIndex: 30,
     });
@@ -535,6 +539,7 @@ export class YugiohCard extends Card {
       height: ['spell', 'trap'].includes(this.data.type) ? 380 : 275,
       x: 109,
       y: effect.top + effectHeight,
+      key: this.key,
       zIndex: 30,
     });
   }
@@ -647,6 +652,7 @@ export class YugiohCard extends Card {
       color: this.data.type === 'monster' && this.data.cardType === 'xyz' ? 'white' : 'black',
       x: 66,
       y: 1932,
+      key: this.key,
       zIndex: 30,
     });
   }

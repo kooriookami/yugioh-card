@@ -1,7 +1,6 @@
 import { Card } from '../card';
 import { Group, Image, Text } from 'leafer-ui';
 import { CompressText } from 'leafer-compress-text';
-import { loadCSS } from '../utils';
 import scStyle from './style/sc-style';
 import jpStyle from './style/jp-style';
 
@@ -54,7 +53,6 @@ export class RushDuelCard extends Card {
       scale: 1,
     };
 
-    loadCSS(`${this.resourcePath}/rush-duel/font/rd-font.css`);
     this.initData(data);
     this.initLeafer();
     this.initDraw();
@@ -111,6 +109,7 @@ export class RushDuelCard extends Card {
       height: 200,
       x: 71,
       y: name.top,
+      key: this.key,
       zIndex: 10,
     });
   }
@@ -207,6 +206,7 @@ export class RushDuelCard extends Card {
       rtTop: spellTrap.rtTop,
       x: 99,
       y: spellTrap.top,
+      key: this.key,
     });
     const leftBounds = leftText.bounds;
 
@@ -224,6 +224,7 @@ export class RushDuelCard extends Card {
       letterSpacing,
       x: spellTrapIcon.x + (this.data.icon ? (icon.marginRight || 0) : 0) + iconWidth,
       y: spellTrap.top,
+      key: this.key,
     });
 
     this.spellTrapLeaf.set({
@@ -276,6 +277,7 @@ export class RushDuelCard extends Card {
       textAlign: 'right',
       scaleX: 0.9,
       y: 1914,
+      key: this.key,
       zIndex: 30,
     });
     const bounds = this.packageLeaf.bounds;
@@ -306,6 +308,7 @@ export class RushDuelCard extends Card {
       height: 80,
       x: 99 + (effect.textIndent || 0),
       y: effect.top,
+      key: this.key,
       visible: this.data.type === 'monster' && this.data.monsterType,
       zIndex: 30,
     });
@@ -335,6 +338,7 @@ export class RushDuelCard extends Card {
       height: 350,
       x: 99,
       y: description.top,
+      key: this.key,
       zIndex: 30,
     });
   }

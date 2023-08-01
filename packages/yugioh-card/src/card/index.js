@@ -1,22 +1,28 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { Leafer } from 'leafer-ui';
+import { loadCSS } from '../utils';
 
 export class Card {
   constructor(data = {}) {
     this.leafer = null;
     this.cardWidth = 100;
     this.cardHeight = 100;
+    this.key = 0;
     this.data = {};
     this.defaultData = {};
 
     this.view = data.view;
     this.resourcePath = data.resourcePath;
+
+    loadCSS(`${this.resourcePath}/yugioh/font/ygo-font.css`);
+    loadCSS(`${this.resourcePath}/yugioh/custom-font/ygo-custom-font.css`);
+    loadCSS(`${this.resourcePath}/rush-duel/font/rd-font.css`);
   }
 
   setData(data = {}) {
     data = cloneDeep(data);
-    let needLoadFont = false;
     let needDraw = false;
+    let needLoadFont = false;
     Object.keys(data).forEach(key => {
       const value = data[key] ?? this.defaultData[key];
       if (JSON.stringify(this.data[key]) !== JSON.stringify(value)) {
@@ -27,16 +33,18 @@ export class Card {
         needDraw = true;
       }
     });
-    if (needLoadFont) {
-      this.loadFont();
-    }
     if (needDraw) {
       this.initDraw();
+    }
+    // 先触发绘制，再触发字体加载
+    if (needLoadFont) {
+      this.loadFont();
     }
   }
 
   loadFont() {
     document.fonts.ready.finally(() => {
+      this.key++;
       this.initDraw();
     });
   }

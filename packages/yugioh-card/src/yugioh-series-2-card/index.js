@@ -1,7 +1,6 @@
 import { Card } from '../card';
 import { Group, Image, ImageEvent } from 'leafer-ui';
 import { CompressText } from 'leafer-compress-text';
-import { loadCSS } from '../utils';
 import jpStyle from './style/jp-style';
 
 export class YugiohSeries2Card extends Card {
@@ -56,7 +55,6 @@ export class YugiohSeries2Card extends Card {
       scale: 1,
     };
 
-    loadCSS(`${this.resourcePath}/yugioh/font/ygo-font.css`);
     this.initData(data);
     this.initLeafer();
     this.initDraw();
@@ -117,6 +115,7 @@ export class YugiohSeries2Card extends Card {
       height: 200,
       x: 147,
       y: name.top,
+      key: this.key,
       zIndex: 10,
     });
   }
@@ -197,6 +196,7 @@ export class YugiohSeries2Card extends Card {
       fontSize: spellTrap.fontSize,
       letterSpacing,
       y: spellTrap.top,
+      key: this.key,
     });
     const rightBounds = rightText.bounds;
     rightText.x = this.cardWidth - spellTrap.right - rightBounds.width;
@@ -217,6 +217,7 @@ export class YugiohSeries2Card extends Card {
       rtTop: spellTrap.rtTop,
       rtFontScaleX: spellTrap.rtFontScaleX || 1,
       y: spellTrap.top,
+      key: this.key,
     });
     const leftBounds = leftText.bounds;
     leftText.x = spellTrapIcon.x - (this.data.icon ? (icon.marginLeft || 0) : 0) - leftBounds.width;
@@ -270,6 +271,7 @@ export class YugiohSeries2Card extends Card {
       fontFamily: 'ygo-tip, serif',
       fontSize: 33,
       y: 1601,
+      key: this.key,
       zIndex: 30,
     });
     const bounds = this.packageLeaf.bounds;
@@ -300,6 +302,7 @@ export class YugiohSeries2Card extends Card {
       height: 70,
       x: 149 + (effect.textIndent || 0),
       y: effect.top,
+      key: this.key,
       visible: this.showEffect,
       zIndex: 30,
     });
@@ -334,6 +337,7 @@ export class YugiohSeries2Card extends Card {
       height: ['spell', 'trap'].includes(this.data.type) ? 240 : 170,
       x: 149,
       y: effect.top + effectHeight,
+      key: this.key,
       zIndex: 30,
     });
   }
@@ -372,6 +376,7 @@ export class YugiohSeries2Card extends Card {
       width: 288,
       x: 950,
       y: 1688,
+      key: this.key,
     });
 
     let defText = '';
@@ -393,6 +398,7 @@ export class YugiohSeries2Card extends Card {
       width: 288,
       x: 950,
       y: 1795,
+      key: this.key,
     });
 
     this.atkDefLeaf.set({
@@ -413,6 +419,7 @@ export class YugiohSeries2Card extends Card {
       fontSize: 33,
       x: 66,
       y: 1940,
+      key: this.key,
       zIndex: 30,
     });
   }
