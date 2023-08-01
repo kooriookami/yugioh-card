@@ -115,7 +115,7 @@
     cardLeaf.value = new Card({
       view: card.value,
       data: form.data,
-      resourcePath: 'src/assets/yugioh-card',
+      resourcePath: '/src/assets/yugioh-card',
     });
     jsonData.value = form.data;
   }
