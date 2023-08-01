@@ -1,1 +1,0 @@
-# yugioh-card

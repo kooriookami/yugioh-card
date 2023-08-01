@@ -35,8 +35,8 @@ const buildLib = {
     plugins: [
       copy({
         targets: [
-          { src: 'packages/yugioh-card/LICENSE', dest: 'dist' },
-          { src: 'packages/yugioh-card/README.md', dest: 'dist' },
+          { src: 'LICENSE', dest: 'dist' },
+          { src: 'README.md', dest: 'dist' },
           { src: 'packages/yugioh-card/package.json', dest: 'dist' },
         ],
         hook: 'writeBundle',
