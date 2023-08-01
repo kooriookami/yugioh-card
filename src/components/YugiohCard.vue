@@ -44,6 +44,10 @@
             />
           </el-form-item>
         </el-form>
+
+        <div class="button-group">
+          <el-button type="primary" @click="exportImage">导出图片</el-button>
+        </div>
       </div>
     </div>
   </div>
@@ -108,13 +112,16 @@
         form.data = yugiohDemo;
         Card = YugiohCard;
     }
-    form.data.scale = 0.2;
     cardLeaf.value = new Card({
       view: card.value,
       data: form.data,
       resourcePath: 'src/assets/yugioh-card',
     });
     jsonData.value = form.data;
+  }
+
+  function exportImage() {
+    cardLeaf.value.leafer.export('卡片.png');
   }
 
   watch(() => jsonData.value, () => {
@@ -186,12 +193,11 @@
       .form-main {
         padding: 20px;
 
-        ::v-deep(.el-form) {
-          .el-form-item {
-            .tip {
-              margin-left: 10px;
-              color: var(--normal-color);
-            }
+        .button-group {
+          margin-top: 20px;
+
+          .el-button {
+            width: 100%;
           }
         }
       }
