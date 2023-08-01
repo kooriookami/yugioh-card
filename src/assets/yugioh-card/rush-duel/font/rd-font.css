@@ -1,0 +1,48 @@
+@font-face {
+  font-family: "rd-sc";
+  src: url("rd-sc.woff2") format("woff2"),
+  url("rd-sc.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "rd-sc-name";
+  src: url("rd-sc-name.woff2") format("woff2"),
+  url("rd-sc-name.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "rd-jp";
+  src: url("rd-jp.woff2") format("woff2"),
+  url("rd-jp.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "rd-jp-name";
+  src: url("rd-jp-name.woff2") format("woff2"),
+  url("rd-jp-name.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "rd-jp-effect";
+  src: url("rd-jp-effect.woff2") format("woff2"),
+  url("rd-jp-effect.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "rd-tip";
+  src: url("rd-tip.woff2") format("woff2"),
+  url("rd-tip.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "rd-atk-def";
+  src: url("rd-atk-def.woff2") format("woff2"),
+  url("rd-atk-def.woff") format("woff");
+  font-display: swap;
+}

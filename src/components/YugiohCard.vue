@@ -1,7 +1,7 @@
 <template>
   <div class="yugioh-card-container">
     <div class="yugioh-card">
-      yugioh-card
+      <div ref="card" class="card" />
     </div>
     <div class="form">
       <div class="form-header">
@@ -20,14 +20,111 @@
         </div>
       </div>
 
-      <div class="form-main" />
+      <div class="form-main">
+        <el-form :model="form" label-width="auto">
+          <el-form-item label="卡片">
+            <el-select
+              v-model="form.card"
+              placeholder="请选择卡片"
+              @change="changeCard"
+            >
+              <el-option label="游戏王" value="yugioh" />
+              <el-option label="超速决斗" value="rush-duel" />
+              <el-option label="游戏王卡背" value="yugioh-back" />
+              <el-option label="场地中心卡" value="field-center" />
+              <el-option label="游戏王 2 期" value="yugioh-series-2" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="数据">
+            <json-editor-vue
+              v-model="jsonData"
+              style="width: 100%"
+              mode="text"
+              v-bind="jsonOption"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
   import { Icon } from '@iconify/vue';
-  import { ref } from 'vue';
+  import { onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue';
+  import { FieldCenterCard, RushDuelCard, YugiohBackCard, YugiohCard, YugiohSeries2Card } from 'yugioh-card';
+  import JsonEditorVue from 'json-editor-vue';
+  import fieldCenterDemo from '@/assets/demo/field-center-demo';
+  import rushDuelDemo from '@/assets/demo/rush-duel-demo';
+  import yugiohBackDemo from '@/assets/demo/yugioh-back-demo';
+  import yugiohDemo from '@/assets/demo/yugioh-demo';
+  import yugiohSeries2Demo from '@/assets/demo/yugioh-series-2-demo';
+
+  const card = ref(null);
+  const cardLeaf = shallowRef(null);
+  const form = reactive({
+    card: 'yugioh',
+    data: {},
+  });
+  const jsonData = ref('');
+  const jsonOption = reactive({
+    mainMenuBar: false,
+    statusBar: false,
+  });
+
+  onMounted(() => {
+    changeCard();
+  });
+
+  onBeforeUnmount(() => {
+    cardLeaf.value?.leafer.destory();
+  });
+
+  function changeCard() {
+    cardLeaf.value?.leafer.destory();
+    let Card;
+    switch (form.card) {
+      case 'yugioh':
+        form.data = yugiohDemo;
+        Card = YugiohCard;
+        break;
+      case 'rush-duel':
+        form.data = rushDuelDemo;
+        Card = RushDuelCard;
+        break;
+      case 'yugioh-back':
+        form.data = yugiohBackDemo;
+        Card = YugiohBackCard;
+        break;
+      case 'field-center':
+        form.data = fieldCenterDemo;
+        Card = FieldCenterCard;
+        break;
+      case 'yugioh-series-2':
+        form.data = yugiohSeries2Demo;
+        Card = YugiohSeries2Card;
+        break;
+      default:
+        form.data = yugiohDemo;
+        Card = YugiohCard;
+    }
+    form.data.scale = 0.2;
+    cardLeaf.value = new Card({
+      view: card.value,
+      data: form.data,
+      resourcePath: 'src/assets/yugioh-card',
+    });
+    jsonData.value = form.data;
+  }
+
+  watch(() => jsonData.value, () => {
+    try {
+      form.data = JSON.parse(jsonData.value);
+      cardLeaf.value.setData(form.data);
+    } catch (e) {
+
+    }
+  });
 
   function toGithub() {
     open('https://github.com/kooriookami/yugioh-card');
@@ -46,12 +143,18 @@
       flex-grow: 1;
       position: relative;
       padding: 20px;
+
+      .card {
+        ::v-deep(canvas) {
+          vertical-align: top;
+        }
+      }
     }
 
     .form {
       height: 100%;
       overflow: auto;
-      width: 400px;
+      width: 600px;
       flex-shrink: 0;
       border-left: 1px solid var(--border-color);
 

@@ -12,12 +12,13 @@
     "yugioh",
     "rush-duel",
     "ygo",
-    "leafer"
+    "leafer",
+    "canvas"
   ],
   "author": "kooriookami",
   "license": "ISC",
   "dependencies": {
-    "leafer-compress-text": "^1.0.7",
+    "leafer-compress-text": "^1.0.8",
     "leafer-ui": "^1.0.0-beta.7",
     "lodash": "^4.17.21"
   }

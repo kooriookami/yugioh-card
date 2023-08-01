@@ -22,7 +22,7 @@ function editPackageJson() {
 
 const buildLib = {
   lib: {
-    entry: path.resolve(__dirname, 'packages/yugioh-card'),
+    entry: path.resolve(__dirname, 'packages/yugioh-card-card'),
     name: 'YugiohCard',
     fileName: format => {
       if (format === 'es') {
@@ -35,9 +35,9 @@ const buildLib = {
     plugins: [
       copy({
         targets: [
-          { src: 'packages/yugioh-card/LICENSE', dest: 'dist' },
-          { src: 'packages/yugioh-card/README.md', dest: 'dist' },
-          { src: 'packages/yugioh-card/package.json', dest: 'dist' },
+          { src: 'packages/yugioh-card-card/LICENSE', dest: 'dist' },
+          { src: 'packages/yugioh-card-card/README.md', dest: 'dist' },
+          { src: 'packages/yugioh-card-card/package.json', dest: 'dist' },
         ],
         hook: 'writeBundle',
       }),

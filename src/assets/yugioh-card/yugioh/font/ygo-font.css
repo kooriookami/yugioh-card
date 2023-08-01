@@ -1,0 +1,104 @@
+@font-face {
+  font-family: "ygo-sc";
+  src: url("ygo-sc.woff2") format("woff2"),
+  url("ygo-sc.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-tc";
+  src: url("ygo-tc.woff2") format("woff2"),
+  url("ygo-tc.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-jp";
+  src: url("ygo-jp.woff2") format("woff2"),
+  url("ygo-jp.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-kr";
+  src: url("ygo-kr.woff2") format("woff2"),
+  url("ygo-kr.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-kr-name";
+  src: url("ygo-kr-name.woff2") format("woff2"),
+  url("ygo-kr-name.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-kr-race";
+  src: url("ygo-kr-race.woff2") format("woff2"),
+  url("ygo-kr-race.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-en";
+  src: url("ygo-en.woff2") format("woff2"),
+  url("ygo-en.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-en-italic";
+  src: url("ygo-en-italic.woff2") format("woff2"),
+  url("ygo-en-italic.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-en-name";
+  src: url("ygo-en-name.woff2") format("woff2"),
+  url("ygo-en-name.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-en-race";
+  src: url("ygo-en-race.woff2") format("woff2"),
+  url("ygo-en-race.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-astral";
+  src: url("ygo-astral.woff2") format("woff2"),
+  url("ygo-astral.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-tip";
+  src: url("ygo-tip.woff2") format("woff2"),
+  url("ygo-tip.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-atk-def";
+  src: url("ygo-atk-def.woff2") format("woff2"),
+  url("ygo-atk-def.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-link";
+  src: url("ygo-link.woff2") format("woff2"),
+  url("ygo-link.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ygo-password";
+  src: url("ygo-password.woff2") format("woff2"),
+  url("ygo-password.woff") format("woff");
+  font-display: swap;
+}
