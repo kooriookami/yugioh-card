@@ -7,7 +7,6 @@ export default inheritProp({
     top: 90,
     fontSize: 106,
     letterSpacing: 4,
-    // todo
     wordSpacing: -20,
     rtFontSize: 18,
     rtTop: 6,

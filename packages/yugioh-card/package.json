@@ -18,8 +18,8 @@
   "author": "kooriookami",
   "license": "ISC",
   "dependencies": {
-    "leafer-compress-text": "^1.0.11",
-    "leafer-ui": "^1.0.0-beta.7",
+    "leafer-compress-text": "^1.0.14",
+    "leafer-ui": "^1.0.0-beta.8",
     "lodash": "^4.17.21"
   }
 }

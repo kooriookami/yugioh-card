@@ -312,7 +312,7 @@ export class YugiohCard extends Card {
       this.maskLeaf = new Image();
       this.leafer.add(this.maskLeaf);
     }
-// todo 图片没有重新计算大小
+
     const maskUrl = this.data.type === 'pendulum' ? `${this.baseImage}/card-mask-pendulum.png` : `${this.baseImage}/card-mask.png`;
     this.maskLeaf.set({
       url: maskUrl,
@@ -671,7 +671,7 @@ export class YugiohCard extends Card {
       visible: this.data.copyright,
       zIndex: 30,
     });
-    // todo
+
     this.copyrightLeaf.x = this.cardWidth - 141 - this.copyrightLeaf.width;
     this.copyrightLeaf.once(ImageEvent.LOADED, () => {
       this.copyrightLeaf.x = this.cardWidth - 141 - this.copyrightLeaf.width;

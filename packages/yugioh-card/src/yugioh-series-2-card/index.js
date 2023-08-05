@@ -437,7 +437,7 @@ export class YugiohSeries2Card extends Card {
       visible: this.data.copyright,
       zIndex: 30,
     });
-    // todo
+
     this.copyrightLeaf.x = this.cardWidth - 161 - this.copyrightLeaf.width;
     this.copyrightLeaf.once(ImageEvent.LOADED, () => {
       this.copyrightLeaf.x = this.cardWidth - 161 - this.copyrightLeaf.width;
