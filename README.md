@@ -72,64 +72,19 @@ export default {
 };
 ```
 ## ⚠️参数事项
-language的可选项为 </p>
-- [ ] '简体中文'--'sc'</p>
-- [ ] '繁体中文'--'tc'</p>
-- [ ] '日文'--'jp'</p>
-- [ ] '韩文'--'kr'</p>
-- [ ] '英文'--'en'</p>
-- [ ] '星光界文'--'astral'</p>
 
-gradientPreset的可选项</p>
-- [ ] '银字' : 'silver'</p>
-- [ ] '金字': 'gold'</p>
-- [ ] '红字': 'red'</p>
-- [ ] '白字': 'white'</p>
-- [ ] '黑字': 'black'</p>
-- [ ] '蓝字': 'blue'</p>
-- [ ] '绿字': 'green'</p>
 
-type的可选项</p>
-- [ ] '怪兽' : 'monster'</p>
-- [ ] '魔法': 'spell'</p>
-- [ ] '陷阱': 'trap'</p>
-- [ ] '灵摆': 'pendulum'</p>
 
-attribute的可选项</p>
-- [ ] '暗' : 'dark'</p>
-- [ ] '光': 'light'</p>
-- [ ] '地': 'earth'</p>
-- [ ] '水': 'water'</p>
-- [ ] '炎': 'fire'</p>
-- [ ] '风': 'wind'</p>
-- [ ] '神': 'divine'</p>
-- [ ] '无': ''</p>
 
-icon的可选项</p>
-- [ ] '装备' : 'equip'</p>
-- [ ] '场地': 'filed'</p>
-- [ ] '速攻': 'quick-play'</p>
-- [ ] '仪式': 'ritual'</p>
-- [ ] '永续': 'continuous'</p>
-- [ ] '反击': 'counter'</p>
-
-cardType的可选项</p>
-- [ ] '通常' : 'normal'</p>
-- [ ] '效果': 'effect'</p>
-- [ ] '仪式': 'ritual'</p>
-- [ ] '融合': 'fusion'</p>
-- [ ] '同调': 'synchro'</p>
-- [ ] '超量': 'xyz'</p>
-- [ ] '连接': 'link'</p>
-- [ ] '衍生物': 'token'</p>
-
-cardType的可选项</p>
-- [ ] '通常 / 灵摆' : 'normal-pendulum'</p>
-- [ ] '效果 / 灵摆': 'effect-pendulum'</p>
-- [ ] '仪式 / 灵摆': 'ritual-pendulum'</p>
-- [ ] '融合 / 灵摆': 'fusion-pendulum'</p>
-- [ ] '同调 / 灵摆': 'synchro-pendulum'</p>
-- [ ] '超量 / 灵摆': 'xyz-pendulum'</p>
+|       参数       |  说明  |   类型   |                                                        可选参数                                                        |                                  备注                                   |
+|:--------------:|:----:|:------:|:------------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------:|
+|  pendulumType  | 灵摆类型 | string | normal-pendulum<br/>effect-pendulum <br/>ritual-pendulum<br/>fusion-pendulum<br/>synchro-pendulum<br/>xyz-pendulum | 通常 / 灵摆 <br/> 效果 / 灵摆<br/>仪式 / 灵摆<br/>融合 / 灵摆<br/>同调 / 灵摆<br/>超量 / 灵摆 |
+|    cardType    | 卡片类型 | string |                  normal<br/> effect<br/>ritual<br/>fusion<br/>synchro<br/>xyz<br/>link<br/>token                   |        通常<br/>效果<br/> 仪式<br/>融合 <br/>同调<br/>超量<br/>连接<br/>衍生物         |
+|      icon      | 卡片图标 | string |                      equip<br/>filed<br/> quick-play<br/> ritual<br/> continuous<br/> counter                      |                装备<br/>场地<br/>速攻<br/>仪式<br/>  永续<br/>反击                |
+|   attribute    |  属性  | string |                      dark  <br/>light<br/>earth<br/>water<br/>fire<br/>wind<br/>divine<br/>""                      |             暗<br/> 光<br/>地<br/>水<br/> 炎<br/>风<br/>神<br/>无             |
+|      type      |  卡类  | string |                                      monster<br/>spell<br/>trap<br/>pendulum                                       |                        怪兽<br/>魔法<br/>陷阱<br/>灵摆                        |
+| gradientPreset | 预设字体 | string |                           silver<br/>gold<br/>red<br/>white<br/>black<br/>blue<br/>green                           |             银字<br/>金字<br/>红字<br/>白字<br/>黑字<br/>蓝字<br/>绿字              |
+|    language    |  语言  | string |                                     sc<br/>tc<br/>jp<br/>kr<br/>en<br/>astral                                      |              简体中文<br/>繁体中文<br/>日文<br/>韩文<br/>英文<br/>星光界文              |
 
 ## TODO
 
