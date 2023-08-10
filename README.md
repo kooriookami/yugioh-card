@@ -1,20 +1,32 @@
-![img.png](https://github.com/pf666nb/My-LeetCode/blob/main/img.png)
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&pause=1000&width=435&lines=%E4%B8%80%E4%B8%AA%E4%BD%BF%E7%94%A8+Canvas+%E6%B8%B2%E6%9F%93%E6%B8%B8%E6%88%8F%E7%8E%8B%E5%8D%A1%E7%89%87%E7%9A%84%E5%B7%A5%E5%85%B7%E3%80%82)](https://git.io/typing-svg)</p>
-![Static Badge](https://img.shields.io/badge/release-0.0.1-blue)
-![Static Badge](https://img.shields.io/badge/start-3-yellow)
-目前有 5 种卡片：🌹🌹🌹🌹🌹
+<h1 align="center">🎉 游戏王卡片 - Yugioh Card 🎉</h1>
 
-1️⃣ 游戏王 </p>
-2️⃣ 超速决斗 </p>
-3️⃣ 游戏王卡背 </p>
-4️⃣ 场地中心卡 </p>
-5️⃣ 游戏王 2 期 </p>
+<p align="center">
+  <a href="https://www.npmjs.org/package/yugioh-card">
+    <img src="https://img.shields.io/npm/v/yugioh-card.svg">
+  </a>
+  <a href="https://www.npmjs.org/package/yugioh-card">
+    <img src="https://img.shields.io/npm/dt/yugioh-card.svg">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg">
+  </a>
+</p>
 
-## 🚩在线演示
+<p align="center">一个使用 Canvas 渲染游戏王卡片的工具</p>
+
+目前有 5 种卡片：🚀🚀🚀🚀
+
+- 1️⃣ 游戏王
+- 2️⃣ 超速决斗
+- 3️⃣ 游戏王卡背
+- 4️⃣ 场地中心卡
+- 5️⃣ 游戏王 2 期
+
+## 🚩 在线演示
 
 [在线演示](https://kooriookami.github.io/yugioh-card/)
 
-## ⚡快速开始
+## ⚡ 快速开始
 
 ```npm i yugioh-card```
 
@@ -22,17 +34,17 @@
   import { YugiohCard } from 'yugioh-card';
 
   const card = new YugiohCard({
-    view: '', // div 容器
+    view: 'container', // div 容器
     data: {
-      ... // 参数见 packages/yugioh-card/src/yugioh-card/index.js => this.defaultData
+      ... // 参数见下方 Data 属性
     },
     resourcePath: 'src/assets/yugioh-card', // 静态资源路径
   });
 ```
 
-## ⚠️参数事项
+## 📖 Data 属性
 
-### 游戏王卡片
+### 游戏王
 
 |         属性名         |    说明     |   类型    |                                                         可选值                                                         |                   备注                    |        默认值        |
 |:-------------------:|:---------:|:-------:|:-------------------------------------------------------------------------------------------------------------------:|:---------------------------------------:|:-----------------:|
@@ -75,6 +87,6 @@
 
 ## TODO
 
-## 🔎示例代码
+## 🔎 示例代码
 
 [示例代码](src/components/YugiohCard.vue)
