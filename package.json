@@ -44,10 +44,10 @@
     "@vitejs/plugin-vue": "^4.2.3",
     "eslint": "^8.46.0",
     "eslint-define-config": "^1.23.0",
-    "eslint-plugin-vue": "^9.16.1",
+    "eslint-plugin-vue": "^9.17.0",
     "jsonfile": "^6.1.0",
     "rollup-plugin-copy": "^3.4.0",
-    "sass": "^1.64.2",
+    "sass": "^1.65.1",
     "vite": "^4.4.9"
   }
 }

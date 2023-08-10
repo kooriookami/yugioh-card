@@ -1,6 +1,6 @@
 {
   "name": "yugioh-card",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "src/index.js",
   "module": "src/index.js",
   "repository": {
@@ -18,7 +18,7 @@
   "author": "kooriookami",
   "license": "ISC",
   "dependencies": {
-    "leafer-compress-text": "^1.0.15",
+    "leafer-compress-text": "^1.0.17",
     "leafer-ui": "^1.0.0-beta.9",
     "lodash": "^4.17.21"
   }
