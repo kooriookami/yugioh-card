@@ -20,7 +20,7 @@ export function numberToFull(value) {
 
 // 继承css样式
 export const inheritProp = (obj, parentObj = {}) => {
-  const inheritPropList = ['fontFamily', 'fontSize', 'fontStyle', 'fontWeight', 'lineHeight', 'letterSpacing'];
+  const inheritPropList = ['fontFamily', 'fontSize', 'fontStyle', 'fontWeight', 'lineHeight', 'letterSpacing', 'wordSpacing'];
   inheritPropList.forEach(inherit => {
     if (!obj.hasOwnProperty(inherit) && parentObj.hasOwnProperty(inherit)) {
       obj[inherit] = parentObj[inherit];
