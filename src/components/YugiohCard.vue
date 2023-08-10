@@ -81,11 +81,11 @@
   });
 
   onBeforeUnmount(() => {
-    cardLeaf.value?.leafer.destory();
+    cardLeaf.value?.leafer.destroy();
   });
 
   function changeCard() {
-    cardLeaf.value?.leafer.destory();
+    cardLeaf.value?.leafer.destroy();
     let Card;
     switch (form.card) {
       case 'yugioh':
