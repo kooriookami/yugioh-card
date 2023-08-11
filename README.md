@@ -31,14 +31,15 @@
 ```npm i yugioh-card```
 
 ```js
+  // 可选 YugiohCard, RushDuelCard, YugiohBackCard, FieldCenterCard, YugiohSeries2Card
   import { YugiohCard } from 'yugioh-card';
 
   const card = new YugiohCard({
-    view: 'container', // div 容器
+    view: 'xxx', // div 容器
     data: {
       ... // 参数见下方 Data 属性
     },
-    resourcePath: 'src/assets/yugioh-card', // 静态资源路径
+    resourcePath: 'xxx', // 静态资源路径，把 src/assets/yugioh-card 文件夹复制到你的项目中或者服务器上
   });
 ```
 
