@@ -152,9 +152,8 @@
       padding: 20px;
 
       .card {
-        ::v-deep(canvas) {
-          vertical-align: top;
-        }
+        display: inline-block;
+        vertical-align: top;
       }
     }
 
