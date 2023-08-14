@@ -54,10 +54,7 @@ export class Card {
   }
 
   initData(data = {}) {
-    data = cloneDeep(data);
-    Object.keys(this.defaultData).forEach(key => {
-      this.data[key] = data.data[key] ?? this.defaultData[key];
-    });
+    this.setData(Object.assign(this.defaultData, data));
   }
 
   initLeafer() {
