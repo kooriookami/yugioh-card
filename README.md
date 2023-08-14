@@ -14,6 +14,10 @@
 
 <p align="center">一个使用 Canvas 渲染游戏王卡片的工具</p>
 
+<p align="center">
+  <img src="src/assets/image/banner.jpg">
+</p>
+
 目前有 5 种卡片：🚀🚀🚀🚀🚀
 
 - 1️⃣ 游戏王
