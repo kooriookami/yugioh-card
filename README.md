@@ -88,32 +88,33 @@
 
 ### 超速决斗
 
-|     属性名     |  说明   |   类型    |                                                       可选值                                                        |                  备注                   |    默认值    |
-|:-----------:|:-----:|:-------:|:----------------------------------------------------------------------------------------------------------------:|:-------------------------------------:|:---------:|
-|  language   |  语言   |  enum   |                                                   'sc' / 'jp'                                                    |              简体中文 / 日文	               |   'sc'    |
-|    name     |  卡名   | string  |                                                        —                                                         |                   —                   |           |
-|    color    | 卡名颜色  | string	 |                                                        —                                                         |                   —                   |    ''     |
-|    type     |  类型	  |  enum   |                                           'monster' / 'spell' / 'trap'                                           |             怪兽 / 魔法 / 陷阱              | 'monster' |
-|  attribute  |  属性   |  enum   |                      'dark' / 'light' / 'earth' / 'water' / 'fire' / 'wind' / 'divine' / ''                      |     暗 / 光 / 地 / 水 / 炎 / 风 / 神 / 无     |  'dark'   |
-|    icon     | 魔陷图标  |  enum   |                      'equip' / 'filed' / 'quick-play' / 'ritual' / 'continuous' / 'counter'                      |      装备 / 场地 / 速攻 / 仪式 / 永续 / 反击      |    ''     |
-|    image    | 中间卡图  | string  |                                                        —                                                         |                   —                   |    ''     |
-|  cardType   | 卡片类型  |  enum   |                                    'normal' / 'effect' / 'ritual' / 'fusion'                                     |           通常 / 效果 / 仪式 / 融合           | 'normal'  |
-|    level    |  等级   | number  |                                                        —                                                         |                   —                   |     0     |
-| monsterType | 怪兽类型  | string  |                                                        —                                                         |                   —                   |    ''     |
-| maximumAtk  | 极限攻击力 | number  |                                                        —                                                         |                   —                   |     0     |
-|     atk     |  攻击力  | number  |                                                        —                                                         |                   —                   |     0     |
-|     def     |  防御力  | number  |                                                        —                                                         |                   —                   |     0     |
-|     description     |   效果描述    | string  |                                                        —                                                         |                   —                   |        ''         |
-|  firstLineCompress  |  是否首行压缩   | boolean |                                                        —                                                         |                   —                   |       false       |
-|  descriptionAlign   | 是否效果描述居中  | boolean |                                                        —                                                         |                   —                   |       false       |
-|   descriptionZoom   |  效果描述缩放   | number  |                                                        —                                                         |                   —                   |         1         |
-|  descriptionWeight  |  效果描述字重   | number  |                                                        —                                                         |                   —                   |         0         |
-|       package       |    卡包     | string  |                                                        —                                                         |                   —                   |         ''         |
-|      password       |   卡片密码    | string  |                                                        —                                                         |                   —                   |         ''         |
-|        laser        |    角标     |  enum   |                                    'laser1' / 'laser2' / 'laser3' / 'laser4'                                     |         样式一 / 样式二 / 样式三 / 样式四         |         ''         |
-|        rare         |    罕贵     |  enum   |                               'dt' / 'ur' / 'gr' / 'hr' / 'ser' / 'gser' / 'pser'                                | DT / UR / GR / HR / SER / GSER / PSER |        ''         |
-|       radius        |   是否是圆角   | boolean |                                                        —                                                         |                   —                   |         true         |
-|        scale        |   卡片缩放    | number  |                                                        —                                                         |                   —                   |         1         |
+|        属性名        |    说明    |   类型    |                                  可选值                                   |              备注               |    默认值    |
+|:-----------------:|:--------:|:-------:|:----------------------------------------------------------------------:|:-----------------------------:|:---------:|
+|     language      |    语言    |  enum   |                              'sc' / 'jp'                               |          简体中文 / 日文	           |   'sc'    |
+|       name        |    卡名    | string  |                                   —                                    |               —               |    ''     |
+|       color       |   卡名颜色   | string	 |                                   —                                    |               —               |    ''     |
+|       type        |   类型	    |  enum   |                      'monster' / 'spell' / 'trap'                      |         怪兽 / 魔法 / 陷阱          | 'monster' |
+|     attribute     |    属性    |  enum   | 'dark' / 'light' / 'earth' / 'water' / 'fire' / 'wind' / 'divine' / '' | 暗 / 光 / 地 / 水 / 炎 / 风 / 神 / 无 |  'dark'   |
+|       icon        |   魔陷图标   |  enum   | 'equip' / 'filed' / 'quick-play' / 'ritual' / 'continuous' / 'counter' |  装备 / 场地 / 速攻 / 仪式 / 永续 / 反击  |    ''     |
+|       image       |   中间卡图   | string  |                                   —                                    |               —               |    ''     |
+|     cardType      |   卡片类型   |  enum   |               'normal' / 'effect' / 'ritual' / 'fusion'                |       通常 / 效果 / 仪式 / 融合       | 'normal'  |
+|       level       |    等级    | number  |                                   —                                    |               —               |     0     |
+|    monsterType    |   怪兽类型   | string  |                                   —                                    |               —               |    ''     |
+|    maximumAtk     |  极限攻击力   | number  |                                   —                                    |               —               |     0     |
+|        atk        |   攻击力    | number  |                                   —                                    |               —               |     0     |
+|        def        |   防御力    | number  |                                   —                                    |               —               |     0     |
+|    description    |   效果描述   | string  |                                   —                                    |               —               |    ''     |
+| firstLineCompress |  是否首行压缩  | boolean |                                   —                                    |               —               |   false   |
+| descriptionAlign  | 是否效果描述居中 | boolean |                                   —                                    |               —               |   false   |
+|  descriptionZoom  |  效果描述缩放  | number  |                                   —                                    |               —               |     1     |
+| descriptionWeight |  效果描述字重  | number  |                                   —                                    |               —               |     0     |
+|      package      |    卡包    | string  |                                   —                                    |               —               |    ''     |
+|     password      |   卡片密码   | string  |                                   —                                    |               —               |    ''     |
+|      legend       |  是否是传说   | boolean |                                   —                                       |             —                    |   true    |
+|       laser       |    角标    |  enum   |               'laser1' / 'laser2' / 'laser3' / 'laser4'                |     样式一 / 样式二 / 样式三 / 样式四     |    ''     |
+|       rare        |    罕贵    |  enum   |            'sr' / 'rr' / 'pser'            |        SR / RR / PSER         |    ''     |
+|      radius       |  是否是圆角   | boolean |                                   —                                    |               —               |   true    |
+|       scale       |   卡片缩放   | number  |                                   —                                    |               —               |     1     |
 
 
 ### 游戏王卡背
