@@ -110,7 +110,7 @@
 | descriptionWeight |  效果描述字重  | number  |                                   —                                    |               —               |     0     |
 |      package      |    卡包    | string  |                                   —                                    |               —               |    ''     |
 |     password      |   卡片密码   | string  |                                   —                                    |               —               |    ''     |
-|      legend       |  是否是传说   | boolean |                                   —                                       |             —                    |   true    |
+|      legend       |  是否是传说   | boolean |                                   —                                       |             —                    |   false   |
 |       laser       |    角标    |  enum   |               'laser1' / 'laser2' / 'laser3' / 'laser4'                |     样式一 / 样式二 / 样式三 / 样式四     |    ''     |
 |       rare        |    罕贵    |  enum   |            'sr' / 'rr' / 'pser'            |        SR / RR / PSER         |    ''     |
 |      radius       |  是否是圆角   | boolean |                                   —                                    |               —               |   true    |
@@ -130,12 +130,12 @@
 
 ### 场地中心卡
 
-|   属性名    |  说明   |   类型    | 可选值 | 备注 | 默认值  |
-|:--------:|:-----:|:-------:|:---:|:--:|:----:|
-|  image   | 场地图片  | string  |  —  | —  |   ''   |
-| cardBack |  卡背   | boolean |  —  | —  | true |
-|  scale   | 卡片缩放  | number  |  —  | —  |  1   |
-|  radius  | 是否是圆角 | boolean |  —  | —  | true |
+|   属性名    |  说明   |   类型    | 可选值 | 备注 |  默认值  |
+|:--------:|:-----:|:-------:|:---:|:--:|:-----:|
+|  image   | 场地图片  | string  |  —  | —  |  ''   |
+| cardBack |  卡背   | boolean |  —  | —  | false |
+|  scale   | 卡片缩放  | number  |  —  | —  |   1   |
+|  radius  | 是否是圆角 | boolean |  —  | —  | true  |
 
 ### 游戏王 2 期
 
