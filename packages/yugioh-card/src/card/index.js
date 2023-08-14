@@ -75,26 +75,26 @@ export class Card {
   }
 
   drawImageStatus(imageLeaf, status) {
-    const { width, height, x, y, zIndex } = imageLeaf;
+    const { url, width, height, x, y, zIndex } = imageLeaf;
     if (!this.imageStatusLeaf) {
       this.imageStatusLeaf = new Image();
       this.leafer.add(this.imageStatusLeaf);
     }
 
-    let url = '';
+    let statusUrl = '';
     if (status === 'loading') {
-      url = loaderIcon;
+      statusUrl = loaderIcon;
     } else if (status === 'error') {
-      url = imageIcon;
+      statusUrl = imageIcon;
     }
 
     this.imageStatusLeaf.set({
-      url,
+      url: statusUrl,
       width: 120,
       height: 120,
       x: x + width / 2 - 60,
       y: y + height / 2 - 60,
-      visible: ['loading', 'error'].includes(status),
+      visible: ['loading', 'error'].includes(status) && url,
       zIndex: zIndex + 1,
     });
 
