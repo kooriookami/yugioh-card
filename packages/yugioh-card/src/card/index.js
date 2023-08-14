@@ -1,10 +1,14 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { Leafer } from 'leafer-ui';
+import { AnimateEvent, Image, Leafer } from 'leafer-ui';
 import { loadCSS } from '../utils';
+import loaderIcon from '../svg/loader.svg';
+import imageIcon from '../svg/image.svg';
 
 export class Card {
   constructor(data = {}) {
     this.leafer = null;
+    this.imageStatusLeaf = null;
+    this.imageStatusEvent = null;
     this.cardWidth = 100;
     this.cardHeight = 100;
     this.key = 0;
@@ -50,10 +54,7 @@ export class Card {
   }
 
   initData(data = {}) {
-    data = cloneDeep(data);
-    Object.keys(this.defaultData).forEach(key => {
-      this.data[key] = data.data[key] ?? this.defaultData[key];
-    });
+    this.setData(Object.assign(this.defaultData, data));
   }
 
   initLeafer() {
@@ -71,6 +72,41 @@ export class Card {
 
   initDraw() {
     // 需要重写Override
+  }
+
+  drawImageStatus(imageLeaf, status) {
+    const { url, width, height, x, y, zIndex } = imageLeaf;
+    if (!this.imageStatusLeaf) {
+      this.imageStatusLeaf = new Image();
+      this.leafer.add(this.imageStatusLeaf);
+    }
+
+    let statusUrl = '';
+    if (status === 'loading') {
+      statusUrl = loaderIcon;
+    } else if (status === 'error') {
+      statusUrl = imageIcon;
+    }
+
+    this.imageStatusLeaf.set({
+      url: statusUrl,
+      width: 120,
+      height: 120,
+      x: x + width / 2 - 60,
+      y: y + height / 2 - 60,
+      visible: ['loading', 'error'].includes(status) && url,
+      zIndex: zIndex + 1,
+    });
+
+    if (status === 'loading') {
+      this.imageStatusEvent = this.leafer.on_(AnimateEvent.FRAME, () => {
+        this.imageStatusLeaf.rotateOf({ x: 60, y: 60 }, 3);
+      });
+    } else {
+      this.imageStatusLeaf.rotateOf({ x: 60, y: 60 }, 0 - this.imageStatusLeaf.rotation);
+      this.leafer.off_(this.imageStatusEvent);
+    }
+    console.log(status);
   }
 
   updateScale() {

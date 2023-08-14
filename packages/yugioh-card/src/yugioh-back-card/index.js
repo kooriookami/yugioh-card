@@ -20,9 +20,8 @@ export class YugiohBackCard extends Card {
       scale: 1,
     };
 
-    this.initData(data);
     this.initLeafer();
-    this.initDraw();
+    this.initData(data.data);
   }
 
   initDraw() {

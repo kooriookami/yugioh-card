@@ -53,10 +53,8 @@ export class RushDuelCard extends Card {
       scale: 1,
     };
 
-    this.initData(data);
     this.initLeafer();
-    this.initDraw();
-    this.loadFont();
+    this.initData(data.data);
   }
 
   initDraw() {

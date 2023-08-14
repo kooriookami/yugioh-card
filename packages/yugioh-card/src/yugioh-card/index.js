@@ -77,10 +77,8 @@ export class YugiohCard extends Card {
       scale: 1,
     };
 
-    this.initData(data);
     this.initLeafer();
-    this.initDraw();
-    this.loadFont();
+    this.initData(data.data);
   }
 
   initDraw() {
@@ -293,6 +291,14 @@ export class YugiohCard extends Card {
   drawImage() {
     if (!this.imageLeaf) {
       this.imageLeaf = new Image();
+      // todo 需要一个loading监听
+      this.drawImageStatus(this.imageLeaf, 'loading');
+      this.imageLeaf.on(ImageEvent.LOADED, () => {
+        this.drawImageStatus(this.imageLeaf, 'loaded');
+      });
+      this.imageLeaf.on(ImageEvent.ERROR, () => {
+        this.drawImageStatus(this.imageLeaf, 'error');
+      });
       this.leafer.add(this.imageLeaf);
     }
 
