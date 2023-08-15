@@ -43,6 +43,7 @@ export class FieldCenterCard extends Card {
   drawImage() {
     if (!this.imageLeaf) {
       this.imageLeaf = new Image();
+      this.listenImageStatus(this.imageLeaf);
       this.leafer.add(this.imageLeaf);
     }
 

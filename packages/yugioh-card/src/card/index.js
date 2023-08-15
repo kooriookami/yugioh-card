@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { AnimateEvent, Image, Leafer } from 'leafer-ui';
+import { AnimateEvent, Image, ImageEvent, Leafer } from 'leafer-ui';
 import { loadCSS } from '../utils';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
@@ -74,6 +74,16 @@ export class Card {
     // 需要重写Override
   }
 
+  listenImageStatus(imageLeaf) {
+    // todo 监听loading
+    imageLeaf.on(ImageEvent.LOADED, () => {
+      this.drawImageStatus(imageLeaf, ImageEvent.LOADED);
+    });
+    imageLeaf.on(ImageEvent.ERROR, () => {
+      this.drawImageStatus(imageLeaf, ImageEvent.ERROR);
+    });
+  }
+
   drawImageStatus(imageLeaf, status) {
     const { url, width, height, x, y, zIndex } = imageLeaf;
     if (!this.imageStatusLeaf) {
@@ -84,7 +94,7 @@ export class Card {
     let statusUrl = '';
     if (status === 'loading') {
       statusUrl = loaderIcon;
-    } else if (status === 'error') {
+    } else if (status === ImageEvent.ERROR) {
       statusUrl = imageIcon;
     }
 
@@ -94,7 +104,7 @@ export class Card {
       height: 120,
       x: x + width / 2 - 60,
       y: y + height / 2 - 60,
-      visible: ['loading', 'error'].includes(status) && url,
+      visible: ['loading', ImageEvent.ERROR].includes(status) && url,
       zIndex: zIndex + 1,
     });
 

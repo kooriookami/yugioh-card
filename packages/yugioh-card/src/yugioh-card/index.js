@@ -291,14 +291,7 @@ export class YugiohCard extends Card {
   drawImage() {
     if (!this.imageLeaf) {
       this.imageLeaf = new Image();
-      // todo 需要一个loading监听
-      this.drawImageStatus(this.imageLeaf, 'loading');
-      this.imageLeaf.on(ImageEvent.LOADED, () => {
-        this.drawImageStatus(this.imageLeaf, 'loaded');
-      });
-      this.imageLeaf.on(ImageEvent.ERROR, () => {
-        this.drawImageStatus(this.imageLeaf, 'error');
-      });
+      this.listenImageStatus(this.imageLeaf);
       this.leafer.add(this.imageLeaf);
     }
 
