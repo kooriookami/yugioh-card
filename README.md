@@ -45,6 +45,9 @@
     },
     resourcePath: 'xxx', // 静态资源路径，把 src/assets/yugioh-card 文件夹复制到你的项目中或者服务器上
   });
+
+  // 导出图片，更多导出参数请参考 https://www.leaferjs.com/ui/guide/export/
+  card.leafer.export('xxx.png');
 ```
 
 ## 🔎 示例代码
