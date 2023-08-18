@@ -3,32 +3,27 @@ import { inheritProp } from '../../utils';
 export default inheritProp({
   fontFamily: 'custom1, 楷体, serif',
   name: {
-    top: 92,
-    fontSize: 108,
+    top: 128,
+    fontSize: 114,
   },
   spellTrap: {
-    top: 250,
+    top: 308,
     fontSize: 76,
-    right: 110,
+    right: 135,
     icon: {
       marginTop: 12,
       marginLeft: 10,
     },
   },
-  pendulumDescription: {
-    top: 1279,
-    fontSize: 38,
-    lineHeight: 1.15,
-  },
   effect: {
-    top: 1525,
-    fontSize: 46,
+    top: 1682,
+    fontSize: 50,
     lineHeight: 1.15,
-    textIndent: -0.4 * 46,
+    textIndent: -0.4 * 50,
     minHeight: 10,
   },
   description: {
-    fontSize: 38,
+    fontSize: 44,
     lineHeight: 1.15,
   },
 });

@@ -1,0 +1,13 @@
+@font-face {
+  font-family: "custom1";
+  src: url("custom1.woff2") format("woff2"),
+  url("custom1.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "custom2";
+  src: url("custom2.woff2") format("woff2"),
+  url("custom2.woff") format("woff");
+  font-display: swap;
+}

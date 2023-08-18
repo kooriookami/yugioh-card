@@ -18,8 +18,8 @@ export class Card {
     this.view = data.view;
     this.resourcePath = data.resourcePath;
 
+    loadCSS(`${this.resourcePath}/custom-font/custom-font.css`);
     loadCSS(`${this.resourcePath}/yugioh/font/ygo-font.css`);
-    loadCSS(`${this.resourcePath}/yugioh/custom-font/ygo-custom-font.css`);
     loadCSS(`${this.resourcePath}/rush-duel/font/rd-font.css`);
   }
 

@@ -2,6 +2,8 @@ import { Card } from '../card';
 import { Group, Image, ImageEvent } from 'leafer-ui';
 import { CompressText } from 'leafer-compress-text';
 import jpStyle from './style/jp-style';
+import custom1Style from './style/custom1-style';
+import custom2Style from './style/custom2-style';
 
 export class YugiohSeries2Card extends Card {
   constructor(data = {}) {
@@ -465,8 +467,16 @@ export class YugiohSeries2Card extends Card {
 
   get style() {
     let style = {};
-    if (this.data.language === 'jp') {
-      style = jpStyle;
+    if (this.data.font) {
+      if (this.data.font === 'custom1') {
+        style = custom1Style;
+      } else if (this.data.font === 'custom2') {
+        style = custom2Style;
+      }
+    } else {
+      if (this.data.language === 'jp') {
+        style = jpStyle;
+      }
     }
     return style;
   }
