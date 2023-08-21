@@ -63,10 +63,7 @@ export class Card {
       width: this.cardWidth,
       height: this.cardHeight,
       usePartRender: false,
-      type: 'user',
-      wheel: {
-        preventDefault: false,
-      },
+      hittable: false,
     });
   }
 
