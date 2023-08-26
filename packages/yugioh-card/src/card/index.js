@@ -72,7 +72,9 @@ export class Card {
   }
 
   listenImageStatus(imageLeaf) {
-    // todo 监听loading
+    imageLeaf.on(ImageEvent.LOAD, () => {
+      this.drawImageStatus(imageLeaf, ImageEvent.LOAD);
+    });
     imageLeaf.on(ImageEvent.LOADED, () => {
       this.drawImageStatus(imageLeaf, ImageEvent.LOADED);
     });
@@ -89,7 +91,7 @@ export class Card {
     }
 
     let statusUrl = '';
-    if (status === 'loading') {
+    if (status === ImageEvent.LOAD) {
       statusUrl = loaderIcon;
     } else if (status === ImageEvent.ERROR) {
       statusUrl = imageIcon;
@@ -101,11 +103,11 @@ export class Card {
       height: 120,
       x: x + width / 2 - 60,
       y: y + height / 2 - 60,
-      visible: ['loading', ImageEvent.ERROR].includes(status) && url,
+      visible: [ImageEvent.LOAD, ImageEvent.ERROR].includes(status) && url,
       zIndex: zIndex + 1,
     });
 
-    if (status === 'loading') {
+    if (status === ImageEvent.LOAD) {
       this.imageStatusEvent = this.leafer.on_(AnimateEvent.FRAME, () => {
         this.imageStatusLeaf.rotateOf({ x: 60, y: 60 }, 3);
       });
@@ -113,7 +115,6 @@ export class Card {
       this.imageStatusLeaf.rotateOf({ x: 60, y: 60 }, 0 - this.imageStatusLeaf.rotation);
       this.leafer.off_(this.imageStatusEvent);
     }
-    console.log(status);
   }
 
   updateScale() {

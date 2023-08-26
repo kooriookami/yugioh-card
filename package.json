@@ -31,23 +31,23 @@
   "license": "ISC",
   "dependencies": {
     "@element-plus/icons-vue": "^2.1.0",
-    "element-plus": "^2.3.9",
+    "element-plus": "^2.3.10",
     "json-editor-vue": "^0.10.6",
     "lodash": "^4.17.21",
     "normalize.css": "^8.0.1",
-    "vanilla-jsoneditor": "^0.17.8",
+    "vanilla-jsoneditor": "^0.18.2",
     "vue": "^3.3.4",
     "yugioh-card": "workspace:*"
   },
   "devDependencies": {
     "@iconify/vue": "^4.1.1",
-    "@vitejs/plugin-vue": "^4.2.3",
-    "eslint": "^8.46.0",
+    "@vitejs/plugin-vue": "^4.3.3",
+    "eslint": "^8.47.0",
     "eslint-define-config": "^1.23.0",
     "eslint-plugin-vue": "^9.17.0",
     "jsonfile": "^6.1.0",
     "rollup-plugin-copy": "^3.4.0",
-    "sass": "^1.65.1",
+    "sass": "^1.66.1",
     "vite": "^4.4.9"
   }
 }

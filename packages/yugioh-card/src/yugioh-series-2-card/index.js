@@ -428,6 +428,9 @@ export class YugiohSeries2Card extends Card {
   drawCopyright() {
     if (!this.copyrightLeaf) {
       this.copyrightLeaf = new Image();
+      this.copyrightLeaf.on(ImageEvent.LOADED, () => {
+        this.copyrightLeaf.x = this.cardWidth - 161 - this.copyrightLeaf.width;
+      });
       this.leafer.add(this.copyrightLeaf);
     }
 
@@ -437,11 +440,6 @@ export class YugiohSeries2Card extends Card {
       y: 1940,
       visible: this.data.copyright,
       zIndex: 30,
-    });
-
-    this.copyrightLeaf.x = this.cardWidth - 161 - this.copyrightLeaf.width;
-    this.copyrightLeaf.once(ImageEvent.LOADED, () => {
-      this.copyrightLeaf.x = this.cardWidth - 161 - this.copyrightLeaf.width;
     });
   }
 
