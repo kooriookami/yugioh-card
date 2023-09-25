@@ -21,6 +21,7 @@ export default {
   pendulumScale: 0,
   pendulumDescription: '',
   monsterType: '龙族/通常',
+  atkBar: true,
   atk: 3000,
   def: 2500,
   arrowList: [],
