@@ -151,13 +151,12 @@ export class RushDuelCard extends Card {
       fontFamily: 'rd-atk-def, sans-serif',
       fontSize: 116,
       lineHeight: 116 * 1.15,
-      textAlign: 'center',
       fill: 'white',
       stroke: '#D3100D',
       strokeWidth: 10,
-      width: 200,
-      x: 91,
+      x: 191,
       y: 1291,
+      around: { x: 0.5, y: 0 },
     });
 
     this.levelLeaf.set({
@@ -367,14 +366,13 @@ export class RushDuelCard extends Card {
       fontFamily: 'rd-atk-def, sans-serif',
       fontSize: 97,
       lineHeight: 97 * 1.15,
-      textAlign: 'right',
       fill: 'white',
       stroke: 'black',
       strokeWidth: 3,
       letterSpacing: -6,
-      width: 300,
-      x: this.cardWidth - 535,
+      x: this.cardWidth - 229,
       y: 1247,
+      around: { x: 1, y: 0 },
     });
 
     this.maximumAtkLeaf.set({
@@ -413,14 +411,13 @@ export class RushDuelCard extends Card {
       fontFamily: 'rd-atk-def, sans-serif',
       fontSize: 97,
       lineHeight: 97 * 1.15,
-      textAlign: 'right',
       fill: 'white',
       stroke: 'black',
       strokeWidth: 3,
       letterSpacing: -6,
-      width: 300,
-      x: this.cardWidth - 962,
+      x: this.cardWidth - 656,
       y: 1349,
+      around: { x: 1, y: 0 },
     });
 
     defText.set({
@@ -428,14 +425,13 @@ export class RushDuelCard extends Card {
       fontFamily: 'rd-atk-def, sans-serif',
       fontSize: 97,
       lineHeight: 97 * 1.15,
-      textAlign: 'right',
       fill: 'white',
       stroke: 'black',
       strokeWidth: 3,
       letterSpacing: -6,
-      width: 300,
-      x: this.cardWidth - 535,
+      x: this.cardWidth - 229,
       y: 1349,
+      around: { x: 1, y: 0 },
     });
 
     this.atkDefLeaf.set({

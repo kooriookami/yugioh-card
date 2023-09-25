@@ -1,5 +1,5 @@
 import { Card } from '../card';
-import { Group, Image, ImageEvent, Text } from 'leafer-ui';
+import { Group, Image, Text } from 'leafer-ui';
 import { CompressText } from 'leafer-compress-text';
 import { numberToFull } from '../utils';
 import scStyle from './style/sc-style';
@@ -59,6 +59,7 @@ export class YugiohCard extends Card {
       pendulumScale: 0,
       pendulumDescription: '',
       monsterType: '',
+      atkBar: true,
       atk: 0,
       def: 0,
       arrowList: [],
@@ -178,8 +179,9 @@ export class YugiohCard extends Card {
     this.levelLeaf.children.forEach((level, index) => {
       level.set({
         url: levelUrl,
-        x: this.cardWidth - right - index * (levelWidth + 4) - levelWidth,
+        x: this.cardWidth - right - index * (levelWidth + 4),
         y: 247,
+        around: { x: 1, y: 0 },
         visible: index < this.data.level,
       });
     });
@@ -334,32 +336,30 @@ export class YugiohCard extends Card {
     const leftPendulum = this.pendulumLeaf.children[0];
     const rightPendulum = this.pendulumLeaf.children[1];
 
-    let left = this.data.language === 'astral' ? 94 : 90;
+    let left = this.data.language === 'astral' ? 144 : 145;
     leftPendulum.set({
       text: this.data.pendulumScale,
       fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
       fontSize: this.data.language === 'astral' ? 84 : 98,
       lineHeight: this.data.language === 'astral' ? 84 * 1.15 : 98 * 1.15,
       fill: 'black',
-      textAlign: 'center',
       letterSpacing: this.data.language === 'astral' ? 0 : -10,
-      width: 100,
       x: left,
       y: this.data.language === 'astral' ? 1389 : 1370,
+      around: { x: 0.5, y: 0 },
     });
 
-    left = this.data.language === 'astral' ? 1200 : 1194;
+    left = this.data.language === 'astral' ? 1250 : 1249;
     rightPendulum.set({
       text: this.data.pendulumScale,
       fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
       fontSize: this.data.language === 'astral' ? 84 : 98,
       lineHeight: this.data.language === 'astral' ? 84 * 1.15 : 98 * 1.15,
       fill: 'black',
-      textAlign: 'center',
       letterSpacing: this.data.language === 'astral' ? 0 : -10,
-      width: 100,
       x: left,
       y: this.data.language === 'astral' ? 1389 : 1370,
+      around: { x: 0.5, y: 0 },
     });
 
     this.pendulumLeaf.set({
@@ -519,6 +519,16 @@ export class YugiohCard extends Card {
       fontFamily = 'ygo-en-italic';
     }
 
+    let height = 380;
+    if (!['spell', 'trap'].includes(this.data.type)) {
+      if (this.showEffect) {
+        height -= 50;
+      }
+      if (this.data.atkBar) {
+        height -= 55;
+      }
+    }
+
     this.descriptionLeaf.set({
       text: this.data.description,
       fontFamily,
@@ -535,7 +545,7 @@ export class YugiohCard extends Card {
       autoSmallSize: !!description.smallFontSize,
       smallFontSize: description.smallFontSize,
       width: 1175,
-      height: ['spell', 'trap'].includes(this.data.type) ? 380 : 275,
+      height,
       x: 109,
       y: effect.top + effectHeight,
       key: this.key,
@@ -577,18 +587,17 @@ export class YugiohCard extends Card {
     } else if (this.data.atk === -2) {
       atkText = '∞';
     }
-    const atkLeft = this.data.language === 'astral' ? 698 : 799;
+    const atkLeft = this.data.language === 'astral' ? 898 : 999;
     atk.set({
       text: atkText,
       fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
       fontSize: this.data.language === 'astral' ? 49 : 62,
       lineHeight: this.data.language === 'astral' ? 49 * 1.15 : 62 * 1.15,
       fill: 'black',
-      textAlign: 'right',
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
-      width: 200,
       x: atkLeft,
       y: this.data.language === 'astral' ? 1850 : 1839,
+      around: { x: 1, y: 0 },
       visible: ['monster', 'pendulum'].includes(this.data.type),
     });
 
@@ -600,34 +609,32 @@ export class YugiohCard extends Card {
     } else if (this.data.def === -2) {
       defText = '∞';
     }
-    const defLeft = this.data.language === 'astral' ? 1079 : 1082;
+    const defLeft = this.data.language === 'astral' ? 1279 : 1282;
     def.set({
       text: defText,
       fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
       fontSize: this.data.language === 'astral' ? 49 : 62,
       lineHeight: this.data.language === 'astral' ? 49 * 1.15 : 62 * 1.15,
       fill: 'black',
-      textAlign: 'right',
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
-      width: 200,
       x: defLeft,
       y: this.data.language === 'astral' ? 1850 : 1839,
+      around: { x: 1, y: 0 },
       visible: (this.data.type === 'monster' && this.data.cardType !== 'link') || this.data.type === 'pendulum',
     });
 
     const linkText = this.data.language === 'astral' ? numberToFull(this.data.arrowList.length) : this.data.arrowList.length;
-    const linkLeft = this.data.language === 'astral' ? 1079 : 1020;
+    const linkLeft = this.data.language === 'astral' ? 1279 : 1220;
     link.set({
       text: linkText,
       fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-link, serif',
       fontSize: this.data.language === 'astral' ? 49 : 44,
       lineHeight: this.data.language === 'astral' ? 49 * 1.15 : 62 * 1.15,
       fill: 'black',
-      textAlign: 'right',
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
-      width: 200,
       x: linkLeft,
       y: this.data.language === 'astral' ? 1850 : 1845,
+      around: { x: 1, y: 0 },
       scaleX: this.data.language === 'astral' ? 1 : 1.3,
       visible: this.data.type === 'monster' && this.data.cardType === 'link',
     });
@@ -659,9 +666,6 @@ export class YugiohCard extends Card {
   drawCopyright() {
     if (!this.copyrightLeaf) {
       this.copyrightLeaf = new Image();
-      this.copyrightLeaf.on(ImageEvent.LOADED, () => {
-        this.copyrightLeaf.x = this.cardWidth - 141 - this.copyrightLeaf.width;
-      });
       this.leafer.add(this.copyrightLeaf);
     }
 
@@ -669,7 +673,9 @@ export class YugiohCard extends Card {
     const copyrightUrl = this.data.copyright ? `${this.baseImage}/copyright-${this.data.copyright}-${color}.svg` : '';
     this.copyrightLeaf.set({
       url: copyrightUrl,
+      x: this.cardWidth - 141,
       y: 1936,
+      around: { x: 1, y: 0 },
       visible: this.data.copyright,
       zIndex: 30,
     });
@@ -891,7 +897,9 @@ export class YugiohCard extends Card {
   }
 
   get showAtkDefLink() {
-    if (this.data.language === 'astral') {
+    if (!this.data.atkBar) {
+      return false;
+    } else if (this.data.language === 'astral') {
       if ((this.data.type === 'monster' && this.data.cardType !== 'link') || this.data.type === 'pendulum') {
         return true;
       }

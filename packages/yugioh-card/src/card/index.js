@@ -101,18 +101,19 @@ export class Card {
       url: statusUrl,
       width: 120,
       height: 120,
-      x: x + width / 2 - 60,
-      y: y + height / 2 - 60,
+      around: 'center',
+      x: x + width / 2,
+      y: y + height / 2,
       visible: [ImageEvent.LOAD, ImageEvent.ERROR].includes(status) && url,
       zIndex: zIndex + 1,
     });
 
     if (status === ImageEvent.LOAD) {
       this.imageStatusEvent = this.leafer.on_(AnimateEvent.FRAME, () => {
-        this.imageStatusLeaf.rotateOf({ x: 60, y: 60 }, 3);
+        this.imageStatusLeaf.rotateOf({ x: 0, y: 0 }, 3);
       });
     } else {
-      this.imageStatusLeaf.rotateOf({ x: 60, y: 60 }, 0 - this.imageStatusLeaf.rotation);
+      this.imageStatusLeaf.rotateOf({ x: 0, y: 0 }, 0 - this.imageStatusLeaf.rotation);
       this.leafer.off_(this.imageStatusEvent);
     }
   }

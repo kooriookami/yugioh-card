@@ -150,8 +150,9 @@ export class YugiohSeries2Card extends Card {
     this.levelLeaf.children.forEach((level, index) => {
       level.set({
         url: levelUrl,
-        x: this.cardWidth - right - index * (levelWidth + 3) - levelWidth,
+        x: this.cardWidth - right - index * (levelWidth + 3),
         y: 314,
+        around: { x: 1, y: 0 },
         visible: index < this.data.level,
       });
     });
@@ -428,16 +429,15 @@ export class YugiohSeries2Card extends Card {
   drawCopyright() {
     if (!this.copyrightLeaf) {
       this.copyrightLeaf = new Image();
-      this.copyrightLeaf.on(ImageEvent.LOADED, () => {
-        this.copyrightLeaf.x = this.cardWidth - 161 - this.copyrightLeaf.width;
-      });
       this.leafer.add(this.copyrightLeaf);
     }
 
     const copyrightUrl = this.data.copyright ? `${this.baseImage}/copyright-${this.data.copyright}-black.svg` : '';
     this.copyrightLeaf.set({
       url: copyrightUrl,
+      x: this.cardWidth - 161,
       y: 1940,
+      around: { x: 1, y: 0 },
       visible: this.data.copyright,
       zIndex: 30,
     });
