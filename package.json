@@ -41,7 +41,7 @@
   "devDependencies": {
     "@iconify/vue": "^4.1.1",
     "@vitejs/plugin-vue": "^4.4.0",
-    "eslint": "^8.51.0",
+    "eslint": "^8.52.0",
     "eslint-define-config": "^1.24.1",
     "eslint-plugin-vue": "^9.17.0",
     "jsonfile": "^6.1.0",
