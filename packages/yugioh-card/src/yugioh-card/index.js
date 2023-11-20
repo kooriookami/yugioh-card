@@ -624,7 +624,7 @@ export class YugiohCard extends Card {
     });
 
     const linkText = this.data.language === 'astral' ? numberToFull(this.data.arrowList.length) : this.data.arrowList.length;
-    const linkLeft = this.data.language === 'astral' ? 1279 : 1220;
+    const linkLeft = this.data.language === 'astral' ? 1279 : 1280;
     link.set({
       text: linkText,
       fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-link, serif',
