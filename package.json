@@ -30,12 +30,12 @@
   "author": "kooriookami",
   "license": "ISC",
   "dependencies": {
-    "@element-plus/icons-vue": "^2.1.0",
-    "element-plus": "^2.4.2",
-    "json-editor-vue": "^0.11.0",
+    "@element-plus/icons-vue": "^2.3.1",
+    "element-plus": "^2.4.3",
+    "json-editor-vue": "^0.11.1",
     "lodash": "^4.17.21",
     "normalize.css": "^8.0.1",
-    "vue": "^3.3.8",
+    "vue": "^3.3.9",
     "yugioh-card": "workspace:*"
   },
   "devDependencies": {
@@ -43,10 +43,10 @@
     "@vitejs/plugin-vue": "^4.5.0",
     "eslint": "^8.54.0",
     "eslint-define-config": "^2.0.0",
-    "eslint-plugin-vue": "^9.18.1",
+    "eslint-plugin-vue": "^9.19.2",
     "jsonfile": "^6.1.0",
     "rollup-plugin-copy": "^3.5.0",
     "sass": "^1.69.5",
-    "vite": "^5.0.2"
+    "vite": "^5.0.4"
   }
 }
