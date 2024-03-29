@@ -19,7 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "leafer-compress-text": "^1.1.3",
-    "leafer-ui": "^1.0.0-rc.8",
+    "leafer-ui": "^1.0.0-rc.19",
     "lodash": "^4.17.21"
   }
 }

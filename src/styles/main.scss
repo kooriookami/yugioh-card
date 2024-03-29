@@ -1,12 +1,5 @@
 @use "variable" as *;
 
-// dialog样式
-.el-dialog {
-  .el-dialog__body {
-    padding: 10px 20px;
-  }
-}
-
 .el-image {
   .el-image__inner {
     opacity: 1;
