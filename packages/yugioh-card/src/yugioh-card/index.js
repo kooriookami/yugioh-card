@@ -181,7 +181,7 @@ export class YugiohCard extends Card {
         url: levelUrl,
         x: this.cardWidth - right - index * (levelWidth + 4),
         y: 247,
-        around: { x: 1, y: 0 },
+        around: { type: 'percent', x: 1, y: 0 },
         visible: index < this.data.level,
       });
     });
@@ -346,7 +346,7 @@ export class YugiohCard extends Card {
       letterSpacing: this.data.language === 'astral' ? 0 : -10,
       x: left,
       y: this.data.language === 'astral' ? 1389 : 1370,
-      around: { x: 0.5, y: 0 },
+      around: { type: 'percent', x: 0.5, y: 0 },
     });
 
     left = this.data.language === 'astral' ? 1250 : 1249;
@@ -359,7 +359,7 @@ export class YugiohCard extends Card {
       letterSpacing: this.data.language === 'astral' ? 0 : -10,
       x: left,
       y: this.data.language === 'astral' ? 1389 : 1370,
-      around: { x: 0.5, y: 0 },
+      around: { type: 'percent', x: 0.5, y: 0 },
     });
 
     this.pendulumLeaf.set({
@@ -597,7 +597,7 @@ export class YugiohCard extends Card {
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
       x: atkLeft,
       y: this.data.language === 'astral' ? 1850 : 1839,
-      around: { x: 1, y: 0 },
+      around: { type: 'percent', x: 1, y: 0 },
       visible: ['monster', 'pendulum'].includes(this.data.type),
     });
 
@@ -619,7 +619,7 @@ export class YugiohCard extends Card {
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
       x: defLeft,
       y: this.data.language === 'astral' ? 1850 : 1839,
-      around: { x: 1, y: 0 },
+      around: { type: 'percent', x: 1, y: 0 },
       visible: (this.data.type === 'monster' && this.data.cardType !== 'link') || this.data.type === 'pendulum',
     });
 
@@ -634,7 +634,7 @@ export class YugiohCard extends Card {
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
       x: linkLeft,
       y: this.data.language === 'astral' ? 1850 : 1845,
-      around: { x: 1, y: 0 },
+      around: { type: 'percent', x: 1, y: 0 },
       scaleX: this.data.language === 'astral' ? 1 : 1.3,
       visible: this.data.type === 'monster' && this.data.cardType === 'link',
     });
@@ -675,7 +675,7 @@ export class YugiohCard extends Card {
       url: copyrightUrl,
       x: this.cardWidth - 141,
       y: 1936,
-      around: { x: 1, y: 0 },
+      around: { type: 'percent', x: 1, y: 0 },
       visible: this.data.copyright,
       zIndex: 30,
     });

@@ -152,7 +152,7 @@ export class YugiohSeries2Card extends Card {
         url: levelUrl,
         x: this.cardWidth - right - index * (levelWidth + 3),
         y: 314,
-        around: { x: 1, y: 0 },
+        around: { type: 'percent', x: 1, y: 0 },
         visible: index < this.data.level,
       });
     });
@@ -437,7 +437,7 @@ export class YugiohSeries2Card extends Card {
       url: copyrightUrl,
       x: this.cardWidth - 161,
       y: 1940,
-      around: { x: 1, y: 0 },
+      around: { type: 'percent', x: 1, y: 0 },
       visible: this.data.copyright,
       zIndex: 30,
     });

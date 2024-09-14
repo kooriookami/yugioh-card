@@ -156,7 +156,7 @@ export class RushDuelCard extends Card {
       strokeWidth: 10,
       x: 191,
       y: 1291,
-      around: { x: 0.5, y: 0 },
+      around: { type: 'percent', x: 0.5, y: 0 },
     });
 
     this.levelLeaf.set({
@@ -372,7 +372,7 @@ export class RushDuelCard extends Card {
       letterSpacing: -6,
       x: this.cardWidth - 229,
       y: 1247,
-      around: { x: 1, y: 0 },
+      around: { type: 'percent', x: 1, y: 0 },
     });
 
     this.maximumAtkLeaf.set({
@@ -417,7 +417,7 @@ export class RushDuelCard extends Card {
       letterSpacing: -6,
       x: this.cardWidth - 656,
       y: 1349,
-      around: { x: 1, y: 0 },
+      around: { type: 'percent', x: 1, y: 0 },
     });
 
     defText.set({
@@ -431,7 +431,7 @@ export class RushDuelCard extends Card {
       letterSpacing: -6,
       x: this.cardWidth - 229,
       y: 1349,
-      around: { x: 1, y: 0 },
+      around: { type: 'percent', x: 1, y: 0 },
     });
 
     this.atkDefLeaf.set({
