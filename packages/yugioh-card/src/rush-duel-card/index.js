@@ -542,7 +542,7 @@ export class RushDuelCard extends Card {
       }
       if (this.data.icon === 'equip') {
         name += '/装备';
-      } else if (this.data.icon === 'filed') {
+      } else if (this.data.icon === 'field') {
         name += '/场地';
       } else if (this.data.icon === 'quick-play') {
         name += '/速攻';
@@ -561,7 +561,7 @@ export class RushDuelCard extends Card {
       }
       if (this.data.icon === 'equip') {
         name += '／[装(そう)][備(び)]';
-      } else if (this.data.icon === 'filed') {
+      } else if (this.data.icon === 'field') {
         name += '／フィールド';
       } else if (this.data.icon === 'quick-play') {
         name += '／[速(そっ)][攻(こう)]';
