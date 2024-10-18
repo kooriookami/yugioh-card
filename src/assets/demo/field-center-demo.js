@@ -1,7 +1,7 @@
-import FiledCenter from '@/assets/image/field-center.jpg';
+import FieldCenter from '@/assets/image/field-center.jpg';
 
 export default {
-  image: FiledCenter,
+  image: FieldCenter,
   radius: true,
   cardBack: false,
   scale: 1,
