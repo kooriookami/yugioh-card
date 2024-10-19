@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { AnimateEvent, Image, ImageEvent, Leafer } from 'leafer-ui';
+import { Image, ImageEvent, Leafer } from 'leafer-ui';
 import { loadCSS } from '../utils';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
@@ -8,12 +8,12 @@ export class Card {
   constructor(data = {}) {
     this.leafer = null;
     this.imageStatusLeaf = null;
-    this.imageStatusEvent = null;
     this.cardWidth = 100;
     this.cardHeight = 100;
     this.key = 0;
     this.data = {};
     this.defaultData = {};
+    this.timer = null;
 
     this.view = data.view;
     this.resourcePath = data.resourcePath;
@@ -108,13 +108,14 @@ export class Card {
       zIndex: zIndex + 1,
     });
 
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
     if (status === ImageEvent.LOAD) {
-      this.imageStatusEvent = this.leafer.on_(AnimateEvent.FRAME, () => {
-        this.imageStatusLeaf.rotateOf({ x: 0, y: 0 }, 3);
-      });
-    } else {
-      this.imageStatusLeaf.rotateOf({ x: 0, y: 0 }, 0 - this.imageStatusLeaf.rotation);
-      this.leafer.off_(this.imageStatusEvent);
+      this.timer = setInterval(() => {
+        this.imageStatusLeaf.rotateOf('center', 3);
+      }, 16.7);
     }
   }
 
