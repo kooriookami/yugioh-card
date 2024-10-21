@@ -2,29 +2,30 @@ import { Card } from '../card';
 import { Image } from 'leafer-ui';
 
 export class YugiohBackCard extends Card {
+  cardLeaf = null;
+  konamiLeaf = null;
+  registerLeaf = null;
+  logoLeaf = null;
+  cardWidth = 1394;
+  cardHeight = 2031;
+
+  data = {
+    type: 'normal',
+    logo: 'ocg',
+    konami: true,
+    register: true,
+    radius: true,
+    scale: 1,
+  };
+
   constructor(data = {}) {
     super(data);
-    this.cardLeaf = null;
-    this.konamiLeaf = null;
-    this.registerLeaf = null;
-    this.logoLeaf = null;
-    this.cardWidth = 1394;
-    this.cardHeight = 2031;
-
-    this.defaultData = {
-      type: 'normal',
-      logo: 'ocg',
-      konami: true,
-      register: true,
-      radius: true,
-      scale: 1,
-    };
 
     this.initLeafer();
-    this.initData(data.data);
+    this.setData(data.data);
   }
 
-  initDraw() {
+  draw() {
     this.drawCard();
     this.drawKonami();
     this.drawRegister();

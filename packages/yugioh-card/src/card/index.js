@@ -1,74 +1,51 @@
-import cloneDeep from 'lodash/cloneDeep';
-import { Image, ImageEvent, Leafer } from 'leafer-ui';
+import { Text, Image, ImageEvent, Leafer } from 'leafer-ui';
 import { loadCSS } from '../utils';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
 
-export class Card {
-  constructor(data = {}) {
-    this.leafer = null;
-    this.imageStatusLeaf = null;
-    this.cardWidth = 100;
-    this.cardHeight = 100;
-    this.key = 0;
-    this.data = {};
-    this.defaultData = {};
-    this.timer = null;
+export function resetAttr() {
+  Text.changeAttr('lineHeight', {
+    type: 'percent',
+    value: 1.15,
+  });
+}
 
+export class Card {
+  leafer = null;
+  imageStatusLeaf = null;
+  cardWidth = 100;
+  cardHeight = 100;
+  data = {};
+  timer = null;
+  view = null;
+  resourcePath = null;
+
+  constructor(data = {}) {
     this.view = data.view;
     this.resourcePath = data.resourcePath;
 
+    resetAttr();
     loadCSS(`${this.resourcePath}/custom-font/custom-font.css`);
     loadCSS(`${this.resourcePath}/yugioh/font/ygo-font.css`);
     loadCSS(`${this.resourcePath}/rush-duel/font/rd-font.css`);
   }
 
   setData(data = {}) {
-    data = cloneDeep(data);
-    let needDraw = false;
-    let needLoadFont = false;
-    Object.keys(data).forEach(key => {
-      const value = data[key] ?? this.defaultData[key];
-      if (JSON.stringify(this.data[key]) !== JSON.stringify(value)) {
-        this.data[key] = value;
-        if (['language', 'font'].includes(key)) {
-          needLoadFont = true;
-        }
-        needDraw = true;
-      }
-    });
-    if (needDraw) {
-      this.initDraw();
-    }
-    // 先触发绘制，再触发字体加载
-    if (needLoadFont) {
-      this.loadFont();
-    }
-  }
-
-  loadFont() {
-    document.fonts.ready.finally(() => {
-      this.key++;
-      this.initDraw();
-    });
-  }
-
-  initData(data = {}) {
-    this.setData(Object.assign(this.defaultData, data));
+    Object.assign(this.data, data);
+    this.draw();
   }
 
   initLeafer() {
     this.leafer = new Leafer({
       view: this.view,
+      type: 'block',
       width: this.cardWidth,
       height: this.cardHeight,
-      usePartRender: false,
-      hittable: false,
     });
   }
 
-  initDraw() {
-    // 需要重写Override
+  draw() {
+    // need to be overridden
   }
 
   listenImageStatus(imageLeaf) {

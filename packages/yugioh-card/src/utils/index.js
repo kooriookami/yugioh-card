@@ -22,7 +22,7 @@ export function numberToFull(value) {
 export const inheritProp = (obj, parentObj = {}) => {
   const inheritPropList = ['fontFamily', 'fontSize', 'fontStyle', 'fontWeight', 'lineHeight', 'letterSpacing', 'wordSpacing'];
   inheritPropList.forEach(inherit => {
-    if (!obj.hasOwnProperty(inherit) && parentObj.hasOwnProperty(inherit)) {
+    if (!Object.prototype.hasOwnProperty.call(obj, inherit) && Object.prototype.hasOwnProperty.call(parentObj, inherit)) {
       obj[inherit] = parentObj[inherit];
     }
   });

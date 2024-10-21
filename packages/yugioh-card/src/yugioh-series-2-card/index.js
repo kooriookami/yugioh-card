@@ -1,67 +1,68 @@
 import { Card } from '../card';
-import { Group, Image, ImageEvent } from 'leafer-ui';
+import { Group, Image } from 'leafer-ui';
 import { CompressText } from 'leafer-compress-text';
 import jpStyle from './style/jp-style';
 import custom1Style from './style/custom1-style';
 import custom2Style from './style/custom2-style';
 
 export class YugiohSeries2Card extends Card {
+  cardLeaf = null;
+  nameLeaf = null;
+  attributeLeaf = null;
+  levelLeaf = null;
+  spellTrapLeaf = null;
+  imageLeaf = null;
+  maskLeaf = null;
+  packageLeaf = null;
+  effectLeaf = null;
+  descriptionLeaf = null;
+  atkDefLeaf = null;
+  passwordLeaf = null;
+  copyrightLeaf = null;
+  laserLeaf = null;
+  cardWidth = 1394;
+  cardHeight = 2031;
+
+  data = {
+    language: 'jp',
+    name: '',
+    color: '',
+    align: 'left',
+    gradient: false,
+    gradientColor1: '#999999',
+    gradientColor2: '#ffffff',
+    gradientPreset: 'silver',
+    type: 'monster',
+    attribute: 'dark',
+    icon: '',
+    image: '',
+    cardType: 'normal',
+    level: 0,
+    monsterType: '',
+    atk: 0,
+    def: 0,
+    description: '',
+    firstLineCompress: false,
+    descriptionAlign: false,
+    descriptionZoom: 1,
+    descriptionWeight: 0,
+    package: '',
+    password: '',
+    copyright: '',
+    laser: '',
+    rare: '',
+    radius: true,
+    scale: 1,
+  };
+
   constructor(data = {}) {
     super(data);
-    this.cardLeaf = null;
-    this.nameLeaf = null;
-    this.attributeLeaf = null;
-    this.levelLeaf = null;
-    this.spellTrapLeaf = null;
-    this.imageLeaf = null;
-    this.maskLeaf = null;
-    this.packageLeaf = null;
-    this.effectLeaf = null;
-    this.descriptionLeaf = null;
-    this.atkDefLeaf = null;
-    this.passwordLeaf = null;
-    this.copyrightLeaf = null;
-    this.laserLeaf = null;
-    this.cardWidth = 1394;
-    this.cardHeight = 2031;
-
-    this.defaultData = {
-      language: 'jp',
-      name: '',
-      color: '',
-      align: 'left',
-      gradient: false,
-      gradientColor1: '#999999',
-      gradientColor2: '#ffffff',
-      gradientPreset: 'silver',
-      type: 'monster',
-      attribute: 'dark',
-      icon: '',
-      image: '',
-      cardType: 'normal',
-      level: 0,
-      monsterType: '',
-      atk: 0,
-      def: 0,
-      description: '',
-      firstLineCompress: false,
-      descriptionAlign: false,
-      descriptionZoom: 1,
-      descriptionWeight: 0,
-      package: '',
-      password: '',
-      copyright: '',
-      laser: '',
-      rare: '',
-      radius: true,
-      scale: 1,
-    };
 
     this.initLeafer();
-    this.initData(data.data);
+    this.setData(data.data);
   }
 
-  initDraw() {
+  draw() {
     this.drawCard();
     this.drawName();
     this.drawAttribute();
@@ -115,7 +116,6 @@ export class YugiohSeries2Card extends Card {
       height: 200,
       x: 147,
       y: name.top,
-      key: this.key,
       zIndex: 10,
     });
   }
@@ -197,7 +197,6 @@ export class YugiohSeries2Card extends Card {
       fontSize: spellTrap.fontSize,
       letterSpacing,
       y: spellTrap.top,
-      key: this.key,
     });
     const rightBounds = rightText.bounds;
     rightText.x = this.cardWidth - spellTrap.right - rightBounds.width;
@@ -218,7 +217,6 @@ export class YugiohSeries2Card extends Card {
       rtTop: spellTrap.rtTop,
       rtFontScaleX: spellTrap.rtFontScaleX || 1,
       y: spellTrap.top,
-      key: this.key,
     });
     const leftBounds = leftText.bounds;
     leftText.x = spellTrapIcon.x - (this.data.icon ? (icon.marginLeft || 0) : 0) - leftBounds.width;
@@ -273,7 +271,6 @@ export class YugiohSeries2Card extends Card {
       fontFamily: 'ygo-tip, serif',
       fontSize: 33,
       y: 1601,
-      key: this.key,
       zIndex: 30,
     });
     const bounds = this.packageLeaf.bounds;
@@ -304,7 +301,6 @@ export class YugiohSeries2Card extends Card {
       height: 70,
       x: 149 + (effect.textIndent || 0),
       y: effect.top,
-      key: this.key,
       visible: this.showEffect,
       zIndex: 30,
     });
@@ -339,7 +335,6 @@ export class YugiohSeries2Card extends Card {
       height: ['spell', 'trap'].includes(this.data.type) ? 240 : 170,
       x: 149,
       y: effect.top + effectHeight,
-      key: this.key,
       zIndex: 30,
     });
   }
@@ -378,7 +373,6 @@ export class YugiohSeries2Card extends Card {
       width: 288,
       x: 950,
       y: 1688,
-      key: this.key,
     });
 
     let defText = '';
@@ -400,7 +394,6 @@ export class YugiohSeries2Card extends Card {
       width: 288,
       x: 950,
       y: 1795,
-      key: this.key,
     });
 
     this.atkDefLeaf.set({
@@ -421,7 +414,6 @@ export class YugiohSeries2Card extends Card {
       fontSize: 33,
       x: 66,
       y: 1940,
-      key: this.key,
       zIndex: 30,
     });
   }

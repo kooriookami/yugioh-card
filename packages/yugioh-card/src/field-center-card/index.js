@@ -2,26 +2,27 @@ import { Card } from '../card';
 import { Image } from 'leafer-ui';
 
 export class FieldCenterCard extends Card {
+  cardLeaf = null;
+  imageLeaf = null;
+  maskLeaf = null;
+  cardWidth = 1488;
+  cardHeight = 2079;
+
+  data = {
+    image: '',
+    radius: true,
+    cardBack: false,
+    scale: 1,
+  };
+
   constructor(data = {}) {
     super(data);
-    this.cardLeaf = null;
-    this.imageLeaf = null;
-    this.maskLeaf = null;
-    this.cardWidth = 1488;
-    this.cardHeight = 2079;
-
-    this.defaultData = {
-      image: '',
-      radius: true,
-      cardBack: false,
-      scale: 1,
-    };
 
     this.initLeafer();
-    this.initData(data.data);
+    this.setData(data.data);
   }
 
-  initDraw() {
+  draw() {
     this.drawCard();
     this.drawImage();
     this.drawMask();

@@ -43,7 +43,7 @@
     "@vitejs/plugin-vue": "^5.1.4",
     "eslint": "^9.13.0",
     "eslint-define-config": "^2.1.0",
-    "eslint-plugin-vue": "^9.29.0",
+    "eslint-plugin-vue": "^9.29.1",
     "jsonfile": "^6.1.0",
     "rollup-plugin-copy": "^3.5.0",
     "sass": "^1.80.3",

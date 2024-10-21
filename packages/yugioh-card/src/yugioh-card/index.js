@@ -12,77 +12,78 @@ import custom1Style from './style/custom1-style';
 import custom2Style from './style/custom2-style';
 
 export class YugiohCard extends Card {
+  cardLeaf = null;
+  nameLeaf = null;
+  attributeLeaf = null;
+  levelLeaf = null;
+  rankLeaf = null;
+  spellTrapLeaf = null;
+  imageLeaf = null;
+  maskLeaf = null;
+  pendulumLeaf = null;
+  pendulumDescriptionLeaf = null;
+  packageLeaf = null;
+  linkArrowLeaf = null;
+  effectLeaf = null;
+  descriptionLeaf = null;
+  atkDefLinkLeaf = null;
+  passwordLeaf = null;
+  copyrightLeaf = null;
+  laserLeaf = null;
+  rareLeaf = null;
+  attributeRareLeaf = null;
+  twentiethLeaf = null;
+  cardWidth = 1394;
+  cardHeight = 2031;
+
+  data = {
+    language: 'sc',
+    font: '',
+    name: '',
+    color: '',
+    align: 'left',
+    gradient: false,
+    gradientColor1: '#999999',
+    gradientColor2: '#ffffff',
+    gradientPreset: 'silver',
+    type: 'monster',
+    attribute: 'dark',
+    icon: '',
+    image: '',
+    cardType: 'normal',
+    pendulumType: 'normal-pendulum',
+    level: 0,
+    rank: 0,
+    pendulumScale: 0,
+    pendulumDescription: '',
+    monsterType: '',
+    atkBar: true,
+    atk: 0,
+    def: 0,
+    arrowList: [],
+    description: '',
+    firstLineCompress: false,
+    descriptionAlign: false,
+    descriptionZoom: 1,
+    descriptionWeight: 0,
+    package: '',
+    password: '',
+    copyright: '',
+    laser: '',
+    rare: '',
+    twentieth: false,
+    radius: true,
+    scale: 1,
+  };
+
   constructor(data = {}) {
     super(data);
-    this.cardLeaf = null;
-    this.nameLeaf = null;
-    this.attributeLeaf = null;
-    this.levelLeaf = null;
-    this.rankLeaf = null;
-    this.spellTrapLeaf = null;
-    this.imageLeaf = null;
-    this.maskLeaf = null;
-    this.pendulumLeaf = null;
-    this.pendulumDescriptionLeaf = null;
-    this.packageLeaf = null;
-    this.linkArrowLeaf = null;
-    this.effectLeaf = null;
-    this.descriptionLeaf = null;
-    this.atkDefLinkLeaf = null;
-    this.passwordLeaf = null;
-    this.copyrightLeaf = null;
-    this.laserLeaf = null;
-    this.rareLeaf = null;
-    this.attributeRareLeaf = null;
-    this.twentiethLeaf = null;
-    this.cardWidth = 1394;
-    this.cardHeight = 2031;
-
-    this.defaultData = {
-      language: 'sc',
-      font: '',
-      name: '',
-      color: '',
-      align: 'left',
-      gradient: false,
-      gradientColor1: '#999999',
-      gradientColor2: '#ffffff',
-      gradientPreset: 'silver',
-      type: 'monster',
-      attribute: 'dark',
-      icon: '',
-      image: '',
-      cardType: 'normal',
-      pendulumType: 'normal-pendulum',
-      level: 0,
-      rank: 0,
-      pendulumScale: 0,
-      pendulumDescription: '',
-      monsterType: '',
-      atkBar: true,
-      atk: 0,
-      def: 0,
-      arrowList: [],
-      description: '',
-      firstLineCompress: false,
-      descriptionAlign: false,
-      descriptionZoom: 1,
-      descriptionWeight: 0,
-      package: '',
-      password: '',
-      copyright: '',
-      laser: '',
-      rare: '',
-      twentieth: false,
-      radius: true,
-      scale: 1,
-    };
 
     this.initLeafer();
-    this.initData(data.data);
+    this.setData(data.data);
   }
 
-  initDraw() {
+  draw() {
     this.drawCard();
     this.drawName();
     this.drawAttribute();
@@ -144,7 +145,6 @@ export class YugiohCard extends Card {
       height: 200,
       x: 116,
       y: name.top,
-      key: this.key,
       zIndex: 10,
     });
   }
@@ -257,7 +257,6 @@ export class YugiohCard extends Card {
       wordSpacing,
       scaleY: spellTrap.scaleY || 1,
       y: spellTrap.top,
-      key: this.key,
     });
     const rightBounds = rightText.bounds;
     rightText.x = this.cardWidth - spellTrap.right - rightBounds.width;
@@ -279,7 +278,6 @@ export class YugiohCard extends Card {
       rtTop: spellTrap.rtTop,
       rtFontScaleX: spellTrap.rtFontScaleX || 1,
       y: spellTrap.top,
-      key: this.key,
     });
     const leftBounds = leftText.bounds;
     leftText.x = spellTrapIcon.x - (this.data.icon ? (icon.marginLeft || 0) : 0) - leftBounds.width;
@@ -341,7 +339,6 @@ export class YugiohCard extends Card {
       text: this.data.pendulumScale,
       fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
       fontSize: this.data.language === 'astral' ? 84 : 98,
-      lineHeight: this.data.language === 'astral' ? 84 * 1.15 : 98 * 1.15,
       fill: 'black',
       letterSpacing: this.data.language === 'astral' ? 0 : -10,
       x: left,
@@ -354,7 +351,6 @@ export class YugiohCard extends Card {
       text: this.data.pendulumScale,
       fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
       fontSize: this.data.language === 'astral' ? 84 : 98,
-      lineHeight: this.data.language === 'astral' ? 84 * 1.15 : 98 * 1.15,
       fill: 'black',
       letterSpacing: this.data.language === 'astral' ? 0 : -10,
       x: left,
@@ -391,7 +387,6 @@ export class YugiohCard extends Card {
       height: 230,
       x: 221,
       y: pendulumDescription.top,
-      key: this.key,
       visible: this.data.type === 'pendulum',
       zIndex: 30,
     });
@@ -410,7 +405,6 @@ export class YugiohCard extends Card {
       color: this.data.type === 'monster' && this.data.cardType === 'xyz' ? 'white' : 'black',
       textAlign: this.data.type === 'pendulum' ? 'left' : 'right',
       y: this.data.type === 'pendulum' ? 1859 : 1455,
-      key: this.key,
       zIndex: 30,
     });
     if (this.data.type === 'pendulum') {
@@ -494,7 +488,6 @@ export class YugiohCard extends Card {
       height: 100,
       x: 109 + (effect.textIndent || 0),
       y: effect.top,
-      key: this.key,
       visible: this.showEffect,
       zIndex: 30,
     });
@@ -548,7 +541,6 @@ export class YugiohCard extends Card {
       height,
       x: 109,
       y: effect.top + effectHeight,
-      key: this.key,
       zIndex: 30,
     });
   }
@@ -592,7 +584,6 @@ export class YugiohCard extends Card {
       text: atkText,
       fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
       fontSize: this.data.language === 'astral' ? 49 : 62,
-      lineHeight: this.data.language === 'astral' ? 49 * 1.15 : 62 * 1.15,
       fill: 'black',
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
       x: atkLeft,
@@ -614,7 +605,6 @@ export class YugiohCard extends Card {
       text: defText,
       fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
       fontSize: this.data.language === 'astral' ? 49 : 62,
-      lineHeight: this.data.language === 'astral' ? 49 * 1.15 : 62 * 1.15,
       fill: 'black',
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
       x: defLeft,
@@ -629,7 +619,6 @@ export class YugiohCard extends Card {
       text: linkText,
       fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-link, serif',
       fontSize: this.data.language === 'astral' ? 49 : 44,
-      lineHeight: this.data.language === 'astral' ? 49 * 1.15 : 62 * 1.15,
       fill: 'black',
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
       x: linkLeft,
@@ -658,7 +647,6 @@ export class YugiohCard extends Card {
       color: this.data.type === 'monster' && this.data.cardType === 'xyz' ? 'white' : 'black',
       x: 66,
       y: 1932,
-      key: this.key,
       zIndex: 30,
     });
   }

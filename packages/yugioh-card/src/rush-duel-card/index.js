@@ -5,59 +5,60 @@ import scStyle from './style/sc-style';
 import jpStyle from './style/jp-style';
 
 export class RushDuelCard extends Card {
+  cardLeaf = null;
+  nameLeaf = null;
+  attributeLeaf = null;
+  levelLeaf = null;
+  spellTrapLeaf = null;
+  imageLeaf = null;
+  maskLeaf = null;
+  packageLeaf = null;
+  effectLeaf = null;
+  descriptionLeaf = null;
+  maximumAtkLeaf = null;
+  atkDefLeaf = null;
+  legendLeaf = null;
+  laserLeaf = null;
+  rareLeaf = null;
+  cardWidth = 1394;
+  cardHeight = 2031;
+
+  data = {
+    language: 'sc',
+    name: '',
+    color: '',
+    type: 'monster',
+    attribute: 'dark',
+    icon: '',
+    image: '',
+    cardType: 'normal',
+    level: 0,
+    monsterType: '',
+    maximumAtk: 0,
+    atk: 0,
+    def: 0,
+    description: '',
+    firstLineCompress: false,
+    descriptionAlign: false,
+    descriptionZoom: 1,
+    descriptionWeight: 0,
+    package: '',
+    password: '',
+    legend: false,
+    laser: '',
+    rare: '',
+    radius: true,
+    scale: 1,
+  };
+
   constructor(data = {}) {
     super(data);
-    this.cardLeaf = null;
-    this.nameLeaf = null;
-    this.attributeLeaf = null;
-    this.levelLeaf = null;
-    this.spellTrapLeaf = null;
-    this.imageLeaf = null;
-    this.maskLeaf = null;
-    this.packageLeaf = null;
-    this.effectLeaf = null;
-    this.descriptionLeaf = null;
-    this.maximumAtkLeaf = null;
-    this.atkDefLeaf = null;
-    this.legendLeaf = null;
-    this.laserLeaf = null;
-    this.rareLeaf = null;
-    this.cardWidth = 1394;
-    this.cardHeight = 2031;
-
-    this.defaultData = {
-      language: 'sc',
-      name: '',
-      color: '',
-      type: 'monster',
-      attribute: 'dark',
-      icon: '',
-      image: '',
-      cardType: 'normal',
-      level: 0,
-      monsterType: '',
-      maximumAtk: 0,
-      atk: 0,
-      def: 0,
-      description: '',
-      firstLineCompress: false,
-      descriptionAlign: false,
-      descriptionZoom: 1,
-      descriptionWeight: 0,
-      package: '',
-      password: '',
-      legend: false,
-      laser: '',
-      rare: '',
-      radius: true,
-      scale: 1,
-    };
 
     this.initLeafer();
-    this.initData(data.data);
+    this.setData(data.data);
   }
 
-  initDraw() {
+  draw() {
     this.drawCard();
     this.drawName();
     this.drawAttribute();
@@ -107,7 +108,6 @@ export class RushDuelCard extends Card {
       height: 200,
       x: 71,
       y: name.top,
-      key: this.key,
       zIndex: 10,
     });
   }
@@ -150,7 +150,6 @@ export class RushDuelCard extends Card {
       text: this.data.level,
       fontFamily: 'rd-atk-def, sans-serif',
       fontSize: 116,
-      lineHeight: 116 * 1.15,
       fill: 'white',
       stroke: '#D3100D',
       strokeWidth: 10,
@@ -203,7 +202,6 @@ export class RushDuelCard extends Card {
       rtTop: spellTrap.rtTop,
       x: 99,
       y: spellTrap.top,
-      key: this.key,
     });
     const leftBounds = leftText.bounds;
 
@@ -221,7 +219,6 @@ export class RushDuelCard extends Card {
       letterSpacing,
       x: spellTrapIcon.x + (this.data.icon ? (icon.marginRight || 0) : 0) + iconWidth,
       y: spellTrap.top,
-      key: this.key,
     });
 
     this.spellTrapLeaf.set({
@@ -275,7 +272,6 @@ export class RushDuelCard extends Card {
       textAlign: 'right',
       scaleX: 0.9,
       y: 1914,
-      key: this.key,
       zIndex: 30,
     });
     const bounds = this.packageLeaf.bounds;
@@ -306,7 +302,6 @@ export class RushDuelCard extends Card {
       height: 80,
       x: 99 + (effect.textIndent || 0),
       y: effect.top,
-      key: this.key,
       visible: this.data.type === 'monster' && this.data.monsterType,
       zIndex: 30,
     });
@@ -336,7 +331,6 @@ export class RushDuelCard extends Card {
       height: 350,
       x: 99,
       y: description.top,
-      key: this.key,
       zIndex: 30,
     });
   }
@@ -365,7 +359,6 @@ export class RushDuelCard extends Card {
       text: this.data.maximumAtk,
       fontFamily: 'rd-atk-def, sans-serif',
       fontSize: 97,
-      lineHeight: 97 * 1.15,
       fill: 'white',
       stroke: 'black',
       strokeWidth: 3,
@@ -410,7 +403,6 @@ export class RushDuelCard extends Card {
       text: this.data.atk >= 0 ? this.data.atk : '?',
       fontFamily: 'rd-atk-def, sans-serif',
       fontSize: 97,
-      lineHeight: 97 * 1.15,
       fill: 'white',
       stroke: 'black',
       strokeWidth: 3,
@@ -424,7 +416,6 @@ export class RushDuelCard extends Card {
       text: this.data.def >= 0 ? this.data.def : '?',
       fontFamily: 'rd-atk-def, sans-serif',
       fontSize: 97,
-      lineHeight: 97 * 1.15,
       fill: 'white',
       stroke: 'black',
       strokeWidth: 3,
