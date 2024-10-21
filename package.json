@@ -33,7 +33,6 @@
     "@element-plus/icons-vue": "^2.3.1",
     "element-plus": "^2.8.6",
     "json-editor-vue": "^0.17.2",
-    "lodash": "^4.17.21",
     "normalize.css": "^8.0.1",
     "vue": "^3.5.12",
     "yugioh-card": "workspace:*"
