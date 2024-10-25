@@ -8,7 +8,6 @@ export default {
   gradient: false,
   gradientColor1: '#999999',
   gradientColor2: '#ffffff',
-  gradientPreset: 'silver',
   type: 'monster',
   attribute: 'light',
   icon: '',

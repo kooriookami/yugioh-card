@@ -45,7 +45,6 @@ export class YugiohCard extends Card {
     gradient: false,
     gradientColor1: '#999999',
     gradientColor2: '#ffffff',
-    gradientPreset: 'silver',
     type: 'monster',
     attribute: 'dark',
     icon: '',
