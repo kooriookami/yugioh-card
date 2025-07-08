@@ -662,6 +662,7 @@ export class YugiohCard extends Card {
       url: copyrightUrl,
       x: this.cardWidth - 141,
       y: 1936,
+      height: this.data.copyright ? null : 0,
       around: { type: 'percent', x: 1, y: 0 },
       visible: this.data.copyright,
       zIndex: 30,
