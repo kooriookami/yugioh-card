@@ -514,10 +514,10 @@ export class YugiohCard extends Card {
     let height = 380;
     if (!['spell', 'trap'].includes(this.data.type)) {
       if (this.showEffect) {
-        height -= 50;
+        height -= effectHeight;
       }
       if (this.data.atkBar) {
-        height -= 55;
+        height -= 60;
       }
     }
 
