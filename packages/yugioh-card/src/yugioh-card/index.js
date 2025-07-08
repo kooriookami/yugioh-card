@@ -621,7 +621,7 @@ export class YugiohCard extends Card {
       fill: 'black',
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
       x: linkLeft,
-      y: this.data.language === 'astral' ? 1850 : 1845,
+      y: this.data.language === 'astral' ? 1850 : 1855,
       around: { type: 'percent', x: 1, y: 0 },
       scaleX: this.data.language === 'astral' ? 1 : 1.3,
       visible: this.data.type === 'monster' && this.data.cardType === 'link',
