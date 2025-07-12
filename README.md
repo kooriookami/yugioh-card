@@ -47,7 +47,7 @@ const card = new YugiohCard({
 });
 
 // 导出图片，更多导出参数请参考 https://www.leaferjs.com/ui/guide/export/
-card.leafer.export('xxx.png');
+card.leafer.export('xxx.png', { screenshot: true });
 ```
 
 ## 🔎 示例代码
