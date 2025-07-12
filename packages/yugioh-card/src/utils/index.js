@@ -1,9 +1,23 @@
-// 动态加载css
-export const loadCSS = url => {
-  let css = document.createElement('link');
-  css.href = url;
-  css.rel = 'stylesheet';
-  document.head.appendChild(css);
+// 加载字体
+export const loadFont = fontPath => {
+  return fetch(`${fontPath}/font-list.json`).then(res => {
+    if (res.ok) {
+      return res.json();
+    } else {
+      throw new Error();
+    }
+  }).then(data => {
+    data.forEach(family => {
+      const font = new FontFace(
+        family,
+        `url(${fontPath}/${family}.woff2) format('woff2'), url(${fontPath}/${family}.woff) format('woff')`,
+        {
+          display: 'swap',
+        },
+      );
+      document.fonts.add(font);
+    });
+  });
 };
 
 // 数字转全角

@@ -1,5 +1,5 @@
-import { Text, Image, ImageEvent, Leafer } from 'leafer-ui';
-import { loadCSS } from '../utils';
+import { Text, Image, ImageEvent, Leafer } from 'leafer';
+import { loadFont } from '../utils';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
 
@@ -16,7 +16,6 @@ export class Card {
   cardWidth = 100;
   cardHeight = 100;
   data = {};
-  timer = null;
   view = null;
   resourcePath = null;
 
@@ -25,9 +24,16 @@ export class Card {
     this.resourcePath = data.resourcePath;
 
     resetAttr();
-    loadCSS(`${this.resourcePath}/custom-font/custom-font.css`);
-    loadCSS(`${this.resourcePath}/yugioh/font/ygo-font.css`);
-    loadCSS(`${this.resourcePath}/rush-duel/font/rd-font.css`);
+    Promise.allSettled([
+      loadFont(`${this.resourcePath}/yugioh/font`),
+      loadFont(`${this.resourcePath}/rush-duel/font`),
+    ]).then(() => {
+      document.fonts.ready.then(() => {
+        setTimeout(() => {
+          this.draw();
+        }, 50);
+      });
+    });
   }
 
   setData(data = {}) {
@@ -38,7 +44,6 @@ export class Card {
   initLeafer() {
     this.leafer = new Leafer({
       view: this.view,
-      type: 'block',
       width: this.cardWidth,
       height: this.cardHeight,
     });
@@ -84,19 +89,10 @@ export class Card {
       visible: [ImageEvent.LOAD, ImageEvent.ERROR].includes(status) && url,
       zIndex: zIndex + 1,
     });
-
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = null;
-    }
-    if (status === ImageEvent.LOAD) {
-      this.timer = setInterval(() => {
-        this.imageStatusLeaf.rotateOf('center', 3);
-      }, 16.7);
-    }
   }
 
   updateScale() {
+    this.leafer.pixelRatio = devicePixelRatio;
     this.leafer.width = this.cardWidth * this.data.scale / devicePixelRatio;
     this.leafer.height = this.cardHeight * this.data.scale / devicePixelRatio;
     this.leafer.scaleX = this.data.scale / devicePixelRatio;

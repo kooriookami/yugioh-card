@@ -12,8 +12,8 @@
     "build:lib": "vite build -- lib",
     "preview": "vite preview",
     "publish": "npm publish dist/ --registry https://registry.npmjs.org",
-    "lint": "eslint ./src --ext .vue,.js,.ts,.jsx,.tsx",
-    "lint-fix": "eslint --fix ./src --ext .vue,.js,.ts,.jsx,.tsx"
+    "lint": "eslint",
+    "lint-fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -31,21 +31,26 @@
   "license": "ISC",
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
-    "element-plus": "^2.8.6",
-    "json-editor-vue": "^0.17.2",
+    "element-plus": "^2.10.4",
+    "json-editor-vue": "^0.18.1",
     "normalize.css": "^8.0.1",
-    "vue": "^3.5.12",
+    "vue": "^3.5.17",
     "yugioh-card": "workspace:*"
   },
   "devDependencies": {
-    "@iconify/vue": "^4.1.2",
-    "@vitejs/plugin-vue": "^5.1.4",
-    "eslint": "^9.13.0",
+    "@iconify/vue": "^5.0.0",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "eslint": "^9.30.1",
     "eslint-define-config": "^2.1.0",
-    "eslint-plugin-vue": "^9.29.1",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-vue": "^10.3.0",
+    "globals": "^16.3.0",
     "jsonfile": "^6.1.0",
     "rollup-plugin-copy": "^3.5.0",
-    "sass": "^1.80.3",
-    "vite": "^5.4.9"
+    "sass-embedded": "^1.89.2",
+    "vite": "^7.0.4"
+  },
+  "engines": {
+    "node": ">= 20"
   }
 }

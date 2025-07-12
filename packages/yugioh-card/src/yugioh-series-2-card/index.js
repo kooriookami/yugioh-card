@@ -1,6 +1,6 @@
+import { Group, Image } from 'leafer';
 import { Card } from '../card';
-import { Group, Image } from 'leafer-ui';
-import { CompressText } from 'leafer-compress-text';
+import { CompressText } from '../compress-text';
 import jpStyle from './style/jp-style';
 import custom1Style from './style/custom1-style';
 import custom2Style from './style/custom2-style';

@@ -1,8 +1,8 @@
+import path from 'path';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import copy from 'rollup-plugin-copy';
 import jsonfile from 'jsonfile';
-import path from 'path';
 
 function editPackageJson() {
   return {

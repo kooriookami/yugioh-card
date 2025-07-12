@@ -54,88 +54,88 @@
 </template>
 
 <script setup>
-  import { Icon } from '@iconify/vue';
-  import { onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue';
-  import { FieldCenterCard, RushDuelCard, YugiohBackCard, YugiohCard, YugiohSeries2Card } from 'yugioh-card';
-  import JsonEditorVue from 'json-editor-vue';
-  import fieldCenterDemo from '@/assets/demo/field-center-demo';
-  import rushDuelDemo from '@/assets/demo/rush-duel-demo';
-  import yugiohBackDemo from '@/assets/demo/yugioh-back-demo';
-  import yugiohDemo from '@/assets/demo/yugioh-demo';
-  import yugiohSeries2Demo from '@/assets/demo/yugioh-series-2-demo';
+import { Icon } from '@iconify/vue';
+import { onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue';
+import { FieldCenterCard, RushDuelCard, YugiohBackCard, YugiohCard, YugiohSeries2Card } from 'yugioh-card';
+import JsonEditorVue from 'json-editor-vue';
+import fieldCenterDemo from '@/assets/demo/field-center-demo';
+import rushDuelDemo from '@/assets/demo/rush-duel-demo';
+import yugiohBackDemo from '@/assets/demo/yugioh-back-demo';
+import yugiohDemo from '@/assets/demo/yugioh-demo';
+import yugiohSeries2Demo from '@/assets/demo/yugioh-series-2-demo';
 
-  const card = ref(null);
-  const cardLeaf = shallowRef(null);
-  const form = reactive({
-    card: 'yugioh',
-    data: {},
-  });
-  const jsonData = ref('');
-  const jsonOption = reactive({
-    mainMenuBar: false,
-    statusBar: false,
-  });
+const card = ref(null);
+const cardLeaf = shallowRef(null);
+const form = reactive({
+  card: 'yugioh',
+  data: {},
+});
+const jsonData = ref('');
+const jsonOption = reactive({
+  mainMenuBar: false,
+  statusBar: false,
+});
 
-  onMounted(() => {
-    changeCard();
-  });
+onMounted(() => {
+  changeCard();
+});
 
-  onBeforeUnmount(() => {
-    cardLeaf.value?.leafer.destroy();
-  });
+onBeforeUnmount(() => {
+  cardLeaf.value?.leafer.destroy();
+});
 
-  function changeCard() {
-    cardLeaf.value?.leafer.destroy();
-    let Card;
-    switch (form.card) {
-      case 'yugioh':
-        form.data = yugiohDemo;
-        Card = YugiohCard;
-        break;
-      case 'rush-duel':
-        form.data = rushDuelDemo;
-        Card = RushDuelCard;
-        break;
-      case 'yugioh-back':
-        form.data = yugiohBackDemo;
-        Card = YugiohBackCard;
-        break;
-      case 'field-center':
-        form.data = fieldCenterDemo;
-        Card = FieldCenterCard;
-        break;
-      case 'yugioh-series-2':
-        form.data = yugiohSeries2Demo;
-        Card = YugiohSeries2Card;
-        break;
-      default:
-        form.data = yugiohDemo;
-        Card = YugiohCard;
-    }
-    cardLeaf.value = new Card({
-      view: card.value,
-      data: form.data,
-      resourcePath: process.env.NODE_ENV === 'production' ? 'https://static.ygosgs.com' : 'src/assets/yugioh-card',
-    });
-    jsonData.value = form.data;
+function changeCard() {
+  cardLeaf.value?.leafer.destroy();
+  let Card;
+  switch (form.card) {
+    case 'yugioh':
+      form.data = yugiohDemo;
+      Card = YugiohCard;
+      break;
+    case 'rush-duel':
+      form.data = rushDuelDemo;
+      Card = RushDuelCard;
+      break;
+    case 'yugioh-back':
+      form.data = yugiohBackDemo;
+      Card = YugiohBackCard;
+      break;
+    case 'field-center':
+      form.data = fieldCenterDemo;
+      Card = FieldCenterCard;
+      break;
+    case 'yugioh-series-2':
+      form.data = yugiohSeries2Demo;
+      Card = YugiohSeries2Card;
+      break;
+    default:
+      form.data = yugiohDemo;
+      Card = YugiohCard;
   }
-
-  function exportImage() {
-    cardLeaf.value.leafer.export('卡片.png');
-  }
-
-  watch(() => jsonData.value, () => {
-    try {
-      form.data = JSON.parse(jsonData.value);
-      cardLeaf.value.setData(form.data);
-    } catch (e) {
-
-    }
+  cardLeaf.value = new Card({
+    view: card.value,
+    data: form.data,
+    resourcePath: process.env.NODE_ENV === 'production' ? 'https://static.ygosgs.com' : 'src/assets/yugioh-card',
   });
+  jsonData.value = form.data;
+}
 
-  function toGithub() {
-    open('https://github.com/kooriookami/yugioh-card');
+function exportImage() {
+  cardLeaf.value.leafer.export('卡片.png');
+}
+
+watch(() => jsonData.value, () => {
+  try {
+    form.data = JSON.parse(jsonData.value);
+    cardLeaf.value.setData(form.data);
+  } catch (e) {
+
   }
+});
+
+function toGithub() {
+  open('https://github.com/kooriookami/yugioh-card');
+}
 </script>
 
 <style lang="scss" scoped>

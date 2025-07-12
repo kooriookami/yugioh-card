@@ -1,6 +1,6 @@
+import { Group, Image, Text } from 'leafer';
 import { Card } from '../card';
-import { Group, Image, Text } from 'leafer-ui';
-import { CompressText } from 'leafer-compress-text';
+import { CompressText } from '../compress-text';
 import { numberToFull } from '../utils';
 import scStyle from './style/sc-style';
 import tcStyle from './style/tc-style';

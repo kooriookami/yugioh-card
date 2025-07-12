@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-  import YugiohCard from './components/YugiohCard.vue';
+import YugiohCard from './components/YugiohCard.vue';
 </script>
 
 <style lang="scss">

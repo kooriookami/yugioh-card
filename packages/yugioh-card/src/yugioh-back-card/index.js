@@ -1,5 +1,5 @@
+import { Image } from 'leafer';
 import { Card } from '../card';
-import { Image } from 'leafer-ui';
 
 export class YugiohBackCard extends Card {
   cardLeaf = null;
