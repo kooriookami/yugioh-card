@@ -115,7 +115,7 @@ function changeCard() {
   cardLeaf.value = new Card({
     view: card.value,
     data: form.data,
-    resourcePath: 'src/assets/yugioh-card',
+    resourcePath: process.env.NODE_ENV === 'production' ? 'https://raw.githubusercontent.com/kooriookami/yugioh-card/refs/heads/master/src/assets/yugioh-card' : 'src/assets/yugioh-card',
   });
   jsonData.value = form.data;
 }
