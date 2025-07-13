@@ -1,5 +1,6 @@
 import { cloneDeep, isEqual } from 'lodash-es';
 import { Group, Text } from 'leafer';
+import { isBrowser } from '../utils/index.js';
 import { splitBreakWord } from './split-break-word.js';
 
 export class CompressText extends Group {
@@ -56,11 +57,13 @@ export class CompressText extends Group {
 
     this.initData(data);
 
-    document.fonts.ready.then(() => {
-      setTimeout(() => {
-        this.compressText();
-      }, 50);
-    });
+    if (isBrowser) {
+      document.fonts.ready.then(() => {
+        setTimeout(() => {
+          this.compressText();
+        }, 250);
+      });
+    }
   }
 
   set(data = {}) {

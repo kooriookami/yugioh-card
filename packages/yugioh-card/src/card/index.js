@@ -1,5 +1,5 @@
 import { Text, Image, ImageEvent, Leafer } from 'leafer';
-import { loadFont } from '../utils';
+import { isBrowser, loadFont } from '../utils';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
 
@@ -28,11 +28,13 @@ export class Card {
       loadFont(`${this.resourcePath}/yugioh/font`),
       loadFont(`${this.resourcePath}/rush-duel/font`),
     ]).then(() => {
-      document.fonts.ready.then(() => {
-        setTimeout(() => {
-          this.draw();
-        }, 50);
-      });
+      if (isBrowser) {
+        document.fonts.ready.then(() => {
+          setTimeout(() => {
+            this.draw();
+          }, 250);
+        });
+      }
     });
   }
 
@@ -92,10 +94,11 @@ export class Card {
   }
 
   updateScale() {
-    this.leafer.pixelRatio = devicePixelRatio;
-    this.leafer.width = this.cardWidth * this.data.scale / devicePixelRatio;
-    this.leafer.height = this.cardHeight * this.data.scale / devicePixelRatio;
-    this.leafer.scaleX = this.data.scale / devicePixelRatio;
-    this.leafer.scaleY = this.data.scale / devicePixelRatio;
+    const pixelRatio = isBrowser ? devicePixelRatio : 1;
+    this.leafer.pixelRatio = pixelRatio;
+    this.leafer.width = this.cardWidth * this.data.scale / pixelRatio;
+    this.leafer.height = this.cardHeight * this.data.scale / pixelRatio;
+    this.leafer.scaleX = this.data.scale / pixelRatio;
+    this.leafer.scaleY = this.data.scale / pixelRatio;
   }
 }

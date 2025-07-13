@@ -1,3 +1,5 @@
+// 是否是浏览器
+export const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
 // 加载字体
 export const loadFont = fontPath => {
   return fetch(`${fontPath}/font-list.json`).then(res => {
@@ -7,15 +9,17 @@ export const loadFont = fontPath => {
       throw new Error();
     }
   }).then(data => {
-    data.forEach(family => {
-      const font = new FontFace(
-        family,
-        `url(${fontPath}/${family}.woff2) format('woff2'), url(${fontPath}/${family}.woff) format('woff')`,
-        {
-          display: 'swap',
-        },
-      );
-      document.fonts.add(font);
+    data.forEach(async family => {
+      if (isBrowser) {
+        const font = new FontFace(
+          family,
+          `url(${fontPath}/${family}.woff2) format('woff2'), url(${fontPath}/${family}.woff) format('woff')`,
+          {
+            display: 'swap',
+          },
+        );
+        document.fonts.add(font);
+      }
     });
   });
 };
