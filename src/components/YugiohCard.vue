@@ -121,7 +121,10 @@ function changeCard() {
 }
 
 function exportImage() {
-  cardLeaf.value.leafer.export('卡片.png');
+  cardLeaf.value.leafer.export('卡片.png', {
+    screenshot: true,
+    pixelRatio: devicePixelRatio,
+  });
 }
 
 watch(() => jsonData.value, () => {
