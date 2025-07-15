@@ -1,4 +1,4 @@
-import { Image } from 'leafer';
+import { Image, Rect } from 'leafer';
 import { Card } from '../card';
 
 export class FieldCenterCard extends Card {
@@ -43,17 +43,22 @@ export class FieldCenterCard extends Card {
 
   drawImage() {
     if (!this.imageLeaf) {
-      this.imageLeaf = new Image();
+      this.imageLeaf = new Rect();
       this.listenImageStatus(this.imageLeaf);
       this.leafer.add(this.imageLeaf);
     }
 
     this.imageLeaf.set({
-      url: this.data.image,
       width: 1308,
       height: 1907,
       x: 90,
       y: 85,
+      fill: {
+        type: 'image',
+        url: this.data.image,
+        mode: 'cover',
+        align: 'top',
+      },
       visible: this.data.image && !this.data.cardBack,
       zIndex: 10,
     });

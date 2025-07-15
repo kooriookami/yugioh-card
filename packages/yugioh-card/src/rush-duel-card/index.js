@@ -1,4 +1,4 @@
-import { Group, Image, Text } from 'leafer';
+import { Group, Image, Rect, Text } from 'leafer';
 import { Card } from '../card';
 import { CompressText } from '../compress-text';
 import scStyle from './style/sc-style';
@@ -229,17 +229,22 @@ export class RushDuelCard extends Card {
 
   drawImage() {
     if (!this.imageLeaf) {
-      this.imageLeaf = new Image();
+      this.imageLeaf = new Rect();
       this.listenImageStatus(this.imageLeaf);
       this.leafer.add(this.imageLeaf);
     }
 
     this.imageLeaf.set({
-      url: this.data.image,
       width: 1254,
       height: 1258,
       x: 70,
       y: 200,
+      fill: {
+        type: 'image',
+        url: this.data.image,
+        mode: 'cover',
+        align: 'top',
+      },
       visible: this.data.image,
       zIndex: 10,
     });

@@ -1,4 +1,4 @@
-import { Group, Image } from 'leafer';
+import { Group, Image, Rect } from 'leafer';
 import { Card } from '../card';
 import { CompressText } from '../compress-text';
 import jpStyle from './style/jp-style';
@@ -228,17 +228,22 @@ export class YugiohSeries2Card extends Card {
 
   drawImage() {
     if (!this.imageLeaf) {
-      this.imageLeaf = new Image();
+      this.imageLeaf = new Rect();
       this.listenImageStatus(this.imageLeaf);
       this.leafer.add(this.imageLeaf);
     }
 
     this.imageLeaf.set({
-      url: this.data.image,
       width: 990,
       height: 1100,
       x: 202,
       y: 468,
+      fill: {
+        type: 'image',
+        url: this.data.image,
+        mode: 'cover',
+        align: 'top',
+      },
       visible: this.data.image,
       zIndex: 10,
     });

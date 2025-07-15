@@ -1,4 +1,4 @@
-import { Group, Image, Text } from 'leafer';
+import { Group, Image, Rect, Text } from 'leafer';
 import { Card } from '../card';
 import { CompressText } from '../compress-text';
 import { numberToFull } from '../utils';
@@ -289,17 +289,22 @@ export class YugiohCard extends Card {
 
   drawImage() {
     if (!this.imageLeaf) {
-      this.imageLeaf = new Image();
+      this.imageLeaf = new Rect();
       this.listenImageStatus(this.imageLeaf);
       this.leafer.add(this.imageLeaf);
     }
 
     this.imageLeaf.set({
-      url: this.data.image,
       width: this.data.type === 'pendulum' ? 1205 : 1054,
       height: this.data.type === 'pendulum' ? 1205 : 1054,
       x: this.data.type === 'pendulum' ? 94 : 170,
       y: this.data.type === 'pendulum' ? 364 : 375,
+      fill: {
+        type: 'image',
+        url: this.data.image,
+        mode: 'cover',
+        align: 'top',
+      },
       visible: this.data.image,
       zIndex: 10,
     });
