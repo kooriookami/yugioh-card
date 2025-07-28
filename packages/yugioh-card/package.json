@@ -1,6 +1,6 @@
 {
   "name": "yugioh-card",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "main": "src/index.js",
   "module": "src/index.js",
   "type": "module",

@@ -1,7 +1,13 @@
+// 已加载的字体路径列表
+let loadedFontPathList = [];
 // 是否是浏览器
 export const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
 // 加载字体
 export const loadFont = fontPath => {
+  if (loadedFontPathList.includes(fontPath)) {
+    return;
+  }
+  loadedFontPathList.push(fontPath);
   return fetch(`${fontPath}/font-list.json`).then(res => {
     if (res.ok) {
       return res.json();
