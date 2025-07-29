@@ -82,6 +82,10 @@ export class YugiohCard extends Card {
     this.setData(data.data);
   }
 
+  get tag() {
+    return 'YugiohCard';
+  }
+
   draw() {
     this.drawCard();
     this.drawName();

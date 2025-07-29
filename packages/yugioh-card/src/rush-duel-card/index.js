@@ -58,6 +58,10 @@ export class RushDuelCard extends Card {
     this.setData(data.data);
   }
 
+  get tag() {
+    return 'RushDuelCard';
+  }
+
   draw() {
     this.drawCard();
     this.drawName();

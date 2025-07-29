@@ -25,6 +25,10 @@ export class YugiohBackCard extends Card {
     this.setData(data.data);
   }
 
+  get tag() {
+    return 'YugiohBackCard';
+  }
+
   draw() {
     this.drawCard();
     this.drawKonami();

@@ -1,6 +1,6 @@
 {
   "name": "yugioh-card",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "main": "src/index.js",
   "module": "src/index.js",
   "type": "module",
@@ -20,7 +20,7 @@
   "license": "ISC",
   "dependencies": {
     "css-line-break": "^2.1.0",
-    "leafer": "^1.8.0",
+    "leafer": "^1.9.0",
     "lodash-es": "^4.17.21"
   }
 }

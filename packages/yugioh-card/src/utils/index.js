@@ -1,13 +1,13 @@
 // 已加载的字体路径列表
-let loadedFontPathList = [];
+let fontPathList = [];
 // 是否是浏览器
 export const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
 // 加载字体
 export const loadFont = fontPath => {
-  if (loadedFontPathList.includes(fontPath)) {
+  if (fontPathList.includes(fontPath)) {
     return;
   }
-  loadedFontPathList.push(fontPath);
+  fontPathList.push(fontPath);
   return fetch(`${fontPath}/font-list.json`).then(res => {
     if (res.ok) {
       return res.json();
@@ -15,8 +15,9 @@ export const loadFont = fontPath => {
       throw new Error();
     }
   }).then(data => {
-    data.forEach(async family => {
-      if (isBrowser) {
+    if (isBrowser) {
+      const fontList = [];
+      data.forEach(family => {
         const font = new FontFace(
           family,
           `url(${fontPath}/${family}.woff2) format('woff2'), url(${fontPath}/${family}.woff) format('woff')`,
@@ -25,8 +26,11 @@ export const loadFont = fontPath => {
           },
         );
         document.fonts.add(font);
-      }
-    });
+        fontList.push(font);
+      });
+      const fontLoadList = fontList.map(font => font.load());
+      return Promise.all(fontLoadList);
+    }
   });
 };
 

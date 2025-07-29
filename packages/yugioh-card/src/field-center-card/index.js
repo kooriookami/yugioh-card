@@ -22,6 +22,10 @@ export class FieldCenterCard extends Card {
     this.setData(data.data);
   }
 
+  get tag() {
+    return 'FieldCenterCard';
+  }
+
   draw() {
     this.drawCard();
     this.drawImage();

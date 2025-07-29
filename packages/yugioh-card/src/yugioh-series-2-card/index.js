@@ -61,6 +61,10 @@ export class YugiohSeries2Card extends Card {
     this.setData(data.data);
   }
 
+  get tag() {
+    return 'YugiohSeries2Card';
+  }
+
   draw() {
     this.drawCard();
     this.drawName();

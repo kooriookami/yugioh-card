@@ -3,6 +3,12 @@ import { isBrowser, loadFont } from '../utils';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
 
+const fontPathMap = {
+  YugiohCard: '/yugioh/font',
+  YugiohSeries2Card: '/yugioh/font',
+  RushDuelCard: '/rush-duel/font',
+};
+
 export function resetAttr() {
   Text.changeAttr('lineHeight', {
     type: 'percent',
@@ -22,18 +28,16 @@ export class Card {
   constructor(data = {}) {
     this.view = data.view;
     this.resourcePath = data.resourcePath;
-
     resetAttr();
-    Promise.allSettled([
-      loadFont(`${this.resourcePath}/yugioh/font`),
-      loadFont(`${this.resourcePath}/rush-duel/font`),
-    ]).then(() => {
+
+    const loadFontList = [];
+    const fontPath = fontPathMap[this.tag];
+    if (fontPath) {
+      loadFontList.push(loadFont(`${this.resourcePath}${fontPath}`));
+    }
+    Promise.allSettled(loadFontList).then(() => {
       if (isBrowser) {
-        document.fonts.ready.then(() => {
-          setTimeout(() => {
-            this.draw();
-          }, 250);
-        });
+        this.draw();
       }
     });
   }
