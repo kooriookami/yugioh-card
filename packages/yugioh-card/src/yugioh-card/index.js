@@ -134,6 +134,7 @@ export class YugiohCard extends Card {
       text: this.data.name,
       fontFamily: name.fontFamily,
       fontSize: name.fontSize,
+      strokeWidth: this.data.descriptionWeight,
       letterSpacing: name.letterSpacing || 0,
       wordSpacing: name.wordSpacing || 0,
       textAlign: this.data.align || 'left',
@@ -142,6 +143,7 @@ export class YugiohCard extends Card {
       gradientColor1: this.data.gradientColor1,
       gradientColor2: this.data.gradientColor2,
       rtFontSize: name.rtFontSize,
+      rtStrokeWidth: this.data.descriptionWeight,
       rtTop: name.rtTop,
       rtColor: this.autoNameColor,
       width: this.showAttribute ? 1033 : 1161,
@@ -390,6 +392,7 @@ export class YugiohCard extends Card {
       letterSpacing: pendulumDescription.letterSpacing || 0,
       wordSpacing: pendulumDescription.wordSpacing || 0,
       rtFontSize: pendulumDescription.rtFontSize,
+      rtStrokeWidth: this.data.descriptionWeight,
       rtTop: pendulumDescription.rtTop,
       width: 950,
       height: 230,
@@ -491,6 +494,7 @@ export class YugiohCard extends Card {
       letterSpacing: effect.letterSpacing || 0,
       wordSpacing: effect.wordSpacing || 0,
       rtFontSize: effect.rtFontSize,
+      rtStrokeWidth: this.data.descriptionWeight,
       rtTop: effect.rtTop,
       width: 1175,
       height: 100,
@@ -520,7 +524,7 @@ export class YugiohCard extends Card {
       fontFamily = 'ygo-en-italic';
     }
 
-    let height = 380;
+    let height = 385;
     if (!['spell', 'trap'].includes(this.data.type)) {
       if (this.showEffect) {
         height -= effectHeight;
@@ -542,6 +546,7 @@ export class YugiohCard extends Card {
       letterSpacing: description.letterSpacing || 0,
       wordSpacing: description.wordSpacing || 0,
       rtFontSize: description.rtFontSize,
+      rtStrokeWidth: this.data.descriptionWeight,
       rtTop: description.rtTop,
       autoSmallSize: !!description.smallFontSize,
       smallFontSize: description.smallFontSize,
