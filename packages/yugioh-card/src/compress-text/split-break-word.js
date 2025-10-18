@@ -5,7 +5,7 @@ export function splitBreakWord(text) {
   const wordSeparators = [0x0020, 0x00a0, 0x1361, 0x10100, 0x10101, 0x1039, 0x1091];
 
   const breaker = LineBreaker(text, {
-    lineBreak: 'auto',
+    lineBreak: 'strict',
     wordBreak: 'normal',
   });
 
