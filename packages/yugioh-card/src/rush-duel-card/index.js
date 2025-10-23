@@ -1,4 +1,4 @@
-import { Group, Image, Rect, Text } from 'leafer';
+import { Group, Image, Rect, Text } from 'leafer-unified';
 import { Card } from '../card';
 import { CompressText } from '../compress-text';
 import scStyle from './style/sc-style';

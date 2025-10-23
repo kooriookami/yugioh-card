@@ -1,7 +1,11 @@
-import { Text, Image, ImageEvent, Leafer } from 'leafer';
-import { isBrowser, loadFont } from '../utils';
+import { Text, Image, ImageEvent, Leafer } from 'leafer-unified';
+import { isBrowser, isNode, loadFont } from '../utils';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
+
+if (isNode) {
+
+}
 
 const fontPathMap = {
   YugiohCard: '/yugioh/font',

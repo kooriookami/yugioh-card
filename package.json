@@ -35,7 +35,8 @@
     "json-editor-vue": "^0.18.1",
     "normalize.css": "^8.0.1",
     "vue": "^3.5.22",
-    "yugioh-card": "workspace:*"
+    "yugioh-card": "workspace:*",
+    "leafer-unified": "workspace:*"
   },
   "devDependencies": {
     "@iconify/vue": "^5.0.0",

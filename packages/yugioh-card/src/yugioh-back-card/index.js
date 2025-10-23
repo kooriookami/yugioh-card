@@ -1,4 +1,4 @@
-import { Image } from 'leafer';
+import { Image } from 'leafer-unified';
 import { Card } from '../card';
 
 export class YugiohBackCard extends Card {

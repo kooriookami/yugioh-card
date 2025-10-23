@@ -1,5 +1,5 @@
 import { cloneDeep, isEqual } from 'lodash-es';
-import { Group, Text } from 'leafer';
+import { Group, Text } from 'leafer-unified';
 import { isBrowser } from '../utils/index.js';
 import { splitBreakWord } from './split-break-word.js';
 

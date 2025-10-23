@@ -2,6 +2,8 @@
 let fontPathList = [];
 // 是否是浏览器
 export const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+// 是否是node环境
+export const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
 // 加载字体
 export const loadFont = fontPath => {
   if (fontPathList.includes(fontPath)) {
