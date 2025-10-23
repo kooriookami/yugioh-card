@@ -1,10 +1,11 @@
-import { Text, Image, ImageEvent, Leafer } from 'leafer-unified';
+import { Text, Image, ImageEvent, Leafer, useCanvas } from 'leafer-unified';
+import skia from 'skia-canvas';
 import { isBrowser, isNode, loadFont } from '../utils';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
 
 if (isNode) {
-
+  useCanvas('skia', skia);
 }
 
 const fontPathMap = {
