@@ -1,10 +1,10 @@
 import { Text, Image, ImageEvent, Leafer, useCanvas } from 'leafer-unified';
-import skia from 'skia-canvas';
 import { isBrowser, isNode, loadFont } from '../utils';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
 
 if (isNode) {
+  const skia = await import('skia-canvas');
   useCanvas('skia', skia);
 }
 

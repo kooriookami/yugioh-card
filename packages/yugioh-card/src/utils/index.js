@@ -1,5 +1,4 @@
 import fs from 'fs';
-import { FontLibrary } from 'skia-canvas';
 // 已加载的字体路径列表
 let fontPathList = [];
 // 是否是浏览器
@@ -57,12 +56,13 @@ export const loadFont = fontPath => {
         await Promise.allSettled(fontLoadList);
         resolve();
       } else if (isNode) {
-        data.forEach(family => {
+        for (const family of data) {
+          const { FontLibrary } = await import('skia-canvas');
           FontLibrary.use(family, [
             `${fontPath}/${family}.woff2`,
             `${fontPath}/${family}.woff`,
           ]);
-        });
+        }
         resolve();
       } else {
         reject('未知环境');

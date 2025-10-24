@@ -11,8 +11,7 @@ function editPackageJson() {
       const file = 'dist/package.json';
       jsonfile.readFile(file, (err, obj) => {
         if (!err) {
-          obj.main = 'umd/index.js';
-          obj.module = 'es/index.mjs';
+          obj.module = 'index.js';
           jsonfile.writeFile(file, obj, { spaces: 2, EOL: '\r\n' });
         }
       });
@@ -24,12 +23,8 @@ const buildLib = {
   lib: {
     entry: path.resolve(__dirname, 'packages/yugioh-card'),
     name: 'YugiohCard',
-    fileName: format => {
-      if (format === 'es') {
-        return `${format}/index.mjs`;
-      }
-      return `${format}/index.js`;
-    },
+    formats: ['es'],
+    fileName: () => 'index.js',
   },
   rollupOptions: {
     plugins: [
