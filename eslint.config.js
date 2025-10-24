@@ -26,6 +26,7 @@ export default defineConfig([
       'arrow-parens': ['error', 'as-needed'],
       'spaced-comment': ['error', 'always'],
       'semi': [2, 'always'],
+      'linebreak-style': ['error', 'unix'],
       // vue
       'vue/no-v-html': 'off',
       'vue/singleline-html-element-content-newline': 'off',

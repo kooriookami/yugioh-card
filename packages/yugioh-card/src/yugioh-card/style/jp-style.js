@@ -22,14 +22,14 @@ export default inheritProp({
   pendulumDescription: {
     top: 1288,
     fontSize: 36,
-    lineHeight: 1.18,
+    lineHeight: 1.17,
     rtFontSize: 12,
     rtTop: -5,
   },
   effect: {
     top: 1528,
     fontSize: 46,
-    lineHeight: 1.18,
+    lineHeight: 1.17,
     textIndent: -0.2 * 46,
     minHeight: 16,
     rtFontSize: 14,
@@ -37,7 +37,7 @@ export default inheritProp({
   },
   description: {
     fontSize: 38,
-    lineHeight: 1.18,
+    lineHeight: 1.17,
     rtFontSize: 13,
     rtTop: -6,
   },
