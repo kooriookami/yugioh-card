@@ -8,57 +8,68 @@ export const isBrowser = typeof window !== 'undefined' && typeof window.document
 export const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
 // 加载json数据
 export const loadJSON = jsonPath => {
-  if (isBrowser) {
-    return fetch(jsonPath).then(res => {
-      if (res.ok) {
-        return res.json();
-      } else {
-        throw new Error();
-      }
-    });
-  } else if (isNode) {
-    return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
+    if (isBrowser) {
+      fetch(jsonPath).then(res => {
+        if (res.ok) {
+          resolve(res.json());
+        } else {
+          throw new Error();
+        }
+      }).catch(() => {
+        reject('解析字体失败');
+      });
+    } else if (isNode) {
       try {
         const json = JSON.parse(fs.readFileSync(jsonPath, { encoding: 'utf-8' }));
         resolve(json);
       } catch {
-        reject(new Error());
+        reject('解析字体失败');
       }
-    });
-  }
-  return Promise.reject(new Error());
+    } else {
+      reject('未知环境');
+    }
+  });
 };
 // 加载字体
 export const loadFont = fontPath => {
-  if (fontPathList.includes(fontPath)) {
-    return;
-  }
-  fontPathList.push(fontPath);
-  return loadJSON(`${fontPath}/font-list.json`).then(data => {
-    if (isBrowser) {
-      const fontList = [];
-      data.forEach(family => {
-        const font = new FontFace(
-          family,
-          `url(${fontPath}/${family}.woff2) format('woff2'), url(${fontPath}/${family}.woff) format('woff')`,
-          {
-            display: 'swap',
-          },
-        );
-        document.fonts.add(font);
-        fontList.push(font);
-      });
-      const fontLoadList = fontList.map(font => font.load());
-      return Promise.all(fontLoadList);
-    } else if (isNode) {
-      data.forEach(family => {
-        FontLibrary.use(family, [
-          `${fontPath}/${family}.woff2`,
-          `${fontPath}/${family}.woff`,
-        ]);
-      });
-      return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    if (fontPathList.includes(fontPath)) {
+      resolve();
+      return;
     }
+    fontPathList.push(fontPath);
+    loadJSON(`${fontPath}/font-list.json`).then(async data => {
+      if (isBrowser) {
+        const fontList = [];
+        data.forEach(family => {
+          const font = new FontFace(
+            family,
+            `url(${fontPath}/${family}.woff2) format('woff2'), url(${fontPath}/${family}.woff) format('woff')`,
+            {
+              display: 'swap',
+            },
+          );
+          document.fonts.add(font);
+          fontList.push(font);
+        });
+        const fontLoadList = fontList.map(font => font.load());
+        await Promise.allSettled(fontLoadList);
+        resolve();
+      } else if (isNode) {
+        data.forEach(family => {
+          FontLibrary.use(family, [
+            `${fontPath}/${family}.woff2`,
+            `${fontPath}/${family}.woff`,
+          ]);
+        });
+        resolve();
+      } else {
+        reject('未知环境');
+      }
+    }).catch(() => {
+      reject('读取字体失败');
+    });
   });
 };
 

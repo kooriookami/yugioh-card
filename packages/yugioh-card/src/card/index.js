@@ -35,14 +35,12 @@ export class Card {
     this.resourcePath = data.resourcePath;
     resetAttr();
 
-    const loadFontList = [];
     const fontPath = fontPathMap[this.tag];
     if (fontPath) {
-      loadFontList.push(loadFont(`${this.resourcePath}${fontPath}`));
+      loadFont(`${this.resourcePath}${fontPath}`).then(() => {
+        this.draw();
+      });
     }
-    Promise.allSettled(loadFontList).then(() => {
-      this.draw();
-    });
   }
 
   setData(data = {}) {
