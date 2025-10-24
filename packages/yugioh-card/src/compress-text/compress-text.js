@@ -423,6 +423,8 @@ export class CompressText extends Group {
 
   // 定位rt
   positionRt(item) {
+    const rtStretchRate = 0.9;
+    const rtCompressRate = 0.6;
     const ruby = item.ruby;
     const rt = item.rt;
     const rtLeaf = rt.rtLeaf;
@@ -442,21 +444,21 @@ export class CompressText extends Group {
       if (this.rtFontScaleX !== 1) {
         // 特殊情况不做压缩，只居中对齐
         rtLeaf.scaleX = this.rtFontScaleX;
-      } else if (rt.width / rubyWidth < 0.95 && ruby.text.length > 1) {
+      } else if (rt.width / rubyWidth < rtStretchRate && ruby.text.length > 1) {
         // 拉伸两端对齐
-        const maxLetterSpacing = this.rtFontSize * this.fontScale * 3;
-        const newLetterSpacing = (rubyWidth * 0.95 - rt.width) / (rt.text.length - 1);
+        const maxLetterSpacing = this.fontSize - this.rtFontSize / 2;
+        const newLetterSpacing = (rubyWidth * rtStretchRate - rt.width) / (rt.text.length - 1);
         rtLeaf.letterSpacing = Math.min(newLetterSpacing, maxLetterSpacing);
         rtLeaf.x += rtLeaf.letterSpacing / 2;
       } else if (rt.width > rubyWidth) {
         // 压缩
-        if (rubyWidth / rt.width < 0.6) {
+        if (rubyWidth / rt.width < rtCompressRate) {
           // 防止过度压缩，加宽ruby
-          // 公式：(rubyWidth + widen) / rtWidth = 0.6
-          const widen = 0.6 * rt.width - rubyWidth;
-          rtLeaf.scaleX = 0.6;
-          firstChar.paddingLeft = widen / 2;
-          lastChar.paddingRight = widen / 2;
+          // 公式：(rubyWidth + widen) / rtWidth = rtCompressRate
+          const widen = rtCompressRate * rt.width - rubyWidth;
+          rtLeaf.scaleX = rtCompressRate;
+          firstChar.paddingLeft = Math.min(widen / 2, 5);
+          lastChar.paddingRight = Math.min(widen / 2, 5);
           this.needCompressTwice = true;
         } else {
           rtLeaf.scaleX = rubyWidth / rt.width;
