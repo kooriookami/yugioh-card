@@ -34,6 +34,8 @@
 
 `npm i yugioh-card`
 
+### 浏览器
+
 ```js
 // 可选 YugiohCard, RushDuelCard, YugiohBackCard, FieldCenterCard, YugiohSeries2Card
 import { YugiohCard } from 'yugioh-card';
@@ -50,6 +52,31 @@ const card = new YugiohCard({
 card.leafer.export('xxx.png', {
   screenshot: true,
   pixelRatio: devicePixelRatio,
+});
+```
+
+### Node.js
+
+```js
+import http from 'http';
+import { YugiohCard } from 'yugioh-card';
+
+http.createServer((req, res) => {
+  const card = new YugiohCard({
+    data: {
+      ..., // 参数见下方 Data 属性
+    },
+    resourcePath: 'xxx', // 静态资源路径，把 src/assets/yugioh-card 文件夹复制到你的项目中或者服务器上
+  });
+  card.leafer.export('png', {
+    screenshot: true,
+  }).then(result => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.write(`<img src="${result.data}" />`);
+    res.end();
+  }).listen(3000, () => {
+    console.log('server is running at http://localhost:3000');
+  });
 });
 ```
 

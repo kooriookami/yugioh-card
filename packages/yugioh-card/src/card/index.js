@@ -41,9 +41,7 @@ export class Card {
       loadFontList.push(loadFont(`${this.resourcePath}${fontPath}`));
     }
     Promise.allSettled(loadFontList).then(() => {
-      if (isBrowser) {
-        this.draw();
-      }
+      this.draw();
     });
   }
 
