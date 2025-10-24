@@ -14,9 +14,14 @@ function editPackageJson() {
         if (!err) {
           obj.module = undefined;
           obj.exports = {
-            browser: './browser/index.js',
-            node: './node/index.js',
-            default: './browser/index.js',
+            browser: {
+              import: './browser/index.es.js',
+              require: './browser/index.umd.js',
+            },
+            node: {
+              import: './node/index.es.js',
+              require: './node/index.cjs.js',
+            },
           };
           jsonfile.writeFile(file, obj, { spaces: 2, EOL: '\r\n' });
         }
@@ -30,8 +35,8 @@ const buildBrowserLib = {
   lib: {
     entry: path.resolve(__dirname, 'packages/yugioh-card'),
     name: 'YugiohCard',
-    formats: ['es'],
-    fileName: () => 'index.js',
+    formats: ['es', 'umd'],
+    fileName: format => `index.${format}.js`,
   },
   rollupOptions: {
     external: builtinModules.builtinModules,
@@ -54,8 +59,8 @@ const buildNodeLib = {
   lib: {
     entry: path.resolve(__dirname, 'packages/yugioh-card'),
     name: 'YugiohCard',
-    formats: ['es'],
-    fileName: () => 'index.js',
+    formats: ['es', 'cjs'],
+    fileName: format => `index.${format}.js`,
   },
   rollupOptions: {
     external: builtinModules.builtinModules,
