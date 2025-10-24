@@ -2,18 +2,24 @@ import http from 'http';
 import { YugiohCard } from 'yugioh-card';
 import yugiohDemo from '@/assets/demo/yugioh-demo';
 
-http.createServer((req, res) => {
+if (global.__server__) {
+  global.__server__.close();
+}
+
+global.__server__ = http.createServer((req, res) => {
   const card = new YugiohCard({
     data: yugiohDemo,
-    resourcePath: 'E:/project/yugioh-card/src/assets/yugioh-card', // 静态资源路径，把 src/assets/yugioh-card 文件夹复制到你的项目中或者服务器上
+    resourcePath: './src/assets/yugioh-card',
   });
   card.leafer.export('png', {
     screenshot: true,
-  }).then(function (result) {
+  }).then(result => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.write(`<img src="${result.data}" />`);
     res.end();
   });
-}).listen(3000, function () {
+});
+
+global.__server__.listen(3000, () => {
   console.log('server is running at http://localhost:3000');
 });

@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "dev:node": "vite-node src/server.js",
+    "dev:node": "vite-node --watch src/server.js",
     "build": "vite build",
     "build:lib": "vite build -- lib",
     "preview": "vite preview",
