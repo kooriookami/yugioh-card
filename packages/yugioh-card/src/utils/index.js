@@ -21,7 +21,7 @@ export const loadJSON = jsonPath => {
       });
     } else if (isNode) {
       try {
-        const json = JSON.parse(fs.readFileSync(jsonPath, { encoding: 'utf-8' }));
+        const json = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
         resolve(json);
       } catch {
         reject('解析字体失败');
