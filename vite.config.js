@@ -69,6 +69,9 @@ const buildNodeLib = {
 
 const buildWebsite = {
   outDir: 'docs',
+  rollupOptions: {
+    external: builtinModules.builtinModules,
+  },
 };
 
 const getBuild = () => {
