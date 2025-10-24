@@ -19,8 +19,12 @@
   "author": "kooriookami",
   "license": "MIT",
   "dependencies": {
+    "@leafer/node": "^1.9.12",
     "css-line-break": "^2.1.0",
-    "leafer-unified": "^1.0.0",
+    "leafer": "^1.9.12",
+    "leafer-unified": "^1.0.2",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "lodash-unified": "^1.0.3",
     "skia-canvas": "^2.0.2"
   }
