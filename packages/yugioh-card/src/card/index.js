@@ -3,11 +3,6 @@ import { isBrowser, isNode, loadFont } from '../utils';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
 
-if (isNode) {
-  const skia = await import('skia-canvas');
-  useCanvas('skia', skia);
-}
-
 const fontPathMap = {
   YugiohCard: '/yugioh/font',
   YugiohSeries2Card: '/yugioh/font',
@@ -29,15 +24,24 @@ export class Card {
   data = {};
   view = null;
   resourcePath = null;
+  skia = null;
 
   constructor(data = {}) {
     this.view = data.view;
     this.resourcePath = data.resourcePath;
+    this.skia = data.skia;
     resetAttr();
+
+    if (isNode) {
+      if (!this.skia) {
+        throw new Error('skia-canvas is required in Node environment');
+      }
+      useCanvas('skia', this.skia);
+    }
 
     const fontPath = fontPathMap[this.tag];
     if (fontPath) {
-      loadFont(`${this.resourcePath}${fontPath}`).then(() => {
+      loadFont(`${this.resourcePath}${fontPath}`, this.skia).then(() => {
         this.draw();
       });
     }

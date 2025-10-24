@@ -31,7 +31,7 @@ export const loadJSON = jsonPath => {
   });
 };
 // 加载字体
-export const loadFont = fontPath => {
+export const loadFont = (fontPath, skia) => {
   return new Promise((resolve, reject) => {
     if (fontPathList.includes(fontPath)) {
       resolve();
@@ -56,12 +56,13 @@ export const loadFont = fontPath => {
         await Promise.allSettled(fontLoadList);
         resolve();
       } else if (isNode) {
-        for (const family of data) {
-          const { FontLibrary } = await import('skia-canvas');
-          FontLibrary.use(family, [
-            `${fontPath}/${family}.woff2`,
-            `${fontPath}/${family}.woff`,
-          ]);
+        if (skia) {
+          data.forEach(family => {
+            skia.FontLibrary.use(family, [
+              `${fontPath}/${family}.woff2`,
+              `${fontPath}/${family}.woff`,
+            ]);
+          });
         }
         resolve();
       } else {

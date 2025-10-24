@@ -1,4 +1,5 @@
 import path from 'path';
+import builtinModules from 'module';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import copy from 'rollup-plugin-copy';
@@ -11,7 +12,12 @@ function editPackageJson() {
       const file = 'dist/package.json';
       jsonfile.readFile(file, (err, obj) => {
         if (!err) {
-          obj.module = 'index.js';
+          obj.module = undefined;
+          obj.exports = {
+            browser: './browser/index.js',
+            node: './node/index.js',
+            default: './browser/index.js',
+          };
           jsonfile.writeFile(file, obj, { spaces: 2, EOL: '\r\n' });
         }
       });
@@ -19,7 +25,8 @@ function editPackageJson() {
   };
 }
 
-const buildLib = {
+const buildBrowserLib = {
+  outDir: 'dist/browser',
   lib: {
     entry: path.resolve(__dirname, 'packages/yugioh-card'),
     name: 'YugiohCard',
@@ -27,6 +34,7 @@ const buildLib = {
     fileName: () => 'index.js',
   },
   rollupOptions: {
+    external: builtinModules.builtinModules,
     plugins: [
       copy({
         targets: [
@@ -41,12 +49,35 @@ const buildLib = {
   },
 };
 
+const buildNodeLib = {
+  outDir: 'dist/node',
+  lib: {
+    entry: path.resolve(__dirname, 'packages/yugioh-card'),
+    name: 'YugiohCard',
+    formats: ['es'],
+    fileName: () => 'index.js',
+  },
+  rollupOptions: {
+    external: builtinModules.builtinModules,
+  },
+};
+
 const buildWebsite = {
   outDir: 'docs',
 };
 
+const getBuild = () => {
+  if (process.argv.includes('browser-lib')) {
+    return buildBrowserLib;
+  } else if (process.argv.includes('node-lib')) {
+    return buildNodeLib;
+  }
+  return buildWebsite;
+};
+
 export default defineConfig({
   base: './',
+  publicDir: false,
   plugins: [
     vue(),
   ],
@@ -55,6 +86,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'], // 扩展了.vue后缀
+    conditions: [process.argv.includes('node-lib') ? 'node' : 'browser'],
   },
-  build: process.argv.includes('lib') ? buildLib : buildWebsite,
+  build: getBuild(),
 });

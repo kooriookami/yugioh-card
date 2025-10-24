@@ -10,7 +10,7 @@
     "dev": "vite",
     "dev:node": "vite-node --watch src/server.js",
     "build": "vite build",
-    "build:lib": "vite build -- lib",
+    "build:lib": "vite build -- browser-lib & vite build -- node-lib",
     "preview": "vite preview",
     "publish": "npm publish dist/ --registry https://registry.npmjs.org",
     "lint": "eslint",
@@ -35,6 +35,7 @@
     "element-plus": "^2.11.5",
     "json-editor-vue": "^0.18.1",
     "normalize.css": "^8.0.1",
+    "skia-canvas": "^2.0.2",
     "vue": "^3.5.22",
     "yugioh-card": "workspace:*"
   },

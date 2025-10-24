@@ -57,8 +57,11 @@ card.leafer.export('xxx.png', {
 
 ### Node.js
 
+```npm i skia-canvas@2```
+
 ```js
 import http from 'http';
+import skia from 'skia-canvas';
 import { YugiohCard } from 'yugioh-card';
 
 http.createServer((req, res) => {
@@ -67,6 +70,7 @@ http.createServer((req, res) => {
       ..., // 参数见下方 Data 属性
     },
     resourcePath: 'xxx', // 静态资源路径，把 src/assets/yugioh-card 文件夹复制到你的项目中或者服务器上
+    skia: skia,
   });
   card.leafer.export('png', {
     screenshot: true,

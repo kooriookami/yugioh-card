@@ -1,6 +1,7 @@
 import http from 'http';
 import path from 'path';
 import { YugiohCard } from 'yugioh-card';
+import skia from 'skia-canvas';
 import yugiohDemo from '@/assets/demo/yugioh-demo';
 
 if (global.__server__) {
@@ -11,6 +12,7 @@ global.__server__ = http.createServer((req, res) => {
   const card = new YugiohCard({
     data: yugiohDemo,
     resourcePath: path.resolve('./src/assets/yugioh-card'),
+    skia: skia,
   });
   card.leafer.export('png', {
     screenshot: true,
