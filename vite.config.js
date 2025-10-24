@@ -39,7 +39,6 @@ const buildBrowserLib = {
     fileName: format => `index.${format}.js`,
   },
   rollupOptions: {
-    external: builtinModules.builtinModules,
     plugins: [
       copy({
         targets: [
