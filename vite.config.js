@@ -4,6 +4,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import copy from 'rollup-plugin-copy';
 import jsonfile from 'jsonfile';
+import sortPackageJson from 'sort-package-json';
 
 function editPackageJson() {
   return {
@@ -12,17 +13,20 @@ function editPackageJson() {
       const file = 'dist/package.json';
       jsonfile.readFile(file, (err, obj) => {
         if (!err) {
+          obj.types = './types/index.d.ts';
           obj.exports = {
             browser: {
               import: './browser/index.es.js',
               require: './browser/index.umd.js',
+              types: './types/index.d.ts',
             },
             node: {
               import: './node/index.es.js',
               require: './node/index.cjs',
+              types: './types/index.d.ts',
             },
           };
-          jsonfile.writeFile(file, obj, { spaces: 2 });
+          jsonfile.writeFile(file, sortPackageJson(obj), { spaces: 2 });
         }
       });
     },

@@ -10,7 +10,7 @@
     "dev": "vite",
     "dev:node": "vite-node --watch src/server.js",
     "build": "vite build",
-    "build:lib": "vite build -- browser-lib & vite build -- node-lib",
+    "build:lib": "npx tsc && vite build -- browser-lib && vite build -- node-lib",
     "preview": "vite preview",
     "publish": "npm publish dist/ --registry https://registry.npmjs.org",
     "lint": "eslint",
@@ -50,6 +50,8 @@
     "jsonfile": "^6.2.0",
     "rollup-plugin-copy": "^3.5.0",
     "sass-embedded": "^1.93.2",
+    "sort-package-json": "^3.4.0",
+    "typescript": "^5.9.3",
     "vite": "^7.1.12",
     "vite-node": "^3.2.4"
   },
