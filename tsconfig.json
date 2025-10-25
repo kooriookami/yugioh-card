@@ -4,7 +4,14 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "dist/types",
-    "noEmit": false
+    "noEmit": false,
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ]
   },
-  "include": ["packages/**/*"]
+  "include": [
+    "packages/**/*"
+  ]
 }
