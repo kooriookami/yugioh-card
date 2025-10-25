@@ -10,8 +10,7 @@ function editPackageJson() {
   return {
     name: 'edit-package-json',
     closeBundle() {
-      const file = 'dist/package.json';
-      jsonfile.readFile(file, (err, obj) => {
+      jsonfile.readFile('packages/yugioh-card/package.json', (err, obj) => {
         if (!err) {
           obj.types = './types/index.d.ts';
           obj.exports = {
@@ -26,7 +25,7 @@ function editPackageJson() {
               types: './types/index.d.ts',
             },
           };
-          jsonfile.writeFile(file, sortPackageJson(obj), { spaces: 2 });
+          jsonfile.writeFile('dist/package.json', sortPackageJson(obj), { spaces: 2 });
         }
       });
     },
@@ -47,7 +46,6 @@ const buildBrowserLib = {
         targets: [
           { src: 'LICENSE', dest: 'dist' },
           { src: 'README.md', dest: 'dist' },
-          { src: 'packages/yugioh-card/package.json', dest: 'dist' },
         ],
         hook: 'writeBundle',
       }),
