@@ -65,6 +65,9 @@ export class Card {
   }
 
   listenImageStatus(imageLeaf) {
+    if (isNode) {
+      return;
+    }
     imageLeaf.on(ImageEvent.LOAD, () => {
       this.drawImageStatus(imageLeaf, ImageEvent.LOAD);
     });
