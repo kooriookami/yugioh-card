@@ -21,7 +21,7 @@
     "@leafer/node": "^1.9.12",
     "css-line-break": "^2.1.0",
     "leafer": "^1.9.12",
-    "leafer-unified": "^1.0.2",
+    "leafer-unified": "^1.0.3",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "lodash-unified": "^1.0.3"
