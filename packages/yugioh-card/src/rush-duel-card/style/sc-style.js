@@ -1,9 +1,9 @@
 import { inheritProp } from '../../utils';
 
 export default inheritProp({
-  fontFamily: 'rd-sc, sans-serif',
+  fontFamily: 'rd-sc',
   name: {
-    fontFamily: 'rd-sc-name, sans-serif',
+    fontFamily: 'rd-sc-name',
     top: 71,
     fontSize: 92,
   },

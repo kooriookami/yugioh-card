@@ -1,7 +1,7 @@
 import { inheritProp } from '../../utils';
 
 export default inheritProp({
-  fontFamily: 'ygo-jp, serif',
+  fontFamily: 'ygo-jp',
   name: {
     top: 136,
     fontSize: 114,

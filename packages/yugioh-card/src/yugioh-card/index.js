@@ -345,7 +345,7 @@ export class YugiohCard extends Card {
     let left = this.data.language === 'astral' ? 144 : 145;
     leftPendulum.set({
       text: this.data.pendulumScale,
-      fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
+      fontFamily: this.data.language === 'astral' ? 'ygo-astral' : 'ygo-atk-def',
       fontSize: this.data.language === 'astral' ? 84 : 98,
       fill: 'black',
       letterSpacing: this.data.language === 'astral' ? 0 : -10,
@@ -357,7 +357,7 @@ export class YugiohCard extends Card {
     left = this.data.language === 'astral' ? 1250 : 1249;
     rightPendulum.set({
       text: this.data.pendulumScale,
-      fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
+      fontFamily: this.data.language === 'astral' ? 'ygo-astral' : 'ygo-atk-def',
       fontSize: this.data.language === 'astral' ? 84 : 98,
       fill: 'black',
       letterSpacing: this.data.language === 'astral' ? 0 : -10,
@@ -409,7 +409,7 @@ export class YugiohCard extends Card {
 
     this.packageLeaf.set({
       text: this.data.package,
-      fontFamily: 'ygo-password, serif',
+      fontFamily: 'ygo-password',
       fontSize: 40,
       color: this.data.type === 'monster' && this.data.cardType === 'xyz' ? 'white' : 'black',
       textAlign: this.data.type === 'pendulum' ? 'left' : 'right',
@@ -593,7 +593,7 @@ export class YugiohCard extends Card {
     const atkLeft = this.data.language === 'astral' ? 898 : 999;
     atk.set({
       text: atkText,
-      fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
+      fontFamily: this.data.language === 'astral' ? 'ygo-astral' : 'ygo-atk-def',
       fontSize: this.data.language === 'astral' ? 49 : 62,
       fill: 'black',
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
@@ -614,7 +614,7 @@ export class YugiohCard extends Card {
     const defLeft = this.data.language === 'astral' ? 1279 : 1282;
     def.set({
       text: defText,
-      fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-atk-def, serif',
+      fontFamily: this.data.language === 'astral' ? 'ygo-astral' : 'ygo-atk-def',
       fontSize: this.data.language === 'astral' ? 49 : 62,
       fill: 'black',
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
@@ -628,7 +628,7 @@ export class YugiohCard extends Card {
     const linkLeft = this.data.language === 'astral' ? 1279 : 1280;
     link.set({
       text: linkText,
-      fontFamily: this.data.language === 'astral' ? 'ygo-astral, serif' : 'ygo-link, serif',
+      fontFamily: this.data.language === 'astral' ? 'ygo-astral' : 'ygo-link',
       fontSize: this.data.language === 'astral' ? 49 : 44,
       fill: 'black',
       letterSpacing: this.data.language === 'astral' ? 0 : 2,
@@ -653,7 +653,7 @@ export class YugiohCard extends Card {
 
     this.passwordLeaf.set({
       text: this.data.password,
-      fontFamily: 'ygo-password, serif',
+      fontFamily: 'ygo-password',
       fontSize: 40,
       color: this.data.type === 'monster' && this.data.cardType === 'xyz' ? 'white' : 'black',
       x: 66,

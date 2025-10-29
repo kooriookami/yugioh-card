@@ -276,7 +276,7 @@ export class YugiohSeries2Card extends Card {
 
     this.packageLeaf.set({
       text: this.data.package,
-      fontFamily: 'ygo-tip, serif',
+      fontFamily: 'ygo-tip',
       fontSize: 33,
       y: 1601,
       zIndex: 30,
@@ -374,7 +374,7 @@ export class YugiohSeries2Card extends Card {
     }
     atk.set({
       text: this.atkName + atkText,
-      fontFamily: 'ygo-jp, serif',
+      fontFamily: 'ygo-jp',
       fontSize: 84,
       textAlign: 'justify',
       textJustifyLast: true,
@@ -395,7 +395,7 @@ export class YugiohSeries2Card extends Card {
     }
     def.set({
       text: this.defName + defText,
-      fontFamily: 'ygo-jp, serif',
+      fontFamily: 'ygo-jp',
       fontSize: 84,
       textAlign: 'justify',
       textJustifyLast: true,
@@ -420,7 +420,7 @@ export class YugiohSeries2Card extends Card {
 
     this.passwordLeaf.set({
       text: this.data.password,
-      fontFamily: 'ygo-tip, serif',
+      fontFamily: 'ygo-tip',
       fontSize: 33,
       x: 66,
       y: 1940,

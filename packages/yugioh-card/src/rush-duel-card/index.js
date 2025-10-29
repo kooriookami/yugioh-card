@@ -152,7 +152,7 @@ export class RushDuelCard extends Card {
 
     levelText.set({
       text: this.data.level,
-      fontFamily: 'rd-atk-def, sans-serif',
+      fontFamily: 'rd-atk-def',
       fontSize: 116,
       fill: 'white',
       stroke: '#D3100D',
@@ -275,7 +275,7 @@ export class RushDuelCard extends Card {
 
     this.packageLeaf.set({
       text: this.data.package,
-      fontFamily: 'rd-tip, sans-serif',
+      fontFamily: 'rd-tip',
       fontSize: 33,
       color: 'white',
       textAlign: 'right',
@@ -368,7 +368,7 @@ export class RushDuelCard extends Card {
 
     maximumAtkText.set({
       text: this.data.maximumAtk,
-      fontFamily: 'rd-atk-def, sans-serif',
+      fontFamily: 'rd-atk-def',
       fontSize: 97,
       fill: 'white',
       stroke: 'black',
@@ -412,7 +412,7 @@ export class RushDuelCard extends Card {
 
     atkText.set({
       text: this.data.atk >= 0 ? this.data.atk : '?',
-      fontFamily: 'rd-atk-def, sans-serif',
+      fontFamily: 'rd-atk-def',
       fontSize: 97,
       fill: 'white',
       stroke: 'black',
@@ -425,7 +425,7 @@ export class RushDuelCard extends Card {
 
     defText.set({
       text: this.data.def >= 0 ? this.data.def : '?',
-      fontFamily: 'rd-atk-def, sans-serif',
+      fontFamily: 'rd-atk-def',
       fontSize: 97,
       fill: 'white',
       stroke: 'black',

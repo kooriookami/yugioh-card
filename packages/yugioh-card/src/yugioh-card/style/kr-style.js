@@ -1,9 +1,9 @@
 import { inheritProp } from '../../utils';
 
 export default inheritProp({
-  fontFamily: 'ygo-kr, serif',
+  fontFamily: 'ygo-kr',
   name: {
-    fontFamily: 'ygo-kr-name, serif',
+    fontFamily: 'ygo-kr-name',
     top: 90,
     fontSize: 106,
     letterSpacing: 4,
@@ -12,7 +12,7 @@ export default inheritProp({
     rtTop: 6,
   },
   spellTrap: {
-    fontFamily: 'ygo-kr-race, serif',
+    fontFamily: 'ygo-kr-race',
     top: 253,
     fontSize: 88,
     wordSpacing: 5,
@@ -31,7 +31,7 @@ export default inheritProp({
     wordSpacing: 5,
   },
   effect: {
-    fontFamily: 'ygo-kr-race, serif',
+    fontFamily: 'ygo-kr-race',
     top: 1526,
     fontSize: 48,
     lineHeight: 1.19,

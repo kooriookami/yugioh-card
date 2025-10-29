@@ -1,7 +1,7 @@
 import { inheritProp } from '../../utils';
 
 export default inheritProp({
-  fontFamily: 'ygo-sc, 楷体, serif',
+  fontFamily: 'ygo-sc',
   name: {
     top: 97,
     fontSize: 108,

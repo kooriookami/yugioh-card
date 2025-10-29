@@ -1,16 +1,16 @@
 import { inheritProp } from '../../utils';
 
 export default inheritProp({
-  fontFamily: 'rd-jp, sans-serif',
+  fontFamily: 'rd-jp',
   name: {
-    fontFamily: 'rd-jp-name, sans-serif',
+    fontFamily: 'rd-jp-name',
     top: 76,
     fontSize: 92,
     rtFontSize: 20,
     rtTop: -15,
   },
   spellTrap: {
-    fontFamily: 'rd-jp-effect, sans-serif',
+    fontFamily: 'rd-jp-effect',
     top: 1478,
     fontSize: 46,
     letterSpacing: 2,
@@ -22,7 +22,7 @@ export default inheritProp({
     rtTop: -13,
   },
   effect: {
-    fontFamily: 'rd-jp-effect, sans-serif',
+    fontFamily: 'rd-jp-effect',
     top: 1478,
     fontSize: 46,
     letterSpacing: 2,

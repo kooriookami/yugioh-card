@@ -22,7 +22,7 @@ export class CompressText extends Group {
 
     this.defaultData = {
       text: '',
-      fontFamily: 'ygo-sc, 楷体, serif',
+      fontFamily: 'ygo-sc',
       fontSize: 24,
       fontWeight: 'normal',
       lineHeight: this.baseLineHeight,
@@ -36,7 +36,7 @@ export class CompressText extends Group {
       gradient: false,
       gradientColor1: '#999999',
       gradientColor2: '#ffffff',
-      rtFontFamily: 'ygo-tip, sans-serif',
+      rtFontFamily: 'ygo-tip',
       rtFontSize: 13,
       rtFontWeight: 'bold',
       rtLineHeight: this.baseLineHeight,

@@ -1,7 +1,7 @@
 import { inheritProp } from '../../utils';
 
 export default inheritProp({
-  fontFamily: 'custom2, 楷体, serif',
+  fontFamily: 'custom2',
   name: {
     top: 92,
     fontSize: 108,
