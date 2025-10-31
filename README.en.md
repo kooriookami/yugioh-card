@@ -24,11 +24,16 @@
 
 Currently there are 5 types of cards: 🚀🚀🚀🚀🚀
 
-* 1️⃣ Yu-Gi-Oh!
-* 2️⃣ Rush Duel
-* 3️⃣ Yu-Gi-Oh! Card Back
-* 4️⃣ Field Center Card
-* 5️⃣ Yu-Gi-Oh! Series 2
+- 1️⃣ Yu-Gi-Oh!
+- 2️⃣ Rush Duel
+- 3️⃣ Yu-Gi-Oh! Card Back
+- 4️⃣ Field Center Card
+- 5️⃣ Yu-Gi-Oh! Series 2
+
+## 🫡 Special Thanks
+
+- [LeaferJS](https://www.leaferjs.com/) for the powerful graphics rendering capabilities
+- [白羽幸鳥](https://tieba.baidu.com/home/main?id=tb.1.d6c63ffd.3YV5T6Q9Z7uIeVVhPlo8hg%3Ft%3D1654573649) for providing high-resolution card templates
 
 ## 🚩 Online Demo
 
