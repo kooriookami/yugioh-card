@@ -144,6 +144,11 @@ export class CompressText extends Group {
     return list;
   }
 
+  // 获取平铺的ruby列表
+  getRubyList() {
+    return this.parseList.map(blockList => blockList.map(item => item.ruby)).flat();
+  }
+
   // 获取压缩文本
   compressText() {
     this.textScale = 1;
@@ -160,8 +165,8 @@ export class CompressText extends Group {
     this.compressRuby();
     this.alignRuby();
     // this.createRt();
-    // this.createGradient();
-    // this.createBounds();
+    this.createGradient();
+    this.createBounds();
     this.add(this.group);
   }
 
@@ -215,7 +220,7 @@ export class CompressText extends Group {
       this.firstLineTextScale = Math.min(Math.floor(maxWidth / firstNewlineTotalWidth * 1000) / 1000, 1);
       this.updateTextScale();
     }
-    const rubyList = this.parseList.map(blockList => blockList.map(item => item.ruby)).flat();
+    const rubyList = this.getRubyList();
     const lastRuby = rubyList[rubyList.length - 1];
     if (this.height && lastRuby && this.currentY + lastRuby.height > this.height) {
       // 用二分法获取最大的scale，精度0.01
@@ -245,7 +250,7 @@ export class CompressText extends Group {
 
   // 对齐ruby
   alignRuby() {
-    const rubyList = this.parseList.map(blockList => blockList.map(item => item.ruby)).flat();
+    const rubyList = this.getRubyList();
     const alignLine = this.textScale < 1 || ['center', 'right'].includes(this.textAlign) || this.textJustifyLast ? this.currentLine + 1 : this.currentLine;
     for (let line = 0; line < alignLine; line++) {
       const lineList = rubyList.filter(item => item.line === line);
@@ -337,32 +342,52 @@ export class CompressText extends Group {
     this.currentY = 0;
     this.currentLine = 0;
 
+    let noBreakCharList = [];
+    let noBreakTotalWidth = 0;
+
     this.newlineList.forEach((newline, newlineIndex) => {
       const lastNewline = newlineIndex === this.newlineList.length - 1;
       newline.forEach(blockList => {
-        const blockWidth = this.getBlockWidth(blockList);
-        const hasNewline = blockList.some(item => item.ruby.text === '\n');
-        if (hasNewline) {
-          this.addRow();
-        } else if (this.width && this.currentX + blockWidth > this.width) {
-          this.addRow();
-        }
         blockList.forEach(item => {
-          // todo
           const ruby = item.ruby;
-          // const rubyLeaf = ruby.rubyLeaf;
-          // const paddingLeft = ruby.paddingLeft || 0;
-          // const paddingRight = ruby.paddingRight || 0;
-          // if (this.firstLineCompress && newlineIndex === 0) {
-          //   // 首行压缩到一行
-          //   rubyLeaf.scaleX = this.firstLineTextScale;
-          //   ruby.width = ruby.originalWidth * this.firstLineTextScale;
-          // } else if (!this.noCompressText.includes(ruby.text) && lastNewline) {
-          //   // 只压缩最后一行
-          //   rubyLeaf.scaleX = this.textScale;
-          //   ruby.width = ruby.originalWidth * this.textScale;
-          // }
-          this.positionRuby(ruby);
+          const rt = item.rt;
+          const rubyLeaf = ruby.rubyLeaf;
+          const paddingLeft = ruby.paddingLeft || 0;
+          const paddingRight = ruby.paddingRight || 0;
+          if (this.firstLineCompress && newlineIndex === 0) {
+            // 首行压缩到一行
+            rubyLeaf.scaleX = this.firstLineTextScale;
+            ruby.width = ruby.originalWidth * this.firstLineTextScale;
+          } else if (!this.noCompressText.includes(ruby.text) && lastNewline) {
+            // 只压缩最后一行
+            rubyLeaf.scaleX = this.textScale;
+            ruby.width = ruby.originalWidth * this.textScale;
+          }
+          if (rt.text) {
+            noBreakCharList.push(ruby);
+            noBreakTotalWidth += ruby.width + paddingLeft + paddingRight;
+          } else {
+            const totalWidth = ruby.width + paddingLeft + paddingRight;
+            if (this.width && ruby.text !== '\n' && this.currentX && this.currentX + totalWidth > this.width) {
+              this.addRow();
+            }
+            this.positionRuby(ruby);
+            if (ruby.text === '\n') {
+              this.addRow();
+            }
+          }
+
+          if (noBreakCharList.length) {
+            if (this.width && this.currentX + noBreakTotalWidth > this.width) {
+              this.addRow();
+            }
+            noBreakCharList.forEach(ruby => {
+              this.positionRuby(ruby);
+            });
+
+            noBreakCharList = [];
+            noBreakTotalWidth = 0;
+          }
         });
       });
     });
@@ -373,7 +398,7 @@ export class CompressText extends Group {
     this.textScale = 1;
     const fontSize = this.isSmallSize ? this.smallFontSize : this.fontSize;
     const sizePercent = fontSize / this.fontSize;
-    const rubyList = this.parseList.map(blockList => blockList.map(item => item.ruby)).flat();
+    const rubyList = this.getRubyList();
     rubyList.forEach(ruby => {
       const rubyLeaf = ruby.rubyLeaf;
       rubyLeaf.fontSize = fontSize * this.fontScale;
@@ -386,7 +411,7 @@ export class CompressText extends Group {
     this.updateTextScale();
   }
 
-  // 定位Char
+  // 定位Ruby
   positionRuby(ruby) {
     const paddingLeft = ruby.paddingLeft || 0;
     const paddingRight = ruby.paddingRight || 0;
@@ -408,7 +433,7 @@ export class CompressText extends Group {
 
   // 删除行尾空格
   removeLineLastSpace(line) {
-    const rubyList = this.parseList.map(blockList => blockList.map(item => item.ruby)).flat();
+    const rubyList = this.getRubyList();
     const lineList = rubyList.filter(item => item.line === line);
     if (lineList.length) {
       const lastRuby = lineList[lineList.length - 1];
@@ -473,33 +498,30 @@ export class CompressText extends Group {
   // 创建渐变
   createGradient() {
     if (this.gradient) {
+      const rubyList = this.getRubyList();
       const fontSize = this.isSmallSize ? this.smallFontSize : this.fontSize;
-      this.parseList.forEach(item => {
-        const ruby = item.ruby;
-        const charList = ruby.charList;
-        charList.forEach(char => {
-          const charLeaf = char.charLeaf;
-          charLeaf.set({
-            fill: {
-              type: 'linear',
-              stops: [
-                { offset: 0, color: this.gradientColor1 },
-                { offset: 0.4, color: this.gradientColor2 },
-                { offset: 0.55, color: this.gradientColor2 },
-                { offset: 0.6, color: this.gradientColor1 },
-                { offset: 0.75, color: this.gradientColor2 },
-              ],
-            },
-            stroke: 'rgba(0, 0, 0, 0.6)',
-            strokeWidth: fontSize * 0.025 * this.fontScale,
-            strokeAlign: 'outside',
-            shadow: {
-              blur: fontSize * 0.015 * this.fontScale,
-              x: 0,
-              y: fontSize * 0.025 * this.fontScale,
-              color: 'rgba(0, 0, 0, 0.6)',
-            },
-          });
+      rubyList.forEach(ruby => {
+        const rubyLeaf = ruby.rubyLeaf;
+        rubyLeaf.set({
+          fill: {
+            type: 'linear',
+            stops: [
+              { offset: 0, color: this.gradientColor1 },
+              { offset: 0.4, color: this.gradientColor2 },
+              { offset: 0.55, color: this.gradientColor2 },
+              { offset: 0.6, color: this.gradientColor1 },
+              { offset: 0.75, color: this.gradientColor2 },
+            ],
+          },
+          stroke: 'rgba(0, 0, 0, 0.6)',
+          strokeWidth: fontSize * 0.025 * this.fontScale,
+          strokeAlign: 'outside',
+          shadow: {
+            blur: fontSize * 0.015 * this.fontScale,
+            x: 0,
+            y: fontSize * 0.025 * this.fontScale,
+            color: 'rgba(0, 0, 0, 0.6)',
+          },
         });
       });
     }
@@ -511,15 +533,15 @@ export class CompressText extends Group {
       width: 0,
       height: 0,
     };
-    const charList = this.parseList.map(item => item.ruby.charList).flat();
+    const rubyList = this.getRubyList();
     for (let line = 0; line < this.currentLine + 1; line++) {
-      const lineList = charList.filter(item => item.line === line);
+      const lineList = rubyList.filter(item => item.line === line);
       if (lineList.length) {
-        const lastChar = lineList[lineList.length - 1];
-        const lastCharLeaf = lastChar.charLeaf;
-        const lastPaddingRight = lastChar.paddingRight || 0;
-        this.bounds.width = Math.max(this.bounds.width, lastCharLeaf.x + lastChar.width + lastPaddingRight) * this.scaleX;
-        this.bounds.height = Math.max(this.bounds.height, lastCharLeaf.y + lastChar.height) * this.scaleY;
+        const lastRuby = lineList[lineList.length - 1];
+        const lastRubyLeaf = lastRuby.rubyLeaf;
+        const lastPaddingRight = lastRuby.paddingRight || 0;
+        this.bounds.width = Math.max(this.bounds.width, lastRubyLeaf.x + lastRuby.width + lastPaddingRight) * this.scaleX;
+        this.bounds.height = Math.max(this.bounds.height, lastRubyLeaf.y + lastRuby.height) * this.scaleY;
       }
     }
   }
