@@ -20,11 +20,12 @@ onMounted(() => {
 
   leafer.add(compressText);
 
-  const text = '你a「|b|c好好好好好好<b>好</b>好好好好好好好好好好好好好好，卡片是：「[测试(test)]」。[测试(test)][测试(test)][测试(test)]';
+  const text = '你congratulation<b>好</b>好好你congratulation好好好好1\n2好好好好好好好好好，卡片是：「[测试(test)]」。[测试(test)][测试(test)][测试(test)]';
 
   compressText.set({
     text: text,
     width: 360,
+    height: 80,
     x: 20,
     y: 20,
   });

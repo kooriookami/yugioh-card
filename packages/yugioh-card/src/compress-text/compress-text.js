@@ -124,7 +124,6 @@ export class CompressText extends Group {
         list.push(blockList);
       });
     });
-    console.log(list);
     return list;
   }
 
@@ -132,13 +131,15 @@ export class CompressText extends Group {
   getNewlineList() {
     const list = [[]];
     let currentIndex = 0;
-    this.parseList.forEach(item => {
-      const ruby = item.ruby;
-      list[currentIndex].push(item);
-      if (ruby.text === '\n') {
-        currentIndex++;
-        list[currentIndex] = [];
-      }
+    this.parseList.forEach(blockList => {
+      blockList.forEach(item => {
+        const ruby = item.ruby;
+        list[currentIndex].push(blockList);
+        if (ruby.text === '\n') {
+          currentIndex++;
+          list[currentIndex] = [];
+        }
+      });
     });
     return list;
   }
@@ -158,20 +159,19 @@ export class CompressText extends Group {
     this.createRuby();
     this.compressRuby();
     this.alignRuby();
-    this.createRt();
-    this.createGradient();
-    this.createBounds();
+    // this.createRt();
+    // this.createGradient();
+    // this.createBounds();
     this.add(this.group);
   }
 
   // 创建文本
   createRuby() {
-    this.parseList.forEach(item => {
-      const ruby = item.ruby;
-      const charList = ruby.charList;
-      charList.forEach(char => {
-        const charLeaf = new Text({
-          text: char.text,
+    this.parseList.forEach(blockList => {
+      blockList.forEach(item => {
+        const ruby = item.ruby;
+        const rubyLeaf = new Text({
+          text: ruby.text,
           fontFamily: this.fontFamily,
           fontSize: this.fontSize * this.fontScale,
           fontWeight: ruby.bold ? 'bold' : this.fontWeight,
@@ -182,17 +182,18 @@ export class CompressText extends Group {
           strokeAlign: 'center',
           letterSpacing: this.letterSpacing,
         });
-        const bounds = charLeaf.textDrawData.bounds;
-        char.charLeaf = charLeaf;
-        char.originalWidth = bounds.width;
-        char.originalHeight = bounds.height;
-        char.width = bounds.width;
-        char.height = bounds.height;
-        if (char.text === ' ') {
-          char.originalWidth += this.wordSpacing;
-          char.width += this.wordSpacing;
+        const bounds = rubyLeaf.textDrawData.bounds;
+        ruby.rubyLeaf = rubyLeaf;
+        ruby.originalWidth = bounds.width;
+        ruby.originalHeight = bounds.height;
+        ruby.width = bounds.width;
+        ruby.height = bounds.height;
+        if (ruby.text === ' ') {
+          // todo
+          ruby.originalWidth += this.wordSpacing;
+          ruby.width += this.wordSpacing;
         }
-        this.group.add(charLeaf);
+        this.group.add(rubyLeaf);
       });
     });
     this.updateTextScale();
@@ -202,21 +203,21 @@ export class CompressText extends Group {
   compressRuby() {
     if (this.firstLineCompress && this.width) {
       // 首行压缩
-      const firstNewlineCharList = this.newlineList[0].map(item => item.ruby.charList).flat();
+      const firstNewlineRubyList = this.newlineList[0].map(blockList => blockList.map(item => item.ruby)).flat();
       let firstNewlineTotalWidth = 0;
       let maxWidth = this.width;
-      firstNewlineCharList.forEach(char => {
-        const paddingLeft = char.paddingLeft || 0;
-        const paddingRight = char.paddingRight || 0;
-        firstNewlineTotalWidth += char.originalWidth;
+      firstNewlineRubyList.forEach(ruby => {
+        const paddingLeft = ruby.paddingLeft || 0;
+        const paddingRight = ruby.paddingRight || 0;
+        firstNewlineTotalWidth += ruby.originalWidth;
         maxWidth -= paddingLeft + paddingRight;
       });
       this.firstLineTextScale = Math.min(Math.floor(maxWidth / firstNewlineTotalWidth * 1000) / 1000, 1);
       this.updateTextScale();
     }
-    const charList = this.parseList.map(item => item.ruby.charList).flat();
-    const lastChar = charList[charList.length - 1];
-    if (this.height && lastChar && this.currentY + lastChar.height > this.height) {
+    const rubyList = this.parseList.map(blockList => blockList.map(item => item.ruby)).flat();
+    const lastRuby = rubyList[rubyList.length - 1];
+    if (this.height && lastRuby && this.currentY + lastRuby.height > this.height) {
       // 用二分法获取最大的scale，精度0.01
       let scale = 0.5;
       let start = 0;
@@ -225,8 +226,8 @@ export class CompressText extends Group {
         scale = (start + end) / 2;
         this.textScale = scale;
         this.updateTextScale();
-        this.currentY + lastChar.height > this.height ? end = scale : start = scale;
-        if (this.currentY + lastChar.height <= this.height && end - start <= 0.01) {
+        this.currentY + lastRuby.height > this.height ? end = scale : start = scale;
+        if (this.currentY + lastRuby.height <= this.height && end - start <= 0.01) {
           // 如果是autoSmallSize，字体判断缩小，当字号大于1不执行
           if (this.autoSmallSize && scale < 0.7 && this.fontScale <= 1 && !this.isSmallSize) {
             this.isSmallSize = true;
@@ -244,34 +245,35 @@ export class CompressText extends Group {
 
   // 对齐ruby
   alignRuby() {
-    const charList = this.parseList.map(item => item.ruby.charList).flat();
+    const rubyList = this.parseList.map(blockList => blockList.map(item => item.ruby)).flat();
     const alignLine = this.textScale < 1 || ['center', 'right'].includes(this.textAlign) || this.textJustifyLast ? this.currentLine + 1 : this.currentLine;
     for (let line = 0; line < alignLine; line++) {
-      const lineList = charList.filter(item => item.line === line);
+      const lineList = rubyList.filter(item => item.line === line);
       if (lineList.length) {
-        const lastChar = lineList[lineList.length - 1];
-        const lastCharLeaf = lastChar.charLeaf;
-        const lastPaddingRight = lastChar.paddingRight || 0;
-        const remainWidth = this.width - lastCharLeaf.x - lastChar.width - lastPaddingRight;
+        const lastRuby = lineList[lineList.length - 1];
+        const lastRubyLeaf = lastRuby.rubyLeaf;
+        const lastPaddingRight = lastRuby.paddingRight || 0;
+        const remainWidth = this.width - lastRubyLeaf.x - lastRuby.width - lastPaddingRight;
         if (remainWidth > 0) {
           if (this.textAlign === 'center') {
             const offset = remainWidth / 2;
-            lineList.forEach(char => {
-              const charLeaf = char.charLeaf;
-              charLeaf.x += offset;
+            lineList.forEach(ruby => {
+              const rubyLeaf = ruby.rubyLeaf;
+              rubyLeaf.x += offset;
             });
           } else if (this.textAlign === 'right') {
             const offset = remainWidth;
-            lineList.forEach(char => {
-              const charLeaf = char.charLeaf;
-              charLeaf.x += offset;
+            lineList.forEach(ruby => {
+              const rubyLeaf = ruby.rubyLeaf;
+              rubyLeaf.x += offset;
             });
           } else if (this.textAlign === 'justify') {
-            if (lineList.length > 1 && lastChar.text !== '\n') {
+            if (lineList.length > 1 && lastRuby.text !== '\n') {
+              // todo 间隙不均匀
               const gap = remainWidth / (lineList.length - 1);
-              lineList.forEach((char, index) => {
-                const charLeaf = char.charLeaf;
-                charLeaf.x += index * gap;
+              lineList.forEach((ruby, index) => {
+                const rubyLeaf = ruby.rubyLeaf;
+                rubyLeaf.x += index * gap;
               });
             }
           }
@@ -318,60 +320,50 @@ export class CompressText extends Group {
     }
   }
 
+  getBlockWidth(blockList) {
+    let blockWidth = 0;
+    blockList.forEach(item => {
+      const ruby = item.ruby;
+      const paddingLeft = ruby.paddingLeft || 0;
+      const paddingRight = ruby.paddingRight || 0;
+      blockWidth += ruby.width + paddingLeft + paddingRight;
+    });
+    return blockWidth;
+  }
+
   // 更新文本压缩
   updateTextScale() {
     this.currentX = 0;
     this.currentY = 0;
     this.currentLine = 0;
 
-    let noBreakCharList = [];
-    let noBreakTotalWidth = 0;
-
     this.newlineList.forEach((newline, newlineIndex) => {
       const lastNewline = newlineIndex === this.newlineList.length - 1;
-      newline.forEach(item => {
-        const ruby = item.ruby;
-        const rt = item.rt;
-        const charList = ruby.charList;
-        charList.forEach(char => {
-          const charLeaf = char.charLeaf;
-          const paddingLeft = char.paddingLeft || 0;
-          const paddingRight = char.paddingRight || 0;
-          if (this.firstLineCompress && newlineIndex === 0) {
-            // 首行压缩到一行
-            charLeaf.scaleX = this.firstLineTextScale;
-            char.width = char.originalWidth * this.firstLineTextScale;
-          } else if (!this.noCompressText.includes(char.text) && lastNewline) {
-            // 只压缩最后一行
-            charLeaf.scaleX = this.textScale;
-            char.width = char.originalWidth * this.textScale;
-          }
-          if (rt.text) {
-            noBreakCharList.push(char);
-            noBreakTotalWidth += char.width + paddingLeft + paddingRight;
-          } else {
-            const totalWidth = char.width + paddingLeft + paddingRight;
-            if (this.width && char.text !== '\n' && this.currentX && this.currentX + totalWidth > this.width) {
-              this.addRow();
-            }
-            this.positionChar(char);
-            if (char.text === '\n') {
-              this.addRow();
-            }
-          }
-        });
-
-        if (noBreakCharList.length) {
-          if (this.width && this.currentX + noBreakTotalWidth > this.width) {
-            this.addRow();
-          }
-          noBreakCharList.forEach(char => {
-            this.positionChar(char);
-          });
-
-          noBreakCharList = [];
-          noBreakTotalWidth = 0;
+      newline.forEach(blockList => {
+        const blockWidth = this.getBlockWidth(blockList);
+        const hasNewline = blockList.some(item => item.ruby.text === '\n');
+        if (hasNewline) {
+          this.addRow();
+        } else if (this.width && this.currentX + blockWidth > this.width) {
+          this.addRow();
         }
+        blockList.forEach(item => {
+          // todo
+          const ruby = item.ruby;
+          // const rubyLeaf = ruby.rubyLeaf;
+          // const paddingLeft = ruby.paddingLeft || 0;
+          // const paddingRight = ruby.paddingRight || 0;
+          // if (this.firstLineCompress && newlineIndex === 0) {
+          //   // 首行压缩到一行
+          //   rubyLeaf.scaleX = this.firstLineTextScale;
+          //   ruby.width = ruby.originalWidth * this.firstLineTextScale;
+          // } else if (!this.noCompressText.includes(ruby.text) && lastNewline) {
+          //   // 只压缩最后一行
+          //   rubyLeaf.scaleX = this.textScale;
+          //   ruby.width = ruby.originalWidth * this.textScale;
+          // }
+          this.positionRuby(ruby);
+        });
       });
     });
   }
@@ -381,28 +373,28 @@ export class CompressText extends Group {
     this.textScale = 1;
     const fontSize = this.isSmallSize ? this.smallFontSize : this.fontSize;
     const sizePercent = fontSize / this.fontSize;
-    const charList = this.parseList.map(item => item.ruby.charList).flat();
-    charList.forEach(char => {
-      const charLeaf = char.charLeaf;
-      charLeaf.fontSize = fontSize * this.fontScale;
-      charLeaf.lineHeight = fontSize * this.lineHeight * this.fontScale;
-      char.originalWidth *= sizePercent;
-      char.originalHeight *= sizePercent;
-      char.width *= sizePercent;
-      char.height *= sizePercent;
+    const rubyList = this.parseList.map(blockList => blockList.map(item => item.ruby)).flat();
+    rubyList.forEach(ruby => {
+      const rubyLeaf = ruby.rubyLeaf;
+      rubyLeaf.fontSize = fontSize * this.fontScale;
+      rubyLeaf.lineHeight = fontSize * this.lineHeight * this.fontScale;
+      ruby.originalWidth *= sizePercent;
+      ruby.originalHeight *= sizePercent;
+      ruby.width *= sizePercent;
+      ruby.height *= sizePercent;
     });
     this.updateTextScale();
   }
 
   // 定位Char
-  positionChar(char) {
-    const paddingLeft = char.paddingLeft || 0;
-    const paddingRight = char.paddingRight || 0;
-    const charLeaf = char.charLeaf;
-    charLeaf.x = this.currentX + paddingLeft;
-    charLeaf.y = this.currentY;
-    this.currentX += char.width + paddingLeft + paddingRight;
-    char.line = this.currentLine;
+  positionRuby(ruby) {
+    const paddingLeft = ruby.paddingLeft || 0;
+    const paddingRight = ruby.paddingRight || 0;
+    const rubyLeaf = ruby.rubyLeaf;
+    rubyLeaf.x = this.currentX + paddingLeft;
+    rubyLeaf.y = this.currentY;
+    this.currentX += ruby.width + paddingLeft + paddingRight;
+    ruby.line = this.currentLine;
   }
 
   // 添加行
@@ -416,17 +408,17 @@ export class CompressText extends Group {
 
   // 删除行尾空格
   removeLineLastSpace(line) {
-    const charList = this.parseList.map(item => item.ruby.charList).flat();
-    const lineList = charList.filter(item => item.line === line);
+    const rubyList = this.parseList.map(blockList => blockList.map(item => item.ruby)).flat();
+    const lineList = rubyList.filter(item => item.line === line);
     if (lineList.length) {
-      const lastChar = lineList[lineList.length - 1];
-      if (lastChar.text === ' ') {
-        const lastCharLeaf = lastChar.charLeaf;
-        const lastPaddingLeft = lastChar.paddingLeft || 0;
-        const lastPaddingRight = lastChar.paddingRight || 0;
-        this.currentX -= lastChar.width + lastPaddingLeft + lastPaddingRight;
-        lastCharLeaf.destroy();
-        lastChar.line = -1;
+      const lastRuby = lineList[lineList.length - 1];
+      if (lastRuby.text === ' ') {
+        const lastRubyLeaf = lastRuby.rubyLeaf;
+        const lastPaddingLeft = lastRuby.paddingLeft || 0;
+        const lastPaddingRight = lastRuby.paddingRight || 0;
+        this.currentX -= lastRuby.width + lastPaddingLeft + lastPaddingRight;
+        lastRubyLeaf.destroy();
+        lastRuby.line = -1;
         this.removeLineLastSpace(line);
       }
     }
