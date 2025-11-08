@@ -89,7 +89,8 @@ export class CompressText extends Group {
   getParseList() {
     let bold = false;
     const text = String(this.text).trimEnd();
-    console.log(splitBreakWordWithBracket(text));
+    const textList = splitBreakWordWithBracket(text);
+    console.log(textList);
     // 正则的捕获圆括号不要随意修改
     return text.split(new RegExp(`(<b>|</b>|\n|[${this.noCompressText}])`)).filter(value => value).map(value => {
       let rubyText = value;

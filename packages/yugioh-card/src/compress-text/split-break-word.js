@@ -40,21 +40,19 @@ export function splitBreakWord(text) {
 
 export function splitBreakWordWithBracket(text) {
   // 先匹配所有 [xxx(yyy)]，用占位符替代
-  const bracketReg = /\[.*?\(.*?\)]/g;
-  const placeholderReg = /__BRACKET_(\d+)__/g;
   let index = 0;
   const placeholderMap = {};
 
-  const replaced = text.replace(bracketReg, match => {
+  const replaceText = text.replace(/\[.*?\(.*?\)]/g, match => {
     const key = `__BRACKET_${index}__`;
     placeholderMap[key] = match;
     index++;
     return key;
-  });
+  }).replace(/(?<=__BRACKET_\d+__)(?=__BRACKET_\d+__)/g, '\u200B');
 
   // 调用原来的 splitBreakWord 逻辑
-  const split = splitBreakWord(replaced);
+  const splitList = splitBreakWord(replaceText);
 
   // 把占位符替换回原来的 [xxx(yyy)] 块
-  return split.map(item => item.replace(placeholderReg, s => placeholderMap[s]));
+  return splitList.map(item => item.replace(/__BRACKET_\d+__/g, s => placeholderMap[s]));
 }
