@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { CompressText, splitBreakWord } from '/packages/yugioh-card/src/compress-text';
+import { CompressText } from '/packages/yugioh-card/src/compress-text';
 import { Leafer } from 'leafer-unified';
 import { onMounted, ref } from 'vue';
 
@@ -20,14 +20,15 @@ onMounted(() => {
 
   leafer.add(compressText);
 
-  const text = '你congratulation<b>好</b>好好你congratulation好好好好1\n2好好好好好好好好好，卡片是：「[测试(test)]」。[测试(test)][测试(test)][测试(test)]';
+  const text = '你congratulation<b>好</b>ation，卡片是：「[测试(test)]」。[测试(test)][测试(test)][测试(test)]';
 
   compressText.set({
     text: text,
     width: 360,
-    height: 80,
+    height: 100,
     x: 20,
     y: 20,
+    // textAlign: 'left',
   });
 });
 </script>
