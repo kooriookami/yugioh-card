@@ -132,14 +132,12 @@ export class CompressText extends Group {
     const list = [[]];
     let currentIndex = 0;
     this.parseList.forEach(itemList => {
-      itemList.forEach(item => {
-        const ruby = item.ruby;
-        list[currentIndex].push(itemList);
-        if (ruby.text === '\n') {
-          currentIndex++;
-          list[currentIndex] = [];
-        }
-      });
+      const hasBreak = itemList.some(item => item.ruby.text === '\n');
+      list[currentIndex].push(itemList);
+      if (hasBreak) {
+        currentIndex++;
+        list[currentIndex] = [];
+      }
     });
     return list;
   }
@@ -346,8 +344,7 @@ export class CompressText extends Group {
     this.currentY = 0;
     this.currentLine = 0;
 
-    let noBreakTotalWidth = 0;
-
+    let totalWidth = 0;
     this.newlineList.forEach((newline, newlineIndex) => {
       const lastNewline = newlineIndex === this.newlineList.length - 1;
       newline.forEach(itemList => {
@@ -365,12 +362,12 @@ export class CompressText extends Group {
           }
         });
         const itemWidth = this.getItemWidth(itemList);
-        noBreakTotalWidth += itemWidth;
+        totalWidth += itemWidth;
         const hasBreak = itemList.some(item => item.ruby.text === '\n');
-        const isOverWidth = this.width && this.currentX && this.currentX + noBreakTotalWidth > this.width;
+        const isOverWidth = this.width && this.currentX && this.currentX + totalWidth > this.width;
         if (hasBreak || isOverWidth) {
-          this.addRow();
-          noBreakTotalWidth = 0;
+          this.addLine();
+          totalWidth = 0;
         }
         itemList.forEach(item => {
           const ruby = item.ruby;
@@ -410,7 +407,7 @@ export class CompressText extends Group {
   }
 
   // 添加行
-  addRow() {
+  addLine() {
     this.removeLineLastSpace(this.currentLine);
     const fontSize = this.isSmallSize ? this.smallFontSize : this.fontSize;
     this.currentX = 0;
