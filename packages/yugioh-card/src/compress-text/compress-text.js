@@ -269,7 +269,6 @@ export class CompressText extends Group {
             });
           } else if (this.textAlign === 'justify') {
             if (lineList.length > 1 && lastRuby.text !== '\n') {
-              // todo 间隙不均匀
               const gap = remainWidth / (lineList.length - 1);
               lineList.forEach((ruby, index) => {
                 const rubyLeaf = ruby.rubyLeaf;
