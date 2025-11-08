@@ -192,7 +192,6 @@ export class CompressText extends Group {
         ruby.width = bounds.width;
         ruby.height = bounds.height;
         if (ruby.text === ' ') {
-          // todo
           ruby.originalWidth += this.wordSpacing;
           ruby.width += this.wordSpacing;
         }
