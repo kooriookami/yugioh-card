@@ -87,18 +87,11 @@ export class CompressText extends Group {
 
   // 获取解析后的文本列表
   getParseList() {
+    const list = [];
     let bold = false;
     const text = String(this.text).trimEnd();
-    const textList = splitBreakWordWithBracket(text);
-    console.log(textList);
     // 正则的捕获圆括号不要随意修改
-    return text.split(new RegExp(`(<b>|</b>|\n|[${this.noCompressText}])`)).filter(value => value).map(value => {
-      let rubyText = value;
-      let rtText = '';
-      if (/\[.*?\(.*?\)]/g.test(value)) {
-        rubyText = value.replace(/\[(.*?)\((.*?)\)]/g, '$1');
-        rtText = value.replace(/\[(.*?)\((.*?)\)]/g, '$2');
-      }
+    text.split(new RegExp(`(<b>|</b>|\n|[${this.noCompressText}])`)).filter(value => value).forEach(value => {
       if (value === '<b>') {
         bold = true;
         return null;
@@ -107,17 +100,32 @@ export class CompressText extends Group {
         bold = false;
         return null;
       }
-      return {
-        ruby: {
-          text: rubyText,
-          bold,
-          charList: splitBreakWord(rubyText).map(char => ({ text: char })),
-        },
-        rt: {
-          text: rtText,
-        },
-      };
-    }).filter(value => value);
+      const splitList = splitBreakWordWithBracket(value);
+      splitList.forEach(value => {
+        const blockList = [];
+        value.split(/(\[.*?\(.*?\)])/g).filter(value => value).forEach(value => {
+          let rubyText = value;
+          let rtText = '';
+          if (/\[.*?\(.*?\)]/g.test(value)) {
+            rubyText = value.replace(/\[(.*?)\((.*?)\)]/g, '$1');
+            rtText = value.replace(/\[(.*?)\((.*?)\)]/g, '$2');
+          }
+          const obj = {
+            ruby: {
+              text: rubyText,
+              bold,
+            },
+            rt: {
+              text: rtText,
+            },
+          };
+          blockList.push(obj);
+        });
+        list.push(blockList);
+      });
+    });
+    console.log(list);
+    return list;
   }
 
   // 获取换行列表
@@ -155,11 +163,6 @@ export class CompressText extends Group {
     this.createBounds();
     this.add(this.group);
   }
-
-  // 获取Ruby
-  getRuby(text) {
-    return text.replace(/\[(.*?)\(.*?\)]/g, '$1');
-  };
 
   // 创建文本
   createRuby() {

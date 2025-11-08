@@ -54,5 +54,5 @@ export function splitBreakWordWithBracket(text) {
   const splitList = splitBreakWord(replaceText);
 
   // 把占位符替换回原来的 [xxx(yyy)] 块
-  return splitList.map(item => item.replace(/__BRACKET_\d+__/g, s => placeholderMap[s]));
+  return splitList.map(item => item.replace(/\u200B/g, '').replace(/__BRACKET_\d+__/g, s => placeholderMap[s]));
 }
