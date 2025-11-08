@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "dev:node": "vite-node --watch src/server.js",
+    "play": "vite --open /play/index.html",
     "build": "vite build",
     "build:lib": "npx tsc && vite build -- browser-lib && vite build -- node-lib",
     "preview": "vite preview",

@@ -37,3 +37,24 @@ export function splitBreakWord(text) {
 
   return words;
 }
+
+export function splitBreakWordWithBracket(text) {
+  // 先匹配所有 [xxx(yyy)]，用占位符替代
+  const bracketReg = /\[.*?\(.*?\)]/g;
+  const placeholderReg = /__BRACKET_(\d+)__/g;
+  let index = 0;
+  const placeholderMap = {};
+
+  const replaced = text.replace(bracketReg, match => {
+    const key = `__BRACKET_${index}__`;
+    placeholderMap[key] = match;
+    index++;
+    return key;
+  });
+
+  // 调用原来的 splitBreakWord 逻辑
+  const split = splitBreakWord(replaced);
+
+  // 把占位符替换回原来的 [xxx(yyy)] 块
+  return split.map(item => item.replace(placeholderReg, s => placeholderMap[s]));
+}

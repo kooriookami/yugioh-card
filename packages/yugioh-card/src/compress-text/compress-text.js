@@ -1,7 +1,7 @@
 import { cloneDeep, isEqual } from 'lodash-unified';
 import { Group, Text } from 'leafer-unified';
 import { isBrowser } from '../utils';
-import { splitBreakWord } from './split-break-word';
+import { splitBreakWord, splitBreakWordWithBracket } from './split-break-word';
 
 export class CompressText extends Group {
   constructor(data = {}) {
@@ -88,8 +88,10 @@ export class CompressText extends Group {
   // 获取解析后的文本列表
   getParseList() {
     let bold = false;
+    const text = String(this.text).trimEnd();
+    console.log(splitBreakWordWithBracket(text));
     // 正则的捕获圆括号不要随意修改
-    return String(this.text).trimEnd().split(new RegExp(`(\\[.*?\\(.*?\\)]|<b>|</b>|\n|[${this.noCompressText}])`)).filter(value => value).map(value => {
+    return text.split(new RegExp(`(<b>|</b>|\n|[${this.noCompressText}])`)).filter(value => value).map(value => {
       let rubyText = value;
       let rtText = '';
       if (/\[.*?\(.*?\)]/g.test(value)) {
@@ -152,6 +154,11 @@ export class CompressText extends Group {
     this.createBounds();
     this.add(this.group);
   }
+
+  // 获取Ruby
+  getRuby(text) {
+    return text.replace(/\[(.*?)\(.*?\)]/g, '$1');
+  };
 
   // 创建文本
   createRuby() {
