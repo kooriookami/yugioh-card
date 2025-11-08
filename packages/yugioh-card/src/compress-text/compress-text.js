@@ -94,11 +94,11 @@ export class CompressText extends Group {
     text.split(new RegExp(`(<b>|</b>|\n|[${this.noCompressText}])`)).filter(value => value).forEach(value => {
       if (value === '<b>') {
         bold = true;
-        return null;
+        return;
       }
       if (value === '</b>') {
         bold = false;
-        return null;
+        return;
       }
       const splitList = splitBreakWordWithBracket(value);
       splitList.forEach(value => {
@@ -110,7 +110,7 @@ export class CompressText extends Group {
             rubyText = value.replace(/\[(.*?)\((.*?)\)]/g, '$1');
             rtText = value.replace(/\[(.*?)\((.*?)\)]/g, '$2');
           }
-          const obj = {
+          const item = {
             ruby: {
               text: rubyText,
               bold,
@@ -119,7 +119,7 @@ export class CompressText extends Group {
               text: rtText,
             },
           };
-          itemList.push(obj);
+          itemList.push(item);
         });
         list.push(itemList);
       });
@@ -170,39 +170,38 @@ export class CompressText extends Group {
 
   // 创建文本
   createRuby() {
-    this.parseList.forEach(itemList => {
-      itemList.forEach(item => {
-        const ruby = item.ruby;
-        const rubyLeaf = new Text({
-          text: ruby.text,
-          fontFamily: this.fontFamily,
-          fontSize: this.fontSize * this.fontScale,
-          fontWeight: ruby.bold ? 'bold' : this.fontWeight,
-          lineHeight: this.fontSize * this.lineHeight * this.fontScale,
-          fill: this.color,
-          stroke: this.strokeWidth ? this.color : null,
-          strokeWidth: this.strokeWidth,
-          strokeAlign: 'center',
-          letterSpacing: this.letterSpacing,
-        });
-        const bounds = rubyLeaf.textDrawData.bounds;
-        ruby.rubyLeaf = rubyLeaf;
-        ruby.originalWidth = bounds.width;
-        ruby.originalHeight = bounds.height;
-        ruby.width = bounds.width;
-        ruby.height = bounds.height;
-        if (ruby.text === ' ') {
-          ruby.originalWidth += this.wordSpacing;
-          ruby.width += this.wordSpacing;
-        }
-        this.group.add(rubyLeaf);
+    const rubyList = this.getRubyList();
+    rubyList.forEach(ruby => {
+      const rubyLeaf = new Text({
+        text: ruby.text,
+        fontFamily: this.fontFamily,
+        fontSize: this.fontSize * this.fontScale,
+        fontWeight: ruby.bold ? 'bold' : this.fontWeight,
+        lineHeight: this.fontSize * this.lineHeight * this.fontScale,
+        fill: this.color,
+        stroke: this.strokeWidth ? this.color : null,
+        strokeWidth: this.strokeWidth,
+        strokeAlign: 'center',
+        letterSpacing: this.letterSpacing,
       });
+      const bounds = rubyLeaf.textDrawData.bounds;
+      ruby.rubyLeaf = rubyLeaf;
+      ruby.originalWidth = bounds.width;
+      ruby.originalHeight = bounds.height;
+      ruby.width = bounds.width;
+      ruby.height = bounds.height;
+      if (ruby.text === ' ') {
+        ruby.originalWidth += this.wordSpacing;
+        ruby.width += this.wordSpacing;
+      }
+      this.group.add(rubyLeaf);
     });
     this.updateTextScale();
   }
 
   // 压缩文本
   compressRuby() {
+    const rubyList = this.getRubyList();
     if (this.firstLineCompress && this.width) {
       // 首行压缩
       const firstNewlineRubyList = this.newlineList[0].map(itemList => itemList.map(item => item.ruby)).flat();
@@ -217,7 +216,6 @@ export class CompressText extends Group {
       this.firstLineTextScale = Math.min(Math.floor(maxWidth / firstNewlineTotalWidth * 1000) / 1000, 1);
       this.updateTextScale();
     }
-    const rubyList = this.getRubyList();
     const lastRuby = rubyList[rubyList.length - 1];
     if (this.height && lastRuby && this.currentY + lastRuby.height > this.height) {
       // 用二分法获取最大的scale，精度0.01
@@ -286,55 +284,41 @@ export class CompressText extends Group {
 
   // 创建注音
   createRt() {
-    this.parseList.forEach(itemList => {
-      itemList.forEach(item => {
-        const rt = item.rt;
-        if (rt.text) {
-          const rtLeaf = new Text({
-            text: rt.text,
-            fontFamily: this.rtFontFamily,
-            fontSize: this.rtFontSize * this.fontScale,
-            fontWeight: this.rtFontWeight,
-            lineHeight: this.rtFontSize * this.rtLineHeight * this.fontScale,
-            fill: this.rtColor,
-            stroke: this.rtStrokeWidth ? this.color : null,
-            strokeWidth: this.rtStrokeWidth,
-            strokeAlign: 'center',
-            letterSpacing: this.rtLetterSpacing,
-          });
-          const bounds = rtLeaf.textDrawData.bounds;
-          rt.rtLeaf = rtLeaf;
-          rt.originalWidth = bounds.width;
-          rt.originalHeight = bounds.height;
-          rt.width = bounds.width;
-          rt.height = bounds.height;
-          this.positionRt(item);
-          this.group.add(rtLeaf);
-        }
-      });
+    const itemList = this.parseList.flat();
+    itemList.forEach(item => {
+      const rt = item.rt;
+      if (rt.text) {
+        const rtLeaf = new Text({
+          text: rt.text,
+          fontFamily: this.rtFontFamily,
+          fontSize: this.rtFontSize * this.fontScale,
+          fontWeight: this.rtFontWeight,
+          lineHeight: this.rtFontSize * this.rtLineHeight * this.fontScale,
+          fill: this.rtColor,
+          stroke: this.rtStrokeWidth ? this.color : null,
+          strokeWidth: this.rtStrokeWidth,
+          strokeAlign: 'center',
+          letterSpacing: this.rtLetterSpacing,
+        });
+        const bounds = rtLeaf.textDrawData.bounds;
+        rt.rtLeaf = rtLeaf;
+        rt.originalWidth = bounds.width;
+        rt.originalHeight = bounds.height;
+        rt.width = bounds.width;
+        rt.height = bounds.height;
+        this.positionRt(item);
+        this.group.add(rtLeaf);
+      }
     });
     // 如果需要再次压缩
     if (this.needCompressTwice) {
       this.updateTextScale();
       this.compressRuby();
       this.alignRuby();
-      this.parseList.forEach(itemList => {
-        itemList.forEach(item => {
-          this.positionRt(item);
-        });
+      itemList.forEach(item => {
+        this.positionRt(item);
       });
     }
-  }
-
-  getItemWidth(itemList) {
-    let itemWidth = 0;
-    itemList.forEach(item => {
-      const ruby = item.ruby;
-      const paddingLeft = ruby.paddingLeft || 0;
-      const paddingRight = ruby.paddingRight || 0;
-      itemWidth += ruby.width + paddingLeft + paddingRight;
-    });
-    return itemWidth;
   }
 
   // 更新文本压缩
@@ -343,10 +327,10 @@ export class CompressText extends Group {
     this.currentY = 0;
     this.currentLine = 0;
 
-    let totalWidth = 0;
     this.newlineList.forEach((newline, newlineIndex) => {
       const lastNewline = newlineIndex === this.newlineList.length - 1;
       newline.forEach(itemList => {
+        let itemWidth = 0;
         itemList.forEach(item => {
           const ruby = item.ruby;
           const rubyLeaf = ruby.rubyLeaf;
@@ -359,14 +343,14 @@ export class CompressText extends Group {
             rubyLeaf.scaleX = this.textScale;
             ruby.width = ruby.originalWidth * this.textScale;
           }
+          const paddingLeft = ruby.paddingLeft || 0;
+          const paddingRight = ruby.paddingRight || 0;
+          itemWidth += ruby.width + paddingLeft + paddingRight;
         });
-        const itemWidth = this.getItemWidth(itemList);
-        totalWidth += itemWidth;
         const hasBreak = itemList.some(item => item.ruby.text === '\n');
-        const isOverWidth = this.width && this.currentX && this.currentX + totalWidth > this.width;
+        const isOverWidth = this.width && this.currentX && this.currentX + itemWidth > this.width;
         if (hasBreak || isOverWidth) {
           this.addLine();
-          totalWidth = 0;
         }
         itemList.forEach(item => {
           const ruby = item.ruby;
@@ -402,7 +386,7 @@ export class CompressText extends Group {
     rubyLeaf.x = this.currentX + paddingLeft;
     rubyLeaf.y = this.currentY;
     this.currentX += ruby.width + paddingLeft + paddingRight;
-    ruby.line = this.currentLine;
+    ruby.line = ruby.text === '\n' ? this.currentLine - 1 : this.currentLine;
   }
 
   // 添加行

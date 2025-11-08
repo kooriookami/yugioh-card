@@ -20,7 +20,7 @@ onMounted(() => {
 
   leafer.add(compressText);
 
-  const text = '你好congratulation<b>好</b>ation，卡片是片是片是片是片是片是片是片是片是片是：「[测试(test)]」。[测试(test)][测试(test)][测试(test)]';
+  const text = '你好congratulation<b>好</b>ation，\n卡片是片是片是432432466546片是片是片是片是片是片是片是：「[测试(test)]」。[测试(test)][测试(test)][测试(test)]';
 
   compressText.set({
     text: text,
@@ -28,7 +28,7 @@ onMounted(() => {
     height: 100,
     x: 20,
     y: 20,
-    textAlign: 'left',
+    // textAlign: 'left',
   });
 });
 </script>
