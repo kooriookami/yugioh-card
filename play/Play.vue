@@ -20,12 +20,13 @@ onMounted(() => {
 
   leafer.add(compressText);
 
-  const text = '你好你好你好你好你好你好片是片是片是片是：「[测煽风反倒试(test)]」。[测试(test)][测试(test)][测试(test)]';
+  const text = '你好你片是片片是片片是片片是片片是片片是片片是片片是片片是片片是片片是片片是片片是片好你好你好你好你●好片是片是片是片片是片片是片片是片是：「[测煽风反倒试(test)]」。[测试(test)][测试(test)][测试(test)]';
 
   compressText.set({
     text: text,
     width: 360,
     height: 100,
+    lineHeight: 1.15,
     x: 20,
     y: 20,
   });
