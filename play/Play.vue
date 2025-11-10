@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { CompressText } from '/packages/yugioh-card/src/compress-text';
+import { CompressText, splitBreakWordWithBracket } from '/packages/yugioh-card/src/compress-text';
 import { Leafer } from 'leafer-unified';
 import { onMounted, ref } from 'vue';
 
@@ -20,13 +20,15 @@ onMounted(() => {
 
   leafer.add(compressText);
 
-  const text = '你好你片是片片是片片是片片是片片是片片是片片是片片是片片是片片是片片是片片是片片是片好你好你好你好你●好片是片是片是片片是片片是片片是片是：「[测煽风反倒试(test)]」。[测试(test)][测试(test)][测试(test)]';
+  const text = '测1111111111111111试「[测试(test)]」[测试(test)][测试(test)][测试(test)]';
+
+  console.log(splitBreakWordWithBracket(text));
 
   compressText.set({
     text: text,
     width: 360,
-    height: 100,
-    lineHeight: 1.15,
+    // height: 100,
+    lineHeight: 1.7,
     x: 20,
     y: 20,
   });

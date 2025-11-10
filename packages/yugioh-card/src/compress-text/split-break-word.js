@@ -39,23 +39,25 @@ export function splitBreakWord(text) {
 }
 
 export function splitBreakWordWithBracket(text) {
-  const splitList = [];
-  let lastIndex = 0;
+  let index = 0;
+  const placeholderMap = new Map();
 
-  for (const match of text.matchAll(/\[.*?\(.*?\)]/g)) {
-    const { index } = match;
-    const value = match[0];
+  const basePrefix = `__${Math.random().toString(36).slice(2)}_`;
 
-    if (index > lastIndex) {
-      splitList.push(...splitBreakWord(text.slice(lastIndex, index)));
+  const replaceText = text.replace(/\[.*?\(.*?\)]/g, match => {
+    const key = `${basePrefix}${index}`;
+    placeholderMap.set(key, match);
+    index++;
+    return key;
+  }).replace(new RegExp(`(?<=${basePrefix}\\d+)(?=${basePrefix}\\d+)`, 'g'), '\u200B');
+
+  const splitList = splitBreakWord(replaceText);
+
+  return splitList.map(item => {
+    let result = item.replace(/\u200B/g, '');
+    for (const [key, value] of placeholderMap) {
+      result = result.replace(key, value);
     }
-
-    splitList.push(value);
-    lastIndex = index + value.length;
-  }
-
-  if (lastIndex < text.length) {
-    splitList.push(...splitBreakWord(text.slice(lastIndex)));
-  }
-  return splitList;
+    return result;
+  });
 }
