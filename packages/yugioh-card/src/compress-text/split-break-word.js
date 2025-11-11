@@ -39,19 +39,21 @@ export function splitBreakWord(text) {
 }
 
 export function splitBreakWordWithBracket(text) {
-  let index = 0;
   const placeholderMap = new Map();
 
-  const basePrefix = `__${Math.random().toString(36).slice(2)}_`;
-
   const replaceText = text.replace(/\[.*?\(.*?\)]/g, match => {
-    const key = `${basePrefix}${index}`;
+    // 每个占位符都使用完全唯一的ID
+    const uniqueId = Math.random().toString(36).slice(2, 11);
+    const key = `__${uniqueId}__`;
     placeholderMap.set(key, match);
-    index++;
     return key;
-  }).replace(new RegExp(`(?<=${basePrefix}\\d+)(?=${basePrefix}\\d+)`, 'g'), '\u200B');
+  });
 
-  const splitList = splitBreakWord(replaceText);
+  // 在相邻占位符之间插入零宽空格
+  const placeholderRegex = /(?<=__[a-z0-9]{9}__)(?=__[a-z0-9]{9}__)/g;
+  const finalText = replaceText.replace(placeholderRegex, '\u200B');
+
+  const splitList = splitBreakWord(finalText);
 
   return splitList.map(item => {
     let result = item.replace(/\u200B/g, '');
