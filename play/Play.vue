@@ -1,6 +1,8 @@
 <template>
-  <div ref="leaferRef" class="leafer" />
-  <div class="text">{{ rubyText }}</div>
+  <div class="play">
+    <div ref="leaferRef" />
+    <div class="text">{{ rubyText }}</div>
+  </div>
 </template>
 
 <script setup>
@@ -22,8 +24,7 @@ const rubyText = removeKanjiKana(text);
 onMounted(() => {
   const leafer = new Leafer({
     view: leaferRef.value,
-    width: 400,
-    height: 300,
+    grow: true,
   });
 
   const compressText = new CompressText();
@@ -36,24 +37,21 @@ onMounted(() => {
 
   compressText.set({
     text: rubyText,
-    width: 360,
+    width: 400,
     lineHeight: 1.15,
-    x: 20,
-    y: 20,
   });
 });
 </script>
 
 <style lang="scss">
-.leafer {
-
+.play {
+  padding: 20px;
 }
 
 .text {
-  box-sizing: border-box;
+  margin-top: 20px;
   text-align: justify;
   width: 400px;
-  padding: 20px;
   font-size: 24px;
   line-height: 1.15;
   line-break: strict;

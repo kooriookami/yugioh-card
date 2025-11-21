@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { isPlainObject } from 'lodash-unified';
 // 已加载的字体路径列表
 let fontPathList = [];
 // 是否是浏览器
@@ -82,12 +83,12 @@ export const numberToFull = value => {
 export const inheritProp = (obj, parentObj = {}) => {
   const inheritPropList = ['fontFamily', 'fontSize', 'fontStyle', 'fontWeight', 'lineHeight', 'letterSpacing', 'wordSpacing'];
   inheritPropList.forEach(inherit => {
-    if (!Object.prototype.hasOwnProperty.call(obj, inherit) && Object.prototype.hasOwnProperty.call(parentObj, inherit)) {
+    if (!Object.hasOwn(obj, inherit) && Object.hasOwn(parentObj, inherit)) {
       obj[inherit] = parentObj[inherit];
     }
   });
   Object.keys(obj).forEach(key => {
-    if (typeof obj[key] === 'object' && !Array.isArray(obj[key]) && obj[key] !== null) {
+    if (isPlainObject(obj[key])) {
       inheritProp(obj[key], obj);
     }
   });
