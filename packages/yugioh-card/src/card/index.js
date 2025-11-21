@@ -9,12 +9,12 @@ const fontPathMap = {
   RushDuelCard: '/rush-duel/font',
 };
 
-export function resetAttr() {
+const resetAttr = () => {
   Text.changeAttr('lineHeight', {
     type: 'percent',
     value: 1.15,
   });
-}
+};
 
 export class Card {
   leafer = null;

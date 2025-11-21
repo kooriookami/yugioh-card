@@ -1,6 +1,6 @@
 import { fromCodePoint, LineBreaker, toCodePoints } from 'css-line-break';
 
-export function splitBreakWord(text) {
+export const splitBreakWord = text => {
   // https://drafts.csswg.org/css-text/#word-separator
   const wordSeparators = [0x0020, 0x00a0, 0x1361, 0x10100, 0x10101, 0x1039, 0x1091];
 
@@ -36,9 +36,9 @@ export function splitBreakWord(text) {
   }
 
   return words;
-}
+};
 
-export function splitBreakWordWithBracket(text) {
+export const splitBreakWordWithBracket = text => {
   const placeholderMap = new Map();
 
   const replaceText = text.replace(/\[.*?\(.*?\)]/g, match => {
@@ -62,4 +62,4 @@ export function splitBreakWordWithBracket(text) {
     }
     return result;
   });
-}
+};

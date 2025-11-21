@@ -7,6 +7,7 @@
 import { CompressText, splitBreakWordWithBracket } from '/packages/yugioh-card/src/compress-text';
 import { Leafer } from 'leafer-unified';
 import { onMounted, ref } from 'vue';
+import { numberToFull } from '/packages/yugioh-card/src/utils';
 
 const leaferRef = ref(null);
 
@@ -30,6 +31,8 @@ onMounted(() => {
   leafer.add(compressText);
 
   console.log(splitBreakWordWithBracket(text));
+
+  console.log(numberToFull('我有0123456789.个苹果'));
 
   compressText.set({
     text: rubyText,

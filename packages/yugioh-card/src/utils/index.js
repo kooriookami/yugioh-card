@@ -74,16 +74,9 @@ export const loadFont = (fontPath, skia) => {
 };
 
 // 数字转全角
-export function numberToFull(value) {
-  let charList = Array.from(String(value)).map(char => {
-    let code = char.charCodeAt(0);
-    if (code >= 48 && code <= 57) {
-      return String.fromCharCode(code + 65248);
-    }
-    return char;
-  });
-  return charList.join('');
-}
+export const numberToFull = value => {
+  return value.replace(/\d/g, d => String.fromCharCode(d.charCodeAt(0) + 0xFEE0));
+};
 
 // 继承css样式
 export const inheritProp = (obj, parentObj = {}) => {

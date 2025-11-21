@@ -84,7 +84,7 @@ onBeforeUnmount(() => {
   cardLeaf.value?.leafer.destroy();
 });
 
-function changeCard() {
+const changeCard = () => {
   cardLeaf.value?.leafer.destroy();
   let Card;
   switch (form.card) {
@@ -118,14 +118,14 @@ function changeCard() {
     resourcePath: process.env.NODE_ENV === 'production' ? 'https://raw.githubusercontent.com/kooriookami/yugioh-card/refs/heads/master/src/assets/yugioh-card' : 'src/assets/yugioh-card',
   });
   jsonData.value = form.data;
-}
+};
 
-function exportImage() {
+const exportImage = () => {
   cardLeaf.value.leafer.export('卡片.png', {
     screenshot: true,
     pixelRatio: devicePixelRatio,
   });
-}
+};
 
 watch(() => jsonData.value, () => {
   try {
@@ -136,73 +136,73 @@ watch(() => jsonData.value, () => {
   }
 });
 
-function toGithub() {
+const toGithub = () => {
   open('https://github.com/kooriookami/yugioh-card');
-}
+};
 </script>
 
 <style lang="scss" scoped>
-  .yugioh-card-container {
-    height: 100vh;
-    display: flex;
-    overflow: hidden;
+.yugioh-card-container {
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
 
-    .yugioh-card {
-      height: 100%;
-      overflow: auto;
-      flex-grow: 1;
-      position: relative;
-      padding: 20px;
+  .yugioh-card {
+    height: 100%;
+    overflow: auto;
+    flex-grow: 1;
+    position: relative;
+    padding: 20px;
 
-      .card {
-        display: inline-block;
-        vertical-align: top;
+    .card {
+      display: inline-block;
+      vertical-align: top;
+    }
+  }
+
+  .form {
+    height: 100%;
+    overflow: auto;
+    width: 600px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border-color);
+
+    .form-header {
+      padding: 30px 20px;
+      font-size: 18px;
+      font-weight: bold;
+      border-bottom: 1px solid var(--border-color);
+
+      .form-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+
+        .github-icon {
+          margin-left: 5px;
+          cursor: pointer;
+        }
+      }
+
+      .form-description {
+        margin-top: 20px;
+        font-size: 12px;
+        font-weight: normal;
+        color: var(--info-color);
       }
     }
 
-    .form {
-      height: 100%;
-      overflow: auto;
-      width: 600px;
-      flex-shrink: 0;
-      border-left: 1px solid var(--border-color);
+    .form-main {
+      padding: 20px;
 
-      .form-header {
-        padding: 30px 20px;
-        font-size: 18px;
-        font-weight: bold;
-        border-bottom: 1px solid var(--border-color);
+      .button-group {
+        margin-top: 20px;
 
-        .form-title {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: center;
-
-          .github-icon {
-            margin-left: 5px;
-            cursor: pointer;
-          }
-        }
-
-        .form-description {
-          margin-top: 20px;
-          font-size: 12px;
-          font-weight: normal;
-          color: var(--info-color);
-        }
-      }
-
-      .form-main {
-        padding: 20px;
-
-        .button-group {
-          margin-top: 20px;
-
-          .el-button {
-            width: 100%;
-          }
+        .el-button {
+          width: 100%;
         }
       }
     }
   }
+}
 </style>
