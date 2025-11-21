@@ -44,7 +44,7 @@ export const loadFont = (fontPath, skia) => {
         data.forEach(family => {
           const font = new FontFace(
             family,
-            `url(${fontPath}/${family}.woff2) format('woff2'), url(${fontPath}/${family}.woff) format('woff')`,
+            `url(${fontPath}/${family}.woff2) format('woff2')`,
             {
               display: 'swap',
             },
@@ -60,7 +60,6 @@ export const loadFont = (fontPath, skia) => {
           data.forEach(family => {
             skia.FontLibrary.use(family, [
               `${fontPath}/${family}.woff2`,
-              `${fontPath}/${family}.woff`,
             ]);
           });
         }
