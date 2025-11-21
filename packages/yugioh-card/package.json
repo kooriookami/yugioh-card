@@ -18,9 +18,9 @@
   "author": "kooriookami",
   "license": "MIT",
   "dependencies": {
-    "@leafer/node": "^1.9.12",
+    "@leafer/node": "^1.10.1",
     "css-line-break": "^2.1.0",
-    "leafer": "^1.9.12",
+    "leafer": "^1.10.1",
     "leafer-unified": "^1.0.3",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
