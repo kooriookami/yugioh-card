@@ -1,5 +1,5 @@
 import { Text, Image, ImageEvent, Leafer, useCanvas } from 'leafer-unified';
-import { isBrowser, isNode, loadFont } from '../utils';
+import { isBrowser, isNode, loadFont } from '../utils/index.js';
 
 const fontPathMap = {
   YugiohCard: '/yugioh/font',
