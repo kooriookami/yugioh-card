@@ -1,15 +1,15 @@
 import { Group, Image, Rect, Text } from 'leafer-unified';
-import { Card } from '../card';
-import { CompressText } from '../compress-text';
-import { numberToFull } from '../utils';
-import scStyle from './style/sc-style';
-import tcStyle from './style/tc-style';
-import jpStyle from './style/jp-style';
-import krStyle from './style/kr-style';
-import enStyle from './style/en-style';
-import astralStyle from './style/astral-style';
-import custom1Style from './style/custom1-style';
-import custom2Style from './style/custom2-style';
+import { Card } from '../card/index.js';
+import { CompressText } from '../compress-text/index.js';
+import { numberToFull } from '../utils/index.js';
+import scStyle from './style/sc-style.js';
+import tcStyle from './style/tc-style.js';
+import jpStyle from './style/jp-style.js';
+import krStyle from './style/kr-style.js';
+import enStyle from './style/en-style.js';
+import astralStyle from './style/astral-style.js';
+import custom1Style from './style/custom1-style.js';
+import custom2Style from './style/custom2-style.js';
 
 export class YugiohCard extends Card {
   cardLeaf = null;

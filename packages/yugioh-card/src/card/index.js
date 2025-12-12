@@ -1,7 +1,5 @@
 import { Text, Image, ImageEvent, Leafer, useCanvas } from 'leafer-unified';
-import { isBrowser, isNode, loadFontBrowser, loadFontNode } from '../utils';
-import loaderIcon from '../svg/loader.svg';
-import imageIcon from '../svg/image.svg';
+import { isBrowser, isNode, loadFontBrowser, loadFontNode } from '../utils/index.js';
 
 const fontPathMap = {
   YugiohCard: '/yugioh/font',
@@ -92,8 +90,10 @@ export class Card {
 
     let statusUrl = '';
     if (status === ImageEvent.LOAD) {
+      const loaderIcon = new URL('../svg/loader.svg', import.meta.url).href;
       statusUrl = loaderIcon;
     } else if (status === ImageEvent.ERROR) {
+      const imageIcon = new URL('../svg/image.svg', import.meta.url).href;
       statusUrl = imageIcon;
     }
 
