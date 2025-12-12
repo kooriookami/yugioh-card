@@ -1,2 +1,2 @@
-export * from './compress-text';
-export * from './split-break-word';
+export * from './compress-text.js';
+export * from './split-break-word.js';

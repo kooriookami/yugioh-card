@@ -1,5 +1,5 @@
 import { Text, Image, ImageEvent, Leafer, useCanvas } from 'leafer-unified';
-import { isBrowser, isNode, loadFont } from '../utils';
+import { isBrowser, isNode, loadFont } from '../utils/index.js';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
 
