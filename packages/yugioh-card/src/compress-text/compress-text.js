@@ -1,7 +1,7 @@
 import { cloneDeep, isEqual } from 'lodash-unified';
 import { Group, Text } from 'leafer-unified';
-import { isBrowser } from '../utils';
-import { splitBreakWordWithBracket } from './split-break-word';
+import { isBrowser } from '../utils/index.js';
+import { splitBreakWordWithBracket } from './split-break-word.js';
 
 export class CompressText extends Group {
   constructor(data = {}) {

@@ -1,8 +1,8 @@
 import { Group, Image, Rect, Text } from 'leafer-unified';
-import { Card } from '../card';
-import { CompressText } from '../compress-text';
-import scStyle from './style/sc-style';
-import jpStyle from './style/jp-style';
+import { Card } from '../card/index.js';
+import { CompressText } from '../compress-text/index.js';
+import scStyle from './style/sc-style.js';
+import jpStyle from './style/jp-style.js';
 
 export class RushDuelCard extends Card {
   cardLeaf = null;

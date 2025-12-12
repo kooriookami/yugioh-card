@@ -1,9 +1,9 @@
 import { Group, Image, Rect } from 'leafer-unified';
-import { Card } from '../card';
-import { CompressText } from '../compress-text';
-import jpStyle from './style/jp-style';
-import custom1Style from './style/custom1-style';
-import custom2Style from './style/custom2-style';
+import { Card } from '../card/index.js';
+import { CompressText } from '../compress-text/index.js';
+import jpStyle from './style/jp-style.js';
+import custom1Style from './style/custom1-style.js';
+import custom2Style from './style/custom2-style.js';
 
 export class YugiohSeries2Card extends Card {
   cardLeaf = null;
