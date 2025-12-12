@@ -6,72 +6,57 @@ let fontPathList = [];
 export const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
 // 是否是node环境
 export const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
-// 加载json数据
-export const loadJSON = jsonPath => {
-  return new Promise((resolve, reject) => {
-    if (isBrowser) {
-      fetch(jsonPath).then(res => {
-        if (res.ok) {
-          resolve(res.json());
-        } else {
-          throw new Error();
-        }
-      }).catch(() => {
-        reject('解析字体失败');
-      });
-    } else if (isNode) {
-      try {
-        const json = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-        resolve(json);
-      } catch {
-        reject('解析字体失败');
-      }
-    } else {
-      reject('未知环境');
-    }
-  });
-};
-// 加载字体
-export const loadFont = (fontPath, skia) => {
+
+// 加载字体 - 浏览器环境，异步
+export const loadFontBrowser = (fontPath) => {
   return new Promise((resolve, reject) => {
     if (fontPathList.includes(fontPath)) {
       resolve();
       return;
     }
     fontPathList.push(fontPath);
-    loadJSON(`${fontPath}/font-list.json`).then(async data => {
-      if (isBrowser) {
-        const fontList = [];
-        data.forEach(family => {
-          const font = new FontFace(
-            family,
-            `url(${fontPath}/${family}.woff2) format('woff2')`,
-            {
-              display: 'swap',
-            },
-          );
-          document.fonts.add(font);
-          fontList.push(font);
-        });
-        const fontLoadList = fontList.map(font => font.load());
-        await Promise.allSettled(fontLoadList);
-        resolve();
-      } else if (isNode) {
-        if (skia) {
-          data.forEach(family => {
-            skia.FontLibrary.use(family, [
-              `${fontPath}/${family}.woff2`,
-            ]);
-          });
-        }
-        resolve();
+    fetch(`${fontPath}/font-list.json`).then(res => {
+      if (res.ok) {
+        return res.json();
       } else {
-        reject('未知环境');
+        throw new Error();
       }
+    }).then(async data => {
+      const fontList = [];
+      data.forEach(family => {
+        const font = new FontFace(
+          family,
+          `url(${fontPath}/${family}.woff2) format('woff2')`,
+          {
+            display: 'swap',
+          },
+        );
+        document.fonts.add(font);
+        fontList.push(font);
+      });
+      const fontLoadList = fontList.map(font => font.load());
+      await Promise.allSettled(fontLoadList);
+      resolve();
     }).catch(() => {
       reject('读取字体失败');
     });
   });
+};
+
+// 加载字体 - Nodejs 环境，同步
+export const loadFontNode = (fontPath, skia) => {
+  if (fontPathList.includes(fontPath)) {
+    return;
+  }
+  fontPathList.push(fontPath);
+  const data = JSON.parse(fs.readFileSync(`${fontPath}/font-list.json`, 'utf-8'));
+  if (skia) {
+    data.forEach(family => {
+      skia.FontLibrary.use(family, [
+        `${fontPath}/${family}.woff2`,
+      ]);
+    });
+  }
 };
 
 // 数字转全角

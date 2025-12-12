@@ -1,5 +1,5 @@
 import { Text, Image, ImageEvent, Leafer, useCanvas } from 'leafer-unified';
-import { isBrowser, isNode, loadFont } from '../utils';
+import { isBrowser, isNode, loadFontBrowser, loadFontNode } from '../utils';
 import loaderIcon from '../svg/loader.svg';
 import imageIcon from '../svg/image.svg';
 
@@ -41,9 +41,13 @@ export class Card {
 
     const fontPath = fontPathMap[this.tag];
     if (fontPath) {
-      loadFont(`${this.resourcePath}${fontPath}`, this.skia).then(() => {
-        this.draw();
-      });
+      if (isNode) {
+        loadFontNode(`${this.resourcePath}${fontPath}`, this.skia); // 同步
+      } else {
+        loadFontBrowser(`${this.resourcePath}${fontPath}`).then(() => { // 异步，加载完再绘制一次
+          this.draw();
+        });
+      }
     }
   }
 
