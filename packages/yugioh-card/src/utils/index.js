@@ -8,7 +8,7 @@ export const isBrowser = typeof window !== 'undefined' && typeof window.document
 export const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
 
 // 加载字体 - 浏览器环境，异步
-export const loadFontBrowser = (fontPath) => {
+export const loadFontBrowser = fontPath => {
   return new Promise((resolve, reject) => {
     if (fontPathList.includes(fontPath)) {
       resolve();

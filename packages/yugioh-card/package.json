@@ -1,6 +1,6 @@
 {
   "name": "yugioh-card",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "type": "module",
   "exports": "./src/index.js",
   "repository": {
@@ -18,9 +18,9 @@
   "author": "kooriookami",
   "license": "MIT",
   "dependencies": {
-    "@leafer/node": "^1.10.1",
+    "@leafer/node": "^1.12.0",
     "css-line-break": "^2.1.0",
-    "leafer": "^1.10.1",
+    "leafer": "^1.12.0",
     "leafer-unified": "^1.0.3",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
