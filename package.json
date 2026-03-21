@@ -11,6 +11,7 @@
     "build": "vite build",
     "build:lib": "vite build --mode lib",
     "preview": "vite preview",
+    "test": "node --test",
     "publish": "pnpm publish dist --registry https://registry.npmjs.org",
     "lint": "eslint",
     "lint-fix": "eslint --fix"
@@ -30,8 +31,8 @@
   "author": "kooriookami",
   "license": "ISC",
   "dependencies": {
-    "@leafer/node": "^2.0.3",
     "@element-plus/icons-vue": "^2.3.2",
+    "@leafer/node": "^2.0.3",
     "css-line-break": "^2.1.0",
     "element-plus": "^2.13.6",
     "json-editor-vue": "^0.18.1",
@@ -43,7 +44,8 @@
     "normalize.css": "^8.0.1",
     "skia-canvas": "^2.0.2",
     "vue": "^3.5.30",
-    "yugioh-card": "file:packages"
+    "yugioh-card": "file:packages",
+    "yugioh-card-v190": "npm:yugioh-card@1.9.0"
   },
   "devDependencies": {
     "@iconify/vue": "^5.0.0",
