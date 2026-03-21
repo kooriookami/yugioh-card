@@ -41,7 +41,16 @@
 
 ## ⚡ 快速开始
 
-`npm i yugioh-card`
+`pnpm add yugioh-card`
+
+### 仓库开发
+
+```bash
+pnpm install
+pnpm dev
+pnpm build
+pnpm build:lib
+```
 
 ### 浏览器
 
@@ -66,7 +75,7 @@ card.leafer.export('xxx.png', {
 
 ### Node.js
 
-`npm i skia-canvas@2`
+`pnpm add skia-canvas`
 
 ```js
 import http from 'http';

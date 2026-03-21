@@ -41,7 +41,16 @@ Currently there are 5 types of cards: 🚀🚀🚀🚀🚀
 
 ## ⚡ Quick Start
 
-`npm i yugioh-card`
+`pnpm add yugioh-card`
+
+### Workspace Development
+
+```bash
+pnpm install
+pnpm dev
+pnpm build
+pnpm build:lib
+```
 
 ### Browser
 
@@ -66,7 +75,7 @@ card.leafer.export('xxx.png', {
 
 ### Node.js
 
-`npm i skia-canvas@2`
+`pnpm add skia-canvas`
 
 ```js
 import http from 'http';

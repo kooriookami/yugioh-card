@@ -6,10 +6,10 @@
 </template>
 
 <script setup>
-import { CompressText, splitBreakWordWithBracket } from '/packages/yugioh-card/src/compress-text';
+import { CompressText, splitBreakWordWithBracket } from '/packages/src/compress-text';
 import { Leafer } from 'leafer-unified';
 import { onMounted, ref } from 'vue';
-import { numberToFull } from '/packages/yugioh-card/src/utils';
+import { numberToFull } from '/packages/src/utils';
 
 const leaferRef = ref(null);
 

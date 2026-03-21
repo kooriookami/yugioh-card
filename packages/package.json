@@ -1,8 +1,20 @@
 {
   "name": "yugioh-card",
-  "version": "1.8.2",
+  "version": "1.9.0",
   "type": "module",
-  "exports": "./src/index.js",
+  "main": "./index.js",
+  "module": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    },
+    "./*": {
+      "types": "./*.d.ts",
+      "import": "./*.js"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/kooriookami/yugioh-card"
@@ -18,12 +30,12 @@
   "author": "kooriookami",
   "license": "MIT",
   "dependencies": {
-    "@leafer/node": "^1.12.0",
+    "@leafer/node": "^2.0.3",
     "css-line-break": "^2.1.0",
-    "leafer": "^1.12.0",
+    "leafer": "^2.0.3",
     "leafer-unified": "^1.0.3",
-    "lodash": "^4.17.21",
-    "lodash-es": "^4.17.21",
+    "lodash": "^4.17.23",
+    "lodash-es": "^4.17.23",
     "lodash-unified": "^1.0.3"
   }
 }

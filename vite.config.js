@@ -1,74 +1,34 @@
-import path from 'path';
-import builtinModules from 'module';
+import fs from 'node:fs';
+import path from 'node:path';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import copy from 'rollup-plugin-copy';
-import jsonfile from 'jsonfile';
-import sortPackageJson from 'sort-package-json';
+import dts from 'vite-plugin-dts';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
-function editPackageJson() {
-  return {
-    name: 'edit-package-json',
-    closeBundle() {
-      jsonfile.readFile('packages/yugioh-card/package.json', (err, obj) => {
-        if (!err) {
-          obj.types = './types/index.d.ts';
-          obj.exports = {
-            browser: {
-              import: './browser/index.es.js',
-              require: './browser/index.umd.js',
-              types: './types/index.d.ts',
-            },
-            node: {
-              import: './node/index.es.js',
-              require: './node/index.cjs',
-              types: './types/index.d.ts',
-            },
-          };
-          jsonfile.writeFile('dist/package.json', sortPackageJson(obj), { spaces: 2 });
-        }
-      });
-    },
-  };
-}
+const packageManifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'packages/package.json'), 'utf8'));
+const packageExternalSet = new Set([
+  ...Object.keys(packageManifest.dependencies ?? {}),
+  ...Object.keys(packageManifest.peerDependencies ?? {}),
+]);
 
-const buildBrowserLib = {
-  outDir: 'dist/browser',
-  lib: {
-    entry: path.resolve(__dirname, 'packages/yugioh-card'),
-    name: 'YugiohCard',
-    formats: ['es', 'umd'],
-    fileName: format => `index.${format}.js`,
-  },
-  rollupOptions: {
-    plugins: [
-      copy({
-        targets: [
-          { src: 'LICENSE', dest: 'dist' },
-          { src: 'README.md', dest: 'dist' },
-        ],
-        hook: 'writeBundle',
-      }),
-      editPackageJson(),
-    ],
-  },
+const external = id => Array.from(packageExternalSet).some(name => id === name || id.startsWith(`${name}/`));
+
+const preserveModulesOutput = {
+  preserveModules: true,
+  preserveModulesRoot: 'packages',
+  entryFileNames: '[name].js',
 };
 
-const buildNodeLib = {
-  outDir: 'dist/node',
+const buildLib = {
+  outDir: 'dist',
   lib: {
-    entry: path.resolve(__dirname, 'packages/yugioh-card'),
-    name: 'YugiohCard',
-    formats: ['es', 'cjs'],
-    fileName: format => {
-      if (format === 'cjs') {
-        return 'index.cjs';
-      }
-      return `index.${format}.js`;
-    },
+    entry: path.resolve(__dirname, 'packages/index.js'),
+    formats: ['es'],
   },
-  rollupOptions: {
-    external: builtinModules.builtinModules,
+  rolldownOptions: {
+    treeshake: false,
+    external,
+    output: preserveModulesOutput,
   },
 };
 
@@ -76,27 +36,43 @@ const buildWebsite = {
   outDir: 'docs',
 };
 
-const getBuild = () => {
-  if (process.argv.includes('browser-lib')) {
-    return buildBrowserLib;
-  } else if (process.argv.includes('node-lib')) {
-    return buildNodeLib;
-  }
-  return buildWebsite;
+const buildConfigMap = {
+  lib: buildLib,
+  website: buildWebsite,
 };
 
-export default defineConfig({
-  base: './',
-  publicDir: false,
-  plugins: [
-    vue(),
-  ],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
+export default defineConfig(({ mode }) => {
+  const buildTarget = mode === 'lib' ? 'lib' : 'website';
+  const isLib = buildTarget === 'lib';
+
+  return {
+    base: './',
+    publicDir: false,
+    plugins: [
+      vue(),
+      ...(isLib ? [viteStaticCopy({
+        targets: [
+          { src: 'packages/package.json', dest: '.' },
+          { src: 'LICENSE', dest: '.' },
+          { src: 'README.md', dest: '.' },
+          { src: 'README.en.md', dest: '.' },
+        ],
+      }), dts({
+        tsconfigPath: path.resolve(__dirname, 'tsconfig.dts.json'),
+        include: ['packages/**/*.js'],
+        outDir: 'dist',
+        entryRoot: 'packages',
+        copyDtsFiles: false,
+        insertTypesEntry: false,
+        skipDiagnostics: false,
+      })] : []),
+    ],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src'),
+      },
+      conditions: ['browser'],
     },
-    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'], // 扩展了.vue后缀
-    conditions: [process.argv.includes('node-lib') ? 'node' : 'browser'],
-  },
-  build: getBuild(),
+    build: buildConfigMap[buildTarget],
+  };
 });

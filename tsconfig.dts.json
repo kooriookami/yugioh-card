@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": false,
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ]
+  },
+  "include": [
+    "packages/**/*.js"
+  ],
+  "exclude": [
+    "dist/**/*",
+    "docs/**/*",
+    "node_modules/**/*"
+  ]
+}

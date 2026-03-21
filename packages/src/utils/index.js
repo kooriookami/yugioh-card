@@ -1,11 +1,24 @@
-import fs from 'fs';
 import { isPlainObject } from 'lodash-unified';
 // 已加载的字体路径列表
 let fontPathList = [];
+let nodeFs = null;
 // 是否是浏览器
 export const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
 // 是否是node环境
 export const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
+
+const getNodeFs = () => {
+  if (!isNode) {
+    throw new Error('fs is not available in browser builds');
+  }
+  if (!nodeFs) {
+    nodeFs = process.getBuiltinModule?.('node:fs') ?? process.getBuiltinModule?.('fs');
+  }
+  if (!nodeFs) {
+    throw new Error('fs is not available in the current Node.js runtime');
+  }
+  return nodeFs;
+};
 
 // 加载字体 - 浏览器环境，异步
 export const loadFontBrowser = fontPath => {
@@ -49,7 +62,7 @@ export const loadFontNode = (fontPath, skia) => {
     return;
   }
   fontPathList.push(fontPath);
-  const data = JSON.parse(fs.readFileSync(`${fontPath}/font-list.json`, 'utf-8'));
+  const data = JSON.parse(getNodeFs().readFileSync(`${fontPath}/font-list.json`, 'utf-8'));
   if (skia) {
     data.forEach(family => {
       skia.FontLibrary.use(family, [
