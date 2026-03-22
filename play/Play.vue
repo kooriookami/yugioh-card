@@ -251,6 +251,15 @@ const cases = [
       width: 360,
     },
   },
+  {
+    id: 'long-unbreakable',
+    label: '超长连续串',
+    description: '验证中文夹长 Latin 连续串时，新版会强制断开而不是越过画布。',
+    config: {
+      text: '汉字汉字汉字汉字汉字汉字汉字汉字汉字longlonglonglonglonglonglonglonglonglonglong汉字汉字汉字汉字汉字汉字汉字汉字汉字汉字',
+      width: 360,
+    },
+  },
 ];
 
 const currentCase = computed(() => {

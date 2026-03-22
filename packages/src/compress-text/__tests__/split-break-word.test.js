@@ -78,6 +78,7 @@ test('splitBreakWord handles consecutive separators and mixed scripts', () => {
   assert.deepEqual(splitBreakWord('A  B'), ['A', ' ', ' ', 'B']);
   assert.deepEqual(splitBreakWord('游戏王ABC１２３'), ['游', '戏', '王', 'ABC', '１', '２', '３']);
   assert.deepEqual(splitBreakWord('カードA・B'), ['カー', 'ド', 'A・', 'B']);
+  assert.deepEqual(splitBreakWord('汉字longlonglong汉字'), ['汉', '字', 'longlonglong', '汉', '字']);
 });
 
 test('splitBreakWordWithBracket falls back to plain splitting when no ruby token exists', () => {

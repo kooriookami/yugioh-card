@@ -408,3 +408,23 @@ test('CompressText respects explicit rtFontScaleX without extra compression logi
 
   assert.equal(rtItem.rt.rtLeaf.scaleX, 0.75);
 });
+
+test('CompressText force-wraps oversized unbreakable text without exceeding width', () => {
+  const text = '汉字汉字汉字汉字汉字汉字汉字汉字汉字longlonglonglonglonglonglonglonglonglonglong汉字汉字汉字汉字汉字汉字汉字汉字汉字汉字';
+  const instance = new NewCompressText({
+    ...baseConfig,
+    text,
+    width: 320,
+  });
+  const rubyText = instance.rubyList.map(ruby => ruby.text).join('');
+  const maxLineWidth = Math.max(...Array.from(instance.rubyLineMap.values()).map(lineList => {
+    const lastRuby = lineList[lineList.length - 1];
+    const lastPaddingRight = lastRuby.paddingRight || 0;
+    return lastRuby.rubyLeaf.x + lastRuby.width + lastPaddingRight;
+  }));
+
+  assert.equal(rubyText, text);
+  assert.ok(instance.currentLine > 0);
+  assert.ok(maxLineWidth <= instance.width);
+  assert.ok(instance.rubyList.some(ruby => ruby.text.length > 1 && ruby.text.length < 'longlonglonglonglonglonglonglonglonglonglong'.length));
+});

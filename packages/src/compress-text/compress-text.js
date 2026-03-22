@@ -155,6 +155,10 @@ export class CompressText extends Group {
     return (ruby.paddingLeft || 0) + (ruby.paddingRight || 0);
   }
 
+  isSplittablePlainTextItem(item) {
+    return !item.rt.text && item.ruby.text !== '\n' && Array.from(item.ruby.text).length > 1;
+  }
+
   resetCompressionState() {
     this.textScale = 1;
     this.firstLineTextScale = 1;
@@ -173,6 +177,18 @@ export class CompressText extends Group {
       this.group.destroy();
     }
     this.group = new Group();
+  }
+
+  createTextItem(text, bold = false) {
+    return {
+      ruby: {
+        text,
+        bold,
+      },
+      rt: {
+        text: '',
+      },
+    };
   }
 
   createRubyLeaf(ruby) {
@@ -269,10 +285,93 @@ export class CompressText extends Group {
   // 创建文本
   createRuby() {
     this.rubyList.forEach(ruby => {
-      const rubyLeaf = this.createRubyLeaf(ruby);
-      this.group.add(rubyLeaf);
+      this.createRubyLeaf(ruby);
+    });
+    this.rebuildOverflowItemLists();
+    this.rubyList.forEach(ruby => {
+      this.group.add(ruby.rubyLeaf);
     });
     this.updateTextScale();
+  }
+
+  splitPlainTextItem(item) {
+    const textList = Array.from(item.ruby.text);
+    const itemList = [];
+    let start = 0;
+
+    while (start < textList.length) {
+      let low = start;
+      let high = textList.length;
+      let bestItem = null;
+
+      while (low < high) {
+        const mid = Math.ceil((low + high) / 2);
+        const nextItem = this.createTextItem(textList.slice(start, mid).join(''), item.ruby.bold);
+        this.createRubyLeaf(nextItem.ruby);
+
+        if (nextItem.ruby.width <= this.width) {
+          if (bestItem?.ruby?.rubyLeaf) {
+            bestItem.ruby.rubyLeaf.destroy();
+          }
+          bestItem = nextItem;
+          low = mid;
+        } else {
+          nextItem.ruby.rubyLeaf.destroy();
+          high = mid - 1;
+        }
+      }
+
+      if (!bestItem) {
+        bestItem = this.createTextItem(textList[start], item.ruby.bold);
+        this.createRubyLeaf(bestItem.ruby);
+      }
+
+      itemList.push([bestItem]);
+      start += Array.from(bestItem.ruby.text).length;
+    }
+
+    return itemList;
+  }
+
+  splitOversizedItemList(itemList) {
+    const nextItemList = [];
+
+    itemList.forEach(item => {
+      if (this.isSplittablePlainTextItem(item)) {
+        if (item.ruby.rubyLeaf) {
+          item.ruby.rubyLeaf.destroy();
+        }
+        nextItemList.push(...this.splitPlainTextItem(item));
+        return;
+      }
+
+      nextItemList.push([item]);
+    });
+
+    return nextItemList;
+  }
+
+  rebuildOverflowItemLists() {
+    if (!this.width) {
+      return;
+    }
+
+    const nextNewlineList = this.newlineList.map(newline => {
+      return newline.flatMap(itemList => {
+        const itemWidth = this.getItemWidth(itemList);
+        const canSplit = itemList.some(item => this.isSplittablePlainTextItem(item));
+
+        if (itemWidth <= this.width || !canSplit) {
+          return [itemList];
+        }
+
+        return this.splitOversizedItemList(itemList);
+      });
+    });
+
+    this.newlineList = nextNewlineList;
+    this.parseList = nextNewlineList.flat();
+    this.updateLayoutCache();
   }
 
   getFirstLineScale() {
