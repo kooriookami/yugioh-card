@@ -41,11 +41,14 @@ Currently there are 5 types of cards: 🚀🚀🚀🚀🚀
 
 ## ⚡ Quick Start
 
+Requirements: Node.js 22+ and pnpm.
+
 `pnpm add yugioh-card`
 
 ### Workspace Development
 
 ```bash
+# Node.js 22+
 pnpm install
 pnpm dev
 pnpm build
@@ -75,7 +78,9 @@ card.leafer.export('xxx.png', {
 
 ### Node.js
 
-`pnpm add skia-canvas`
+Before running the Node.js example, make sure your local Node.js version is 22 or higher.
+
+`pnpm add skia-canvas@2`
 
 ```js
 import http from 'http';
