@@ -52,7 +52,7 @@ export default defineConfig(({ mode }) => {
       vue(),
       ...(isLib ? [viteStaticCopy({
         targets: [
-          { src: 'packages/package.json', dest: '.' },
+          { src: 'packages/package.json', dest: '.', rename: { stripBase: 1 } },
           { src: 'LICENSE', dest: '.' },
           { src: 'README.md', dest: '.' },
           { src: 'README.en.md', dest: '.' },
