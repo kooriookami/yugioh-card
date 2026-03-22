@@ -21,6 +21,19 @@ import { splitBreakWordWithBracket } from './split-break-word.js';
 
 const rubyTokenPattern = /(\[[^\[\]()]*\([^\[\]()]*\)])/g;
 const rubyRtPattern = /^\[([^\[\]()]+)\(([^\[\]()]*)\)]$/;
+const baseLineHeight = 1.15; // 默认正文与注音行高倍率。
+const noCompressText = '●①②③④⑤⑥⑦⑧⑨⑩'; // 不参与末行压缩的特殊字符集合。
+const compressBinarySearchStartScale = 0.5; // 高度压缩时二分搜索的初始缩放值。
+const compressBinarySearchPrecision = 0.01; // 高度压缩时二分搜索的停止精度。
+const autoSmallSizeScaleThreshold = 0.7; // autoSmallSize 触发切换到小字模式的缩放阈值。
+const rtStretchRate = 0.9; // 注音可通过字距拉伸覆盖正文宽度时采用的目标占比。
+const rtCompressRate = 0.6; // 注音过宽时允许压缩到的最小横向比例。
+const rubyPaddingMax = 5; // 因注音过宽而扩展正文占位时，单侧 padding 的最大值。
+const gradientStops = [0, 0.4, 0.55, 0.6, 0.75]; // 渐变填充的关键色标位置。
+const gradientStrokeColor = 'rgba(0, 0, 0, 0.6)'; // 渐变模式下正文描边与阴影共用的颜色。
+const gradientStrokeWidthRate = 0.025; // 渐变模式下描边宽度相对字号的倍率。
+const gradientShadowBlurRate = 0.015; // 渐变模式下阴影模糊相对字号的倍率。
+const gradientShadowOffsetYRate = 0.025; // 渐变模式下阴影纵向偏移相对字号的倍率。
 
 export class CompressText extends Group {
   /**
@@ -30,8 +43,6 @@ export class CompressText extends Group {
    */
   constructor(data = {}) {
     super();
-    this.baseLineHeight = 1.15; // 基础行高
-    this.noCompressText = '●①②③④⑤⑥⑦⑧⑨⑩'; // 不压缩的文本
     this.parseList = []; // 解析后的文本列表
     this.flatItemList = []; // 平铺后的文本项列表
     this.newlineList = []; // 根据换行符分割的文本列表
@@ -52,7 +63,7 @@ export class CompressText extends Group {
       fontFamily: 'ygo-sc',
       fontSize: 24,
       fontWeight: 'normal',
-      lineHeight: this.baseLineHeight,
+      lineHeight: baseLineHeight,
       letterSpacing: 0,
       wordSpacing: 0,
       firstLineCompress: false,
@@ -66,7 +77,7 @@ export class CompressText extends Group {
       rtFontFamily: 'ygo-tip',
       rtFontSize: 13,
       rtFontWeight: 'bold',
-      rtLineHeight: this.baseLineHeight,
+      rtLineHeight: baseLineHeight,
       rtLetterSpacing: 0,
       rtTop: -9,
       rtColor: 'black',
@@ -123,7 +134,7 @@ export class CompressText extends Group {
    * @param {object} [data={}] 初始化配置。
    */
   initData(data = {}) {
-    this.set(Object.assign(this.defaultData, data));
+    this.set(Object.assign({}, this.defaultData, data));
   }
 
   // 解析与缓存
@@ -147,7 +158,7 @@ export class CompressText extends Group {
     let bold = false;
     const text = String(this.text).trimEnd();
     // 正则的捕获圆括号不要随意修改
-    text.split(new RegExp(`(<b>|</b>|\n|[${this.noCompressText}])`)).filter(value => value).forEach(value => {
+    text.split(new RegExp(`(<b>|</b>|\n|[${noCompressText}])`)).filter(value => value).forEach(value => {
       if (value === '<b>') {
         bold = true;
         return;
@@ -701,15 +712,15 @@ export class CompressText extends Group {
    * 当开启 autoSmallSize 且缩放过小时，会切换到 smallFontSize 再重新计算。
    */
   compressRuby() {
+    // 首行压缩
     if (this.firstLineCompress && this.width) {
-      // 首行压缩
       this.firstLineTextScale = this.getFirstLineScale();
       this.updateTextScale();
     }
     const lastRuby = this.rubyList[this.rubyList.length - 1];
+    // 用二分法获取最大的 scale，精度由 compressBinarySearchPrecision 控制。
     if (this.doesOverflowHeight(lastRuby)) {
-      // 用二分法获取最大的scale，精度0.01
-      let scale = 0.5;
+      let scale = compressBinarySearchStartScale;
       let start = 0;
       let end = this.textScale;
       while (scale > 0) {
@@ -717,12 +728,11 @@ export class CompressText extends Group {
         this.textScale = scale;
         this.updateTextScale();
         this.doesOverflowHeight(lastRuby) ? end = scale : start = scale;
-        if (!this.doesOverflowHeight(lastRuby) && end - start <= 0.01) {
-          // 如果是autoSmallSize，字体判断缩小，当字号大于1不执行
-          if (this.autoSmallSize && scale < 0.7 && this.fontScale <= 1 && !this.isSmallSize) {
+        if (!this.doesOverflowHeight(lastRuby) && end - start <= compressBinarySearchPrecision) {
+          if (this.autoSmallSize && scale < autoSmallSizeScaleThreshold && this.fontScale <= 1 && !this.isSmallSize) {
             this.isSmallSize = true;
             this.updateFontSize();
-            scale = 0.5;
+            scale = compressBinarySearchStartScale;
             start = 0;
             end = 1;
           } else {
@@ -856,7 +866,7 @@ export class CompressText extends Group {
         this.group.add(rtLeaf);
       }
     });
-    // 如果需要再次压缩
+    // rt 扩宽正文占位后需要再做一次正文重排。
     if (this.needCompressTwice) {
       this.relayoutAfterRtCompression();
     }
@@ -910,7 +920,7 @@ export class CompressText extends Group {
       if (this.firstLineCompress && newlineIndex === 0) {
         // 首行压缩到一行
         this.updateRubyScale(ruby, this.firstLineTextScale);
-      } else if (!this.noCompressText.includes(ruby.text) && lastNewline) {
+      } else if (!noCompressText.includes(ruby.text) && lastNewline) {
         // 只压缩最后一行
         this.updateRubyScale(ruby, this.textScale);
       } else {
@@ -1132,7 +1142,6 @@ export class CompressText extends Group {
    */
   stretchRtLetterSpacing(context) {
     const { ruby, rt, rtLeaf, rubyWidth } = context;
-    const rtStretchRate = 0.9;
     const maxLetterSpacing = this.fontSize - this.rtFontSize / 2;
     const newLetterSpacing = (rubyWidth * rtStretchRate - rt.width) / (rt.text.length - 1);
 
@@ -1146,14 +1155,13 @@ export class CompressText extends Group {
    * @param {{ruby: object, rt: object, rtLeaf: Text, rubyWidth: number}} context 注音布局上下文。
    */
   compressRtToRubyWidth(context) {
-    const rtCompressRate = 0.6;
     const { ruby, rt, rtLeaf, rubyWidth } = context;
 
     if (rubyWidth / rt.width < rtCompressRate) {
       const widen = rtCompressRate * rt.width - rubyWidth;
       rtLeaf.scaleX = rtCompressRate;
-      ruby.paddingLeft = Math.min(widen / 2, 5);
-      ruby.paddingRight = Math.min(widen / 2, 5);
+      ruby.paddingLeft = Math.min(widen / 2, rubyPaddingMax);
+      ruby.paddingRight = Math.min(widen / 2, rubyPaddingMax);
       this.needCompressTwice = true;
     } else {
       rtLeaf.scaleX = rubyWidth / rt.width;
@@ -1166,7 +1174,6 @@ export class CompressText extends Group {
    * @param {{ruby: object, rt: object, rtLeaf: Text, rubyWidth: number}} context 注音布局上下文。
    */
   applyRtWidthStrategy(context) {
-    const rtStretchRate = 0.9;
     const { ruby, rt } = context;
 
     if (this.rtFontScaleX !== 1) {
@@ -1216,21 +1223,21 @@ export class CompressText extends Group {
           fill: {
             type: 'linear',
             stops: [
-              { offset: 0, color: this.gradientColor1 },
-              { offset: 0.4, color: this.gradientColor2 },
-              { offset: 0.55, color: this.gradientColor2 },
-              { offset: 0.6, color: this.gradientColor1 },
-              { offset: 0.75, color: this.gradientColor2 },
+              { offset: gradientStops[0], color: this.gradientColor1 },
+              { offset: gradientStops[1], color: this.gradientColor2 },
+              { offset: gradientStops[2], color: this.gradientColor2 },
+              { offset: gradientStops[3], color: this.gradientColor1 },
+              { offset: gradientStops[4], color: this.gradientColor2 },
             ],
           },
-          stroke: 'rgba(0, 0, 0, 0.6)',
-          strokeWidth: fontSize * 0.025 * this.fontScale,
+          stroke: gradientStrokeColor,
+          strokeWidth: fontSize * gradientStrokeWidthRate * this.fontScale,
           strokeAlign: 'outside',
           shadow: {
-            blur: fontSize * 0.015 * this.fontScale,
+            blur: fontSize * gradientShadowBlurRate * this.fontScale,
             x: 0,
-            y: fontSize * 0.025 * this.fontScale,
-            color: 'rgba(0, 0, 0, 0.6)',
+            y: fontSize * gradientShadowOffsetYRate * this.fontScale,
+            color: gradientStrokeColor,
           },
         });
       });

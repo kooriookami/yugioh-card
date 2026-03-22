@@ -184,15 +184,18 @@ const summarizeRuntimeState = instance => {
     width: instance.width,
     height: instance.height,
     textAlign: instance.textAlign,
-    defaultData: {
-      text: instance.defaultData.text,
-      fontSize: instance.defaultData.fontSize,
-      smallFontSize: instance.defaultData.smallFontSize,
-      width: instance.defaultData.width,
-      height: instance.defaultData.height,
-      textAlign: instance.defaultData.textAlign,
-    },
     layout: summarizeLayout(instance),
+  };
+};
+
+const summarizeDefaultData = instance => {
+  return {
+    text: instance.defaultData.text,
+    fontSize: instance.defaultData.fontSize,
+    smallFontSize: instance.defaultData.smallFontSize,
+    width: instance.defaultData.width,
+    height: instance.defaultData.height,
+    textAlign: instance.defaultData.textAlign,
   };
 };
 
@@ -257,7 +260,7 @@ test('CompressText helper getters reflect current size and padding', () => {
   assert.equal(instance.getCurrentFontSize(), 16);
 });
 
-test('CompressText initData fallback semantics match yugioh-card@1.9.0', () => {
+test('CompressText keeps defaultData pristine and falls back to class defaults', () => {
   const initConfig = {
     ...baseConfig,
     text: '[初(しょ)]期[設(せっ)][定(てい)]',
@@ -276,13 +279,33 @@ test('CompressText initData fallback semantics match yugioh-card@1.9.0', () => {
     textAlign: undefined,
   };
 
-  const next = new NewCompressText(initConfig);
-  const old = new OldCompressText(initConfig);
+  const instance = new NewCompressText(initConfig);
 
-  next.set(revertConfig);
-  old.set(revertConfig);
+  assert.deepEqual(summarizeDefaultData(instance), {
+    text: '',
+    fontSize: 24,
+    smallFontSize: 18,
+    width: 0,
+    height: 0,
+    textAlign: 'justify',
+  });
 
-  assert.deepEqual(summarizeRuntimeState(next), summarizeRuntimeState(old));
+  instance.set(revertConfig);
+
+  assert.equal(instance.text, '');
+  assert.equal(instance.fontSize, 24);
+  assert.equal(instance.smallFontSize, 18);
+  assert.equal(instance.width, 0);
+  assert.equal(instance.height, 0);
+  assert.equal(instance.textAlign, 'justify');
+  assert.deepEqual(summarizeDefaultData(instance), {
+    text: '',
+    fontSize: 24,
+    smallFontSize: 18,
+    width: 0,
+    height: 0,
+    textAlign: 'justify',
+  });
 });
 
 test('CompressText set update sequences match yugioh-card@1.9.0', () => {
