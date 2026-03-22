@@ -411,7 +411,7 @@ export class CompressText extends Group {
    */
   createRubyLeaf(ruby) {
     const rubyLeaf = new Text(this.getRubyTextStyle(ruby));
-    const bounds = rubyLeaf.textDrawData.bounds;
+    const bounds = rubyLeaf.getBounds('content', 'inner');
     const spacingWidth = ruby.text === ' ' ? this.wordSpacing : 0;
 
     ruby.rubyLeaf = rubyLeaf;
@@ -431,7 +431,7 @@ export class CompressText extends Group {
    */
   createRtLeaf(rt) {
     const rtLeaf = new Text(this.getRtTextStyle(rt));
-    const bounds = rtLeaf.textDrawData.bounds;
+    const bounds = rtLeaf.getBounds('content', 'inner');
 
     rt.rtLeaf = rtLeaf;
     rt.originalWidth = bounds.width;
