@@ -51,7 +51,6 @@
     "@iconify/vue": "^5.0.0",
     "@vitejs/plugin-vue": "^6.0.5",
     "eslint": "^10.1.0",
-    "eslint-define-config": "^2.1.0",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-vue": "^10.8.0",
     "globals": "^17.4.0",
