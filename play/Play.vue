@@ -24,7 +24,12 @@
         <div class="compare-grid">
           <div class="compare-card">
             <div class="compare-card-header">
-              <h3>新版本</h3>
+              <div class="compare-card-title">
+                <h3>新版本</h3>
+                <span :class="['render-metric', getRenderMetricClass(renderCost.newMs)]">
+                  最近一次渲染 {{ formatRenderCost(renderCost.newMs) }}
+                </span>
+              </div>
               <span class="compare-tag compare-tag-new">current</span>
             </div>
             <div ref="newLeaferRef" class="leafer-host" />
@@ -32,10 +37,26 @@
 
           <div class="compare-card">
             <div class="compare-card-header">
-              <h3>旧版本</h3>
-              <span class="compare-tag compare-tag-old">yugioh-card@1.9.0</span>
+              <div class="compare-card-title">
+                <h3>旧版本</h3>
+                <span :class="['render-metric', getRenderMetricClass(renderCost.oldMs)]">
+                  {{ oldPreviewEnabled ? `最近一次渲染 ${formatRenderCost(renderCost.oldMs)}` : '预览已关闭' }}
+                </span>
+              </div>
+              <div class="compare-card-actions">
+                <span class="compare-tag compare-tag-old">yugioh-card@1.9.0</span>
+                <el-switch
+                  v-model="oldPreviewEnabled"
+                  inline-prompt
+                  active-text="开"
+                  inactive-text="关"
+                />
+              </div>
             </div>
-            <div ref="oldLeaferRef" class="leafer-host" />
+            <div v-if="oldPreviewEnabled" ref="oldLeaferRef" class="leafer-host" />
+            <div v-else class="compare-placeholder">
+              旧版本预览已关闭。可以用这个开关确认卡顿是否来自旧版本渲染。
+            </div>
           </div>
         </div>
       </section>
@@ -176,7 +197,7 @@
 
 <script setup>
 import { Leafer } from 'leafer-unified';
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { CompressText as OldCompressText } from 'yugioh-card-v190/src/compress-text/compress-text';
 import { splitBreakWordWithBracket as splitBreakWordWithBracketOld } from 'yugioh-card-v190/src/compress-text/split-break-word';
 import { CompressText as NewCompressText, splitBreakWordWithBracket as splitBreakWordWithBracketNew } from '/packages/src/compress-text';
@@ -185,9 +206,12 @@ const rubyPlainTextPattern = /\[([^\[\]()]+)\(([^\[\]()]*)\)]/g;
 
 const newLeaferRef = ref(null);
 const oldLeaferRef = ref(null);
+const newLeaferInstanceRef = ref(null);
+const oldLeaferInstanceRef = ref(null);
 const newCompressTextRef = ref(null);
 const oldCompressTextRef = ref(null);
 const selectedCaseId = ref('ruby-basic');
+const oldPreviewEnabled = ref(true);
 
 const previewBaseConfig = {
   text: '',
@@ -205,6 +229,10 @@ const previewBaseConfig = {
 };
 
 const editableConfig = reactive({ ...previewBaseConfig });
+const renderCost = reactive({
+  newMs: null,
+  oldMs: null,
+});
 
 // 移除假名
 const removeKanjiKana = (text = '') => {
@@ -311,18 +339,80 @@ const resetCurrentCase = () => {
   loadCaseConfig();
 };
 
-const updatePreview = () => {
-  if (!newCompressTextRef.value || !oldCompressTextRef.value) {
-    return;
-  }
-
-  const nextConfig = {
+const getCurrentPreviewConfig = () => {
+  return {
     ...previewBaseConfig,
     ...editableConfig,
   };
+};
 
-  newCompressTextRef.value.set({ ...nextConfig });
-  oldCompressTextRef.value.set({ ...nextConfig });
+const measureRenderCost = callback => {
+  const startTime = performance.now();
+  callback();
+  return performance.now() - startTime;
+};
+
+const formatRenderCost = value => {
+  if (typeof value !== 'number') {
+    return '--';
+  }
+
+  return `${value.toFixed(2)} ms`;
+};
+
+const getRenderMetricClass = value => {
+  if (typeof value !== 'number') {
+    return 'render-metric-idle';
+  }
+  if (value >= 50) {
+    return 'render-metric-danger';
+  }
+  if (value >= 16) {
+    return 'render-metric-warn';
+  }
+
+  return 'render-metric-ok';
+};
+
+const createOldPreview = () => {
+  if (oldLeaferInstanceRef.value || !oldLeaferRef.value) {
+    return;
+  }
+
+  const oldLeafer = new Leafer({
+    view: oldLeaferRef.value,
+    grow: true,
+  });
+  const oldCompressText = new OldCompressText();
+
+  oldLeafer.add(oldCompressText);
+  oldLeaferInstanceRef.value = oldLeafer;
+  oldCompressTextRef.value = oldCompressText;
+};
+
+const destroyOldPreview = () => {
+  oldCompressTextRef.value = null;
+  oldLeaferInstanceRef.value?.destroy();
+  oldLeaferInstanceRef.value = null;
+  renderCost.oldMs = null;
+};
+
+const updatePreview = () => {
+  if (!newCompressTextRef.value) {
+    return;
+  }
+
+  const nextConfig = getCurrentPreviewConfig();
+
+  renderCost.newMs = measureRenderCost(() => {
+    newCompressTextRef.value.set({ ...nextConfig });
+  });
+
+  if (oldPreviewEnabled.value && oldCompressTextRef.value) {
+    renderCost.oldMs = measureRenderCost(() => {
+      oldCompressTextRef.value.set({ ...nextConfig });
+    });
+  }
 };
 
 onMounted(() => {
@@ -330,25 +420,38 @@ onMounted(() => {
     view: newLeaferRef.value,
     grow: true,
   });
-
-  const oldLeafer = new Leafer({
-    view: oldLeaferRef.value,
-    grow: true,
-  });
-
   const newCompressText = new NewCompressText();
-  const oldCompressText = new OldCompressText();
+
+  newLeaferInstanceRef.value = newLeafer;
   newCompressTextRef.value = newCompressText;
-  oldCompressTextRef.value = oldCompressText;
 
   newLeafer.add(newCompressText);
-  oldLeafer.add(oldCompressText);
+
+  if (oldPreviewEnabled.value) {
+    createOldPreview();
+  }
 
   updatePreview();
 });
 
+onBeforeUnmount(() => {
+  newLeaferInstanceRef.value?.destroy();
+  destroyOldPreview();
+});
+
 watch(selectedCaseId, () => {
   loadCaseConfig();
+});
+
+watch(oldPreviewEnabled, async enabled => {
+  if (enabled) {
+    await nextTick();
+    createOldPreview();
+    updatePreview();
+    return;
+  }
+
+  destroyOldPreview();
 });
 
 watch(editableConfig, () => {
@@ -439,6 +542,39 @@ loadCaseConfig();
   margin: 0;
 }
 
+.compare-card-title {
+  display: grid;
+  gap: 4px;
+}
+
+.render-metric {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(15, 23, 42, 0.62);
+}
+
+.render-metric-idle {
+  color: rgba(15, 23, 42, 0.45);
+}
+
+.render-metric-ok {
+  color: #0f766e;
+}
+
+.render-metric-warn {
+  color: #b45309;
+}
+
+.render-metric-danger {
+  color: #b91c1c;
+}
+
+.compare-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .compare-tag,
 .compare-chip {
   display: inline-flex;
@@ -484,6 +620,19 @@ loadCaseConfig();
     linear-gradient(90deg, rgba(148, 163, 184, 0.2) 1px, transparent 1px),
     linear-gradient(rgba(148, 163, 184, 0.2) 1px, transparent 1px);
   background-size: auto, 24px 24px, 24px 24px;
+}
+
+.compare-placeholder {
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border-radius: 20px;
+  color: rgba(15, 23, 42, 0.68);
+  text-align: center;
+  background: rgba(241, 245, 249, 0.72);
+  border: 1px dashed rgba(148, 163, 184, 0.5);
 }
 
 .info-block {

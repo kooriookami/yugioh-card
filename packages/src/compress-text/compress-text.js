@@ -700,6 +700,19 @@ export class CompressText extends Group {
     return this.height && lastRuby && this.currentY + lastRuby.height > this.height;
   }
 
+  /**
+   * 判断当前高度压缩是否已经达到单行收敛边界。
+   *
+   * 当文本已经被压缩到一行，但单行本身的高度仍然超过容器高度时，
+   * 继续做横向压缩也无法进一步降低高度，应直接停止压缩。
+   *
+   * @param {object} lastRuby 当前最后一个 ruby 项。
+   * @returns {boolean} 是否已经达到单行高度边界。
+   */
+  reachedSingleLineHeightLimit(lastRuby) {
+    return !!(this.height && lastRuby && this.currentLine === 0 && lastRuby.height > this.height);
+  }
+
   // 压缩与对齐
 
   /**
@@ -720,6 +733,10 @@ export class CompressText extends Group {
     const lastRuby = this.rubyList[this.rubyList.length - 1];
     // 用二分法获取最大的 scale，精度由 compressBinarySearchPrecision 控制。
     if (this.doesOverflowHeight(lastRuby)) {
+      if (this.reachedSingleLineHeightLimit(lastRuby)) {
+        return;
+      }
+
       let scale = compressBinarySearchStartScale;
       let start = 0;
       let end = this.textScale;
@@ -727,8 +744,13 @@ export class CompressText extends Group {
         scale = (start + end) / 2;
         this.textScale = scale;
         this.updateTextScale();
-        this.doesOverflowHeight(lastRuby) ? end = scale : start = scale;
-        if (!this.doesOverflowHeight(lastRuby) && end - start <= compressBinarySearchPrecision) {
+        if (this.reachedSingleLineHeightLimit(lastRuby)) {
+          break;
+        }
+
+        const overflowHeight = this.doesOverflowHeight(lastRuby);
+        overflowHeight ? end = scale : start = scale;
+        if (!overflowHeight && end - start <= compressBinarySearchPrecision) {
           if (this.autoSmallSize && scale < autoSmallSizeScaleThreshold && this.fontScale <= 1 && !this.isSmallSize) {
             this.isSmallSize = true;
             this.updateFontSize();

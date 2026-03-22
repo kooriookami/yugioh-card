@@ -378,6 +378,30 @@ test('CompressText overflow helper reflects current layout height', () => {
   assert.equal(instance.doesOverflowHeight(lastRuby), true);
 });
 
+test('CompressText stops height compression after reaching one-line height limit', () => {
+  const instance = new NewCompressText({
+    ...baseConfig,
+    text: '[自(じ)][分(ぶん)]フィールドのカード１枚を対象として発動できる。',
+    width: 180,
+    height: 80,
+  });
+  const originalUpdateTextScale = instance.updateTextScale;
+  let updateTextScaleCount = 0;
+
+  instance.updateTextScale = (...args) => {
+    updateTextScaleCount++;
+    return originalUpdateTextScale.apply(instance, args);
+  };
+
+  instance.set({ height: 12 });
+
+  const lastRuby = instance.rubyList[instance.rubyList.length - 1];
+  assert.equal(instance.currentLine, 0);
+  assert.equal(instance.reachedSingleLineHeightLimit(lastRuby), true);
+  assert.equal(instance.doesOverflowHeight(lastRuby), true);
+  assert.ok(updateTextScaleCount < 40);
+});
+
 test('CompressText gradient styling is applied to ruby leaves', () => {
   const instance = new NewCompressText({
     ...baseConfig,
