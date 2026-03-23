@@ -69,7 +69,6 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, 'src'),
       },
-      conditions: ['browser'],
     },
     build: buildConfigMap[buildTarget],
   };

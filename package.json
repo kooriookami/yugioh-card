@@ -63,5 +63,10 @@
   },
   "engines": {
     "node": ">= 22"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "skia-canvas"
+    ]
   }
 }
