@@ -65,7 +65,7 @@
     "node": ">= 22"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
+    "allowBuilds": [
       "skia-canvas"
     ]
   }
