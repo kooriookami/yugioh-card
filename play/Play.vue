@@ -124,9 +124,10 @@
           <label class="field">
             <span>对齐方式</span>
             <el-select v-model="editableConfig.textAlign">
-              <el-option label="两端对齐" value="justify" />
+              <el-option label="左对齐" value="left" />
               <el-option label="居中" value="center" />
               <el-option label="右对齐" value="right" />
+              <el-option label="两端对齐" value="justify" />
             </el-select>
           </label>
 
