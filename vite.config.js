@@ -53,9 +53,7 @@ export default defineConfig(({ mode }) => {
       ...(isLib ? [viteStaticCopy({
         targets: [
           { src: 'packages/package.json', dest: '.', rename: { stripBase: 1 } },
-          { src: 'LICENSE', dest: '.' },
-          { src: 'README.md', dest: '.' },
-          { src: 'README.en.md', dest: '.' },
+          { src: ['LICENSE', 'README.md', 'README.en.md'], dest: '.' },
         ],
       }), dts({
         tsconfigPath: path.resolve(__dirname, 'tsconfig.dts.json'),
