@@ -30,9 +30,9 @@
   "author": "kooriookami",
   "license": "MIT",
   "dependencies": {
-    "@leafer/node": "^2.0.3",
+    "@leafer/node": "^2.0.4",
     "css-line-break": "^2.1.0",
-    "leafer": "^2.0.3",
+    "leafer": "^2.0.4",
     "leafer-unified": "^1.0.3",
     "lodash": "^4.17.23",
     "lodash-es": "^4.17.23",

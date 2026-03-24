@@ -32,11 +32,11 @@
   "license": "ISC",
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
-    "@leafer/node": "^2.0.3",
+    "@leafer/node": "^2.0.4",
     "css-line-break": "^2.1.0",
     "element-plus": "^2.13.6",
     "json-editor-vue": "^0.18.1",
-    "leafer": "^2.0.3",
+    "leafer": "^2.0.4",
     "leafer-unified": "^1.0.3",
     "lodash": "^4.17.23",
     "lodash-es": "^4.17.23",
@@ -45,7 +45,7 @@
     "skia-canvas": "^2.0.2",
     "vue": "^3.5.30",
     "yugioh-card": "file:packages",
-    "yugioh-card-v190": "npm:yugioh-card@1.9.0"
+    "yugioh-card-v190": "npm:yugioh-card@1.9.2"
   },
   "devDependencies": {
     "@iconify/vue": "^5.0.0",
@@ -55,8 +55,8 @@
     "eslint-plugin-vue": "^10.8.0",
     "globals": "^17.4.0",
     "sass-embedded": "^1.98.0",
-    "typescript": "^5.9.3",
-    "vite": "^8.0.1",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.2",
     "vite-node": "^6.0.0",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-static-copy": "^4.0.0"
