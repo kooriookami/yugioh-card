@@ -22,8 +22,6 @@
     "packages/**/*.js"
   ],
   "exclude": [
-    "dist/**/*",
-    "docs/**/*",
-    "node_modules/**/*"
+    "**/__tests__/**"
   ]
 }
