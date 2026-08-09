@@ -32,5 +32,6 @@ export default inheritProp({
     fontSize: 36,
     letterSpacing: 2,
     lineHeight: 1.2,
+    smallFontSize: 28, // 启用 autoSmallSize，超长描述自动切换到 28px 小字
   },
 });

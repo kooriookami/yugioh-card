@@ -4,6 +4,10 @@ import { CompressText } from '../compress-text/index.js';
 import jpStyle from './style/jp-style.js';
 import custom1Style from './style/custom1-style.js';
 import custom2Style from './style/custom2-style.js';
+import lsStyle from '../yugioh-card/style/ls-style.js';
+import lsfStyle from '../yugioh-card/style/lsf-style.js';
+import hklsw7Style from '../yugioh-card/style/hklsw7-style.js';
+import ktStyle from '../yugioh-card/style/kt-style.js';
 
 export class YugiohSeries2Card extends Card {
   cardLeaf = null;
@@ -472,6 +476,14 @@ export class YugiohSeries2Card extends Card {
         style = custom1Style;
       } else if (this.data.font === 'custom2') {
         style = custom2Style;
+      } else if (this.data.font === 'hklsw7') {
+        style = hklsw7Style;
+      } else if (this.data.font === 'xlsj') {
+        style = lsStyle;
+      } else if (this.data.font === 'xlsf') {
+        style = lsfStyle;
+      } else if (this.data.font === 'kt') {
+        style = ktStyle;
       }
     } else {
       if (this.data.language === 'jp') {

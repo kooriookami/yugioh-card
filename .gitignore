@@ -1,6 +1,8 @@
 .DS_Store
 node_modules
 dist
+dist-electron
+release
 output
 
 # local env files
@@ -13,6 +15,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Temp debug files
+temp_*
+
 # Editor directories and files
 .idea
 .vscode
@@ -21,3 +26,6 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# CodeBuddy IDE working space (memory, temp scripts, screenshots)
+.codebuddy/

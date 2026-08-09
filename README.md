@@ -16,13 +16,27 @@
   </a>
 </p>
 
-<p align="center">一个使用 Canvas 渲染游戏王卡片的工具</p>
+<p align="center">基于 Canvas 的游戏王可视化制卡器，支持 OCG 卡库检索、随机生成、高清卡图与桌面 EXE 打包</p>
 
 <p align="center">
   <img src="src/assets/image/banner.jpg">
 </p>
 
-目前有 5 种卡片：🚀🚀🚀🚀🚀
+## ✨ 特色功能
+
+| 功能 | 说明 |
+|------|------|
+| 🔍 **OCG 卡库检索** | 按卡密/卡名搜索，自动填充全部字段 |
+| 🎲 **随机一卡** | 全卡库随机抽取真实卡片 |
+| 🌐 **多译名** | YGOPro / 简中官方 / Master Duel / NWBBS / CNOCG |
+| 🖼️ **高清卡图** | 1200×1200 WebP 艺术插画 |
+| 🎨 **完整自定义** | 颜色/渐变/字体、类型/属性/星级/攻防、连接箭头、防伪标、罕贵 |
+| 📦 **一键导出** | JSON 导入/导出、高清 PNG（最高 3x） |
+| 🖥️ **桌面应用** | Windows EXE，独立运行 |
+
+> 卡片数据由 [ygocdb.com](https://ygocdb.com/) 提供，卡图由 [ygotoken.com](http://www.ygotoken.com/) 提供
+
+目前有 5 种卡片：
 
 - 1️⃣ 游戏王
 - 2️⃣ 超速决斗
@@ -48,32 +62,24 @@
 ### 仓库开发
 
 ```bash
-# Node.js 22+
 pnpm install
-pnpm dev
-pnpm build
-pnpm build:lib
+pnpm dev            # Web 开发
+pnpm dev:electron   # Electron 桌面应用
+pnpm build:exe      # 打包 Windows EXE → release/
 ```
 
 ### 浏览器
 
 ```js
-// 可选 YugiohCard, RushDuelCard, YugiohBackCard, FieldCenterCard, YugiohSeries2Card
 import { YugiohCard } from 'yugioh-card';
 
 const card = new YugiohCard({
-  view: 'xxx', // div 容器
-  data: {
-    ..., // 参数见下方 Data 属性
-  },
-  resourcePath: 'xxx', // 静态资源路径，把 src/assets/yugioh-card 文件夹复制到你的项目中或者服务器上
+  view: 'xxx',           // div 容器
+  data: { /* 参数见 Data 属性 */ },
+  resourcePath: 'xxx',   // 静态资源路径，复制 src/assets/yugioh-card 到项目或服务器
 });
-
-// 导出图片，更多导出参数请参考 https://www.leaferjs.com/ui/guide/basic/export.html
-card.leafer.export('xxx.png', {
-  screenshot: true,
-  pixelRatio: devicePixelRatio,
-});
+// 导出：card.leafer.export('xxx.png', { screenshot: true });
+```
 ```
 
 ### Node.js
@@ -118,7 +124,7 @@ http.createServer((req, res) => {
 |         属性名         |    说明     |   类型    |                                                         可选值                                                         |                   备注                    |        默认值        |
 |:-------------------:|:---------:|:-------:|:-------------------------------------------------------------------------------------------------------------------:|:---------------------------------------:|:-----------------:|
 |      language       |    语言     |  enum   |                                     'sc' / 'tc' / 'jp' / 'kr' / 'en' / 'astral'                                     |    简体中文 / 繁体中文 / 日文 / 韩文 / 英文 / 星光界文    |       'sc'        |
-|        font         |    字体     |  enum   |                                             '' / 'custom1' / 'custom2'                                              |            默认 / 自定义一 / 自定义二             |        ''         |
+|        font         |    字体     |  enum   |                                 '' / 'xlsj' / 'xlsf' / 'hklsw7' / 'kt'                                  |     默认 / 细隶书简 / 细隶书繁 / 华康隶书 / 楷体     |        ''         |
 |        name         |    卡名     | string  |                                                          —                                                          |                    —                    |        ''         |
 |        color        |   卡名颜色    | string  |                                                          —                                                          |                    —                    |        ''         |
 |        align        |   卡名对齐    |  enum   |                                             'left' / 'center' / 'right'                                             |             左对齐 / 居中 / 右对齐              |      'left'       |
@@ -147,9 +153,9 @@ http.createServer((req, res) => {
 |  descriptionWeight  |  效果描述字重   | number  |                                                          —                                                          |                    —                    |         0         |
 |       package       |    卡包     | string  |                                                          —                                                          |                    —                    |        ''         |
 |      password       |   卡片密码    | string  |                                                          —                                                          |                    —                    |        ''         |
-|      copyright      |    版权     |  enum   |                                                 'sc' / 'jp' / 'en'                                                  |             简体中文 / 日文 / 英文              |        ''         |
-|        laser        |    角标     |  enum   |                                      'laser1' / 'laser2' / 'laser3' / 'laser4'                                      |          样式一 / 样式二 / 样式三 / 样式四          |        ''         |
-|        rare         |    罕贵     |  enum   |                                 'dt' / 'ur' / 'gr' / 'hr' / 'ser' / 'gser' / 'pser'                                 |  DT / UR / GR / HR / SER / GSER / PSER  |        ''         |
+|      copyright      |    版权     |  enum   |                                                    '' / 'ocg'                                                     |               无 / OCG               |        ''         |
+|        laser        |    角标     |  enum   |                                            '' / 'laser-gold' / 'laser-silver'                                            |               无 / 金标 / 银标              |        ''         |
+|        rare         |    罕贵     |  enum   |                       'hr' / 'ser' / 'gser' / 'pser' / 'ur' / 'sr' / 'r' / 'n' / 'npr'                       |      HR / SER / GSER / PSER / UR / SR / R / N / NPR      |        ''         |
 |      twentieth      | 是否是 20 周年 | boolean |                                                          —                                                          |                    —                    |       false       |
 |       radius        |   是否是圆角   | boolean |                                                          —                                                          |                    —                    |       true        |
 |        scale        |   卡片缩放    | number  |                                                          —                                                          |                    —                    |         1         |
@@ -179,8 +185,8 @@ http.createServer((req, res) => {
 |      package      |    卡包    | string  |                                   —                                    |               —               |    ''     |
 |     password      |   卡片密码   | string  |                                   —                                    |               —               |    ''     |
 |      legend       |  是否是传说   | boolean |                                   —                                    |               —               |   false   |
-|       laser       |    角标    |  enum   |               'laser1' / 'laser2' / 'laser3' / 'laser4'                |     样式一 / 样式二 / 样式三 / 样式四     |    ''     |
-|       rare        |    罕贵    |  enum   |                          'sr' / 'rr' / 'pser'                          |        SR / RR / PSER         |    ''     |
+|       laser       |    角标    |  enum   |                '' / 'laser-gold' / 'laser-silver'                |       无 / 金标 / 银标       |    ''     |
+|       rare        |    罕贵    |  enum   | 'hr' / 'ser' / 'gser' / 'pser' / 'ur' / 'sr' / 'r' / 'n' / 'npr' | HR / SER / GSER / PSER / UR / SR / R / N / NPR |    ''     |
 |      radius       |  是否是圆角   | boolean |                                   —                                    |               —               |   true    |
 |       scale       |   卡片缩放   | number  |                                   —                                    |               —               |     1     |
 
@@ -209,7 +215,7 @@ http.createServer((req, res) => {
 |        属性名        |    说明    |   类型    |                                           可选值                                            |                 备注                  |    默认值    |
 |:-----------------:|:--------:|:-------:|:----------------------------------------------------------------------------------------:|:-----------------------------------:|:---------:|
 |     language      |    语言    |  enum   |                                           'jp'                                           |                 日文                  |   'jp'    |
-|       font        |    字体    |  enum   |                                '' / 'custom1' / 'custom2'                                |          默认 / 自定义一 / 自定义二           |    ''     |
+|       font        |    字体    |  enum   |                                 '' / 'xlsj' / 'xlsf' / 'hklsw7' / 'kt'                                  |     默认 / 细隶书简 / 细隶书繁 / 华康隶书 / 楷体     |    ''     |
 |       name        |    卡名    | string  |                                            —                                             |                  —                  |    ''     |
 |       color       |   卡名颜色   | string  |                                            —                                             |                  —                  |    ''     |
 |       align       |   卡名对齐   |  enum   |                               'left' / 'center' / 'right'                                |           左对齐 / 居中 / 右对齐            |  'left'   |
@@ -233,6 +239,6 @@ http.createServer((req, res) => {
 |      package      |    卡包    | string  |                                            —                                             |                  —                  |    ''     |
 |     password      |   卡片密码   | string  |                                            —                                             |                  —                  |    ''     |
 |     copyright     |    版权    |  enum   |                                           'jp'                                           |                 日文                  |    ''     |
-|       laser       |    角标    |  enum   |                        'laser1' / 'laser2' / 'laser3' / 'laser4'                         |        样式一 / 样式二 / 样式三 / 样式四        |    ''     |
+|       laser       |    角标    |  enum   |                        '' / 'laser-gold' / 'laser-silver'                        |       无 / 金标 / 银标       |    ''     |
 |      radius       |  是否是圆角   | boolean |                                            —                                             |                  —                  |   true    |
 |       scale       |   卡片缩放   | number  |                                            —                                             |                  —                  |     1     |

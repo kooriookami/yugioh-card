@@ -10,6 +10,10 @@ import enStyle from './style/en-style.js';
 import astralStyle from './style/astral-style.js';
 import custom1Style from './style/custom1-style.js';
 import custom2Style from './style/custom2-style.js';
+import lsStyle from './style/ls-style.js';
+import lsfStyle from './style/lsf-style.js';
+import hklsw7Style from './style/hklsw7-style.js';
+import ktStyle from './style/kt-style.js';
 
 export class YugiohCard extends Card {
   cardLeaf = null;
@@ -522,7 +526,7 @@ export class YugiohCard extends Card {
       fontFamily = 'ygo-en-italic';
     }
 
-    let height = 385;
+    let height = 440;
     if (!['spell', 'trap'].includes(this.data.type)) {
       if (this.showEffect) {
         height -= effectHeight;
@@ -689,8 +693,8 @@ export class YugiohCard extends Card {
     const laserUrl = this.data.laser ? `${this.baseImage}/${this.data.laser}.png` : '';
     this.laserLeaf.set({
       url: laserUrl,
-      x: 1276,
-      y: 1913,
+      x: 1275,
+      y: 1911,
       visible: this.data.laser,
       zIndex: 120,
     });
@@ -703,12 +707,14 @@ export class YugiohCard extends Card {
     }
 
     const suffix = this.data.type === 'pendulum' ? '-pendulum' : '';
-    const rareUrl = this.data.rare ? `${this.baseImage}/rare-${this.data.rare}${suffix}.png` : '';
+    const supportedRare = ['dt', 'ur', 'gr', 'hr', 'ser', 'gser', 'pser'];
+    const rareUrl = this.data.rare && supportedRare.includes(this.data.rare)
+      ? `${this.baseImage}/rare-${this.data.rare}${suffix}.png` : '';
 
     this.rareLeaf.set({
       url: rareUrl,
       cornerRadius: this.data.radius ? 24 : 0,
-      visible: this.data.rare,
+      visible: !!rareUrl,
       zIndex: 100,
     });
   }
@@ -756,6 +762,14 @@ export class YugiohCard extends Card {
         style = custom1Style;
       } else if (this.data.font === 'custom2') {
         style = custom2Style;
+      } else if (this.data.font === 'hklsw7') {
+        style = hklsw7Style;
+      } else if (this.data.font === 'xlsj') {
+        style = lsStyle;
+      } else if (this.data.font === 'xlsf') {
+        style = lsfStyle;
+      } else if (this.data.font === 'kt') {
+        style = ktStyle;
       }
     } else {
       if (this.data.language === 'sc') {
@@ -768,8 +782,6 @@ export class YugiohCard extends Card {
         style = krStyle;
       } else if (this.data.language === 'en') {
         style = enStyle;
-      } else if (this.data.language === 'astral') {
-        style = astralStyle;
       } else if (this.data.language === 'astral') {
         style = astralStyle;
       }

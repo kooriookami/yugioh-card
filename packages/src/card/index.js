@@ -52,7 +52,8 @@ export class Card {
   }
 
   setData(data = {}) {
-    Object.assign(this.data, data);
+    // 使用解构赋值创建新对象，避免 reactive proxy 导致的数据污染
+    this.data = { ...this.data, ...data };
     this.draw();
   }
 

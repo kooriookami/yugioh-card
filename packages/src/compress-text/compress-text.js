@@ -23,7 +23,7 @@ const rubyTokenPattern = /(\[[^\[\]()]*\([^\[\]()]*\)])/g;
 const rubyRtPattern = /^\[([^\[\]()]+)\(([^\[\]()]*)\)]$/;
 const baseLineHeight = 1.15; // 默认正文与注音行高倍率。
 const noCompressText = '●①②③④⑤⑥⑦⑧⑨⑩'; // 不参与末行压缩的特殊字符集合。
-const compressBinarySearchStartScale = 0.5; // 高度压缩时二分搜索的初始缩放值。
+const compressBinarySearchStartScale = 0.15; // 高度压缩时二分搜索的初始缩放值。
 const compressBinarySearchPrecision = 0.01; // 高度压缩时二分搜索的停止精度。
 const autoSmallSizeScaleThreshold = 0.7; // autoSmallSize 触发切换到小字模式的缩放阈值。
 const rtStretchRate = 0.9; // 注音可通过字距拉伸覆盖正文宽度时采用的目标占比。
@@ -942,8 +942,8 @@ export class CompressText extends Group {
       if (this.firstLineCompress && newlineIndex === 0) {
         // 首行压缩到一行
         this.updateRubyScale(ruby, this.firstLineTextScale);
-      } else if (!noCompressText.includes(ruby.text) && lastNewline) {
-        // 只压缩最后一行
+      } else if (!noCompressText.includes(ruby.text)) {
+        // 所有非首行都按相同比例压缩，保持字号一致
         this.updateRubyScale(ruby, this.textScale);
       } else {
         this.updateRubyScale(ruby, 1);

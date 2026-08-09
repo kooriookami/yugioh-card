@@ -3,6 +3,7 @@ import path from 'node:path';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import dts from 'vite-plugin-dts';
+import electron from 'vite-plugin-electron/simple';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 const packageManifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'packages/package.json'), 'utf8'));
@@ -36,13 +37,18 @@ const buildWebsite = {
   outDir: 'docs',
 };
 
+const buildElectron = {
+  outDir: 'dist',
+};
+
 const buildConfigMap = {
   lib: buildLib,
   website: buildWebsite,
+  electron: buildElectron,
 };
 
 export default defineConfig(({ mode }) => {
-  const buildTarget = mode === 'lib' ? 'lib' : 'website';
+  const buildTarget = mode === 'lib' ? 'lib' : mode === 'electron' ? 'electron' : 'website';
   const isLib = buildTarget === 'lib';
 
   return {
@@ -50,6 +56,22 @@ export default defineConfig(({ mode }) => {
     publicDir: false,
     plugins: [
       vue(),
+      // Electron 插件 + 静态资源拷贝（仅 electron 模式）
+      ...(mode === 'electron' ? [
+        electron({
+          main: {
+            entry: 'electron/main.mjs',
+          },
+          preload: {
+            input: 'electron/preload.mjs',
+          },
+        }),
+        viteStaticCopy({
+          targets: [
+            { src: 'src/assets/yugioh-card/**/*', dest: 'assets' },
+          ],
+        }),
+      ] : []),
       ...(isLib ? [viteStaticCopy({
         targets: [
           { src: 'packages/package.json', dest: '.', rename: { stripBase: 1 } },
@@ -68,6 +90,20 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
+      },
+    },
+    server: {
+      proxy: {
+        '/ygotoken-img': {
+          target: 'http://www.ygotoken.com/images',
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/ygotoken-img/, ''),
+        },
+        '/ygotoken-api': {
+          target: 'http://www.ygotoken.com',
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/ygotoken-api/, ''),
+        },
       },
     },
     build: buildConfigMap[buildTarget],

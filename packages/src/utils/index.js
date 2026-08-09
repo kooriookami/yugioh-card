@@ -39,7 +39,7 @@ export const loadFontBrowser = fontPath => {
       data.forEach(family => {
         const font = new FontFace(
           family,
-          `url(${fontPath}/${family}.woff2) format('woff2')`,
+          `url(${fontPath}/${family}.woff2) format('woff2'), url(${fontPath}/${family}.ttf) format('truetype')`,
           {
             display: 'swap',
           },
