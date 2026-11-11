@@ -247,6 +247,38 @@ test('CompressText keeps malformed bracket text plain while parsing following va
   assert.equal(flatItemList.slice(0, validRubyIndex).map(item => item.ruby.text).join(''), '[その]カードを');
 });
 
+test('CompressText preserves space nodes across trial layouts', () => {
+  const instance = new NewCompressText({
+    text: 'one two three four five six seven eight',
+    fontFamily: 'ygo-en', fontSize: 20, lineHeight: 1.05, width: 120,
+  });
+  try {
+    const leaves = instance.rubyList.map(ruby => ruby.rubyLeaf);
+    const snapshot = () => instance.rubyList.map(ruby => ({
+      text: ruby.text, line: ruby.line, x: ruby.rubyLeaf.x, y: ruby.rubyLeaf.y, visible: ruby.rubyLeaf.visible,
+    }));
+    const before = snapshot();
+    const hiddenSpaces = instance.rubyList.filter(ruby => ruby.text === ' ' && ruby.line < 0);
+    assert.ok(hiddenSpaces.length > 0);
+    let restoredSpace = false;
+    for (const scale of [0.65, 1, 0.8, 1]) {
+      instance.textScale = scale;
+      instance.updateTextScale();
+      instance.alignRuby();
+      instance.rubyList.forEach((ruby, index) => {
+        assert.equal(ruby.rubyLeaf, leaves[index]);
+        assert.ok(!ruby.rubyLeaf.destroyed);
+        assert.equal(ruby.rubyLeaf.visible, ruby.line >= 0);
+      });
+      restoredSpace ||= hiddenSpaces.some(ruby => ruby.line >= 0);
+    }
+    assert.ok(restoredSpace);
+    assert.deepEqual(snapshot(), before);
+  } finally {
+    instance.destroy();
+  }
+});
+
 test('CompressText helper getters reflect current size and padding', () => {
   const instance = new NewCompressText({ text: '[魔(ま)]法', width: 200, ...baseConfig });
   const ruby = instance.rubyList[0];

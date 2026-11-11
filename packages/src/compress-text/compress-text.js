@@ -1026,6 +1026,11 @@ export class CompressText extends Group {
    */
   updateTextScale() {
     this.resetLayoutPosition();
+    // 试排中的行尾空格可能在下一轮回到行内，先恢复节点并清除旧行号。
+    this.rubyList.forEach(ruby => {
+      ruby.line = -1;
+      ruby.rubyLeaf.visible = true;
+    });
 
     this.newlineList.forEach((newline, newlineIndex) => {
       this.layoutNewlineItems(newline, newlineIndex);
@@ -1083,7 +1088,7 @@ export class CompressText extends Group {
   }
 
   /**
-   * 删除指定行尾部连续的空格项。
+   * 隐藏指定行尾部连续的空格项，保留节点供后续试排复用。
    *
    * 这些空格在排版结束后不应继续占据宽度，因此会同步回退 currentX。
    *
@@ -1102,7 +1107,7 @@ export class CompressText extends Group {
       const paddingLeft = ruby.paddingLeft || 0;
       const paddingRight = ruby.paddingRight || 0;
       this.currentX -= ruby.width + paddingLeft + paddingRight;
-      rubyLeaf.destroy();
+      rubyLeaf.visible = false;
       ruby.line = -1;
     }
   }
