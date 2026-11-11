@@ -21,7 +21,8 @@ export default inheritProp({
     rtFontSize: 14,
     rtTop: -13,
   },
-  effect: {
+  monsterType: {
+    height: 80,
     fontFamily: 'rd-jp-effect',
     top: 1478,
     fontSize: 46,

@@ -15,7 +15,8 @@ export default inheritProp({
       marginLeft: 10,
     },
   },
-  effect: {
+  monsterType: {
+    height: 57.6,
     top: 1682,
     fontSize: 48,
     lineHeight: 1.2,
