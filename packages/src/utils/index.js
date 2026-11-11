@@ -1,6 +1,7 @@
 import { isPlainObject } from 'lodash-unified';
 // 已加载的字体路径列表
 let fontPathList = [];
+const browserFontPromises = new Map();
 let nodeFs = null;
 // 是否是浏览器
 export const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
@@ -22,38 +23,39 @@ const getNodeFs = () => {
 
 // 加载字体 - 浏览器环境，异步
 export const loadFontBrowser = fontPath => {
-  return new Promise((resolve, reject) => {
-    if (fontPathList.includes(fontPath)) {
-      resolve();
-      return;
+  if (browserFontPromises.has(fontPath)) return browserFontPromises.get(fontPath);
+  const promise = fetch(`${fontPath}/font-list.json`).then(res => {
+    if (res.ok) {
+      return res.json();
+    } else {
+      throw new Error();
     }
-    fontPathList.push(fontPath);
-    fetch(`${fontPath}/font-list.json`).then(res => {
-      if (res.ok) {
-        return res.json();
-      } else {
-        throw new Error();
-      }
-    }).then(async data => {
-      const fontList = [];
-      data.forEach(family => {
-        const font = new FontFace(
-          family,
-          `url(${fontPath}/${family}.woff2) format('woff2')`,
-          {
-            display: 'swap',
-          },
-        );
-        document.fonts.add(font);
-        fontList.push(font);
-      });
-      const fontLoadList = fontList.map(font => font.load());
-      await Promise.allSettled(fontLoadList);
-      resolve();
-    }).catch(() => {
-      reject('读取字体失败');
+  }).then(async data => {
+    const fontList = [];
+    data.forEach(family => {
+      const font = new FontFace(
+        family,
+        `url(${fontPath}/${family}.woff2) format('woff2')`,
+        {
+          display: 'swap',
+        },
+      );
+      document.fonts.add(font);
+      fontList.push(font);
     });
+    const fontLoadList = fontList.map(font => font.load());
+    const results = await Promise.allSettled(fontLoadList);
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.warn(`字体 ${data[index]} 加载失败，使用默认字体`, result.reason);
+      }
+    });
+  }).catch(() => {
+    browserFontPromises.delete(fontPath);
+    throw new Error('读取字体失败');
   });
+  browserFontPromises.set(fontPath, promise);
+  return promise;
 };
 
 // 加载字体 - Nodejs 环境，同步

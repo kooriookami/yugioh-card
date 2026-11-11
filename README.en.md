@@ -70,6 +70,7 @@ const card = new YugiohCard({
 });
 
 // Export image, for more export options refer to https://www.leaferjs.com/ui/guide/basic/export.html
+await card.ready;
 card.leafer.export('xxx.png', {
   screenshot: true,
   pixelRatio: devicePixelRatio,
@@ -87,7 +88,7 @@ import http from 'http';
 import skia from 'skia-canvas';
 import { YugiohCard } from 'yugioh-card';
 
-http.createServer((req, res) => {
+http.createServer(async (req, res) => {
   const card = new YugiohCard({
     data: {
       ..., // see Data properties below
@@ -95,6 +96,7 @@ http.createServer((req, res) => {
     resourcePath: 'xxx', // path to static resources, copy src/assets/yugioh-card folder to your project or server
     skia: skia,
   });
+  await card.ready;
   card.leafer.export('png', {
     screenshot: true,
   }).then(result => {

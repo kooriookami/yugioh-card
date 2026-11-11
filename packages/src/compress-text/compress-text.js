@@ -96,12 +96,19 @@ export class CompressText extends Group {
     this.initData(data);
 
     if (isBrowser) {
-      document.fonts.ready.then(() => {
-        setTimeout(() => {
-          this.compressText();
-        }, 250);
-      });
+      this.fontSet = document.fonts;
+      this.onFontsLoaded = () => {
+        if (!this.destroyed) this.compressText();
+      };
+      // ready 可能在异步获取字体列表前就已完成，后续加载仍需重新测量，不能沿用回退字体的字宽。
+      this.fontSet.addEventListener('loadingdone', this.onFontsLoaded);
+      this.fontSet.ready.then(this.onFontsLoaded);
     }
+  }
+
+  destroy() {
+    this.fontSet?.removeEventListener('loadingdone', this.onFontsLoaded);
+    super.destroy();
   }
 
   /**

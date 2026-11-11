@@ -120,8 +120,10 @@ const changeCard = () => {
   jsonData.value = form.data;
 };
 
-const exportImage = () => {
-  cardLeaf.value.leafer.export('卡片.png', {
+const exportImage = async () => {
+  const card = cardLeaf.value;
+  await card.ready;
+  card.leafer.export('卡片.png', {
     screenshot: true,
     pixelRatio: devicePixelRatio,
   });

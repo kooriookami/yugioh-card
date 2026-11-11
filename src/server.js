@@ -14,9 +14,9 @@ global.__server__ = http.createServer((req, res) => {
     resourcePath: path.resolve('./src/assets/yugioh-card'),
     skia: skia,
   });
-  card.leafer.export('png', {
+  card.ready.then(() => card.leafer.export('png', {
     screenshot: true,
-  }).then(result => {
+  })).then(result => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.write(`<img src="${result.data}" />`);
     res.end();
