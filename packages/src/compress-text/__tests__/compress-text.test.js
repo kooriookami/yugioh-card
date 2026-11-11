@@ -247,6 +247,26 @@ test('CompressText keeps malformed bracket text plain while parsing following va
   assert.equal(flatItemList.slice(0, validRubyIndex).map(item => item.ruby.text).join(''), '[その]カードを');
 });
 
+test('CompressText applies group scaling once to multiline bounds', () => {
+  const instance = new NewCompressText({ text: 'one two three\nx\ny', fontFamily: 'ygo-en', fontSize: 20, width: 300, textAlign: 'left' });
+  try {
+    assert.equal(instance.currentLine, 2);
+    const unscaledBounds = { ...instance.bounds };
+    for (const [scaleX, scaleY] of [[2, 3], [0.5, 0.75], [1, 1]]) {
+      instance.set({ scaleX, scaleY });
+      const expectedBounds = {
+        width: unscaledBounds.width * scaleX,
+        height: unscaledBounds.height * scaleY,
+      };
+      assert.deepEqual(instance.bounds, expectedBounds);
+      instance.createBounds();
+      assert.deepEqual(instance.bounds, expectedBounds);
+    }
+  } finally {
+    instance.destroy();
+  }
+});
+
 test('CompressText helper getters reflect current size and padding', () => {
   const instance = new NewCompressText({ text: '[魔(ま)]法', width: 200, ...baseConfig });
   const ruby = instance.rubyList[0];
