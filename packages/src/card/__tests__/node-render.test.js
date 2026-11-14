@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { Platform, useCanvas } from 'leafer-unified';
+import { Platform, Resource, useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
 import { YugiohCard, RushDuelCard, YugiohBackCard, FieldCenterCard, YugiohSeries2Card } from '../../../index.js';
+import { getNodeFontResource } from '../../utils/font-loader.js';
 
 const resourcePath = path.resolve('src/assets/yugioh-card');
 const photo = path.resolve('src/assets/image/blue-eyes.jpg');
@@ -43,12 +44,18 @@ const controlImages = t => {
   return requestFor;
 };
 
-test('all five card classes wait for real assets and rendering before producing a PNG', async t => {
+test('all five card classes complete unchanged updates and export real assets', async t => {
   for (const Card of [YugiohCard, RushDuelCard, YugiohBackCard, FieldCenterCard, YugiohSeries2Card]) {
     await t.test(Card.name, async t => {
       const card = makeCard(t, Card, { name: '[青眼(ブルーアイズ)]', description: 'A real font measurement and image export.', image: photo });
       assert.equal(card.ready instanceof Promise, true);
       await card.ready;
+      for (const data of [{}, { ...card.data }]) {
+        const previous = card.ready;
+        card.setData(data);
+        assert.notEqual(card.ready, previous, 'unchanged updates create a new readiness promise');
+        await card.ready;
+      }
       assert.equal(card.leafer.imageReady, true);
       const result = await card.leafer.export('png', { screenshot: true });
       assert.match(result.data, /^data:image\/png;base64,/);
@@ -59,6 +66,91 @@ test('all five card classes wait for real assets and rendering before producing 
   }
 });
 
+test('initial draw failures release their font subscription and Leafer without affecting another card', async t => {
+  const fonts = getNodeFontResource(`${resourcePath}/yugioh/font`, skia);
+  const subscribe = fonts.subscribe;
+  let subscriptions = 0;
+  t.mock.method(fonts, 'subscribe', callback => {
+    subscriptions++;
+    const unsubscribe = subscribe(callback);
+    return () => { subscriptions--; unsubscribe(); };
+  });
+  const sibling = makeCard(t, YugiohCard, { image: photo });
+  await sibling.ready;
+  assert.equal(subscriptions, 1);
+  let partial;
+  class InvalidCard extends YugiohCard {
+    initLeafer() { super.initLeafer(); partial = this; }
+  }
+  t.after(() => partial?.leafer.destroy(true));
+  let originalError;
+  assert.throws(() => new InvalidCard({ resourcePath, skia, data: { language: 'unsupported-language' } }), error => {
+    originalError = error;
+    return error instanceof TypeError;
+  });
+  await assert.rejects(partial.ready, error => error === originalError);
+  assert.equal(partial._readiness.disposed, true);
+  assert.equal(partial.leafer.destroyed, true);
+  assert.equal(partial.leafer.children?.length ?? 0, 0);
+  assert.equal(partial._readiness.images.records.size, 0);
+  assert.equal(subscriptions, 1, 'only the surviving card retains a font subscription');
+  assert.equal(getNodeFontResource(`${resourcePath}/yugioh/font`, skia), fonts);
+  sibling.setData({ name: 'Still usable' });
+  await sibling.ready;
+  assert.equal(sibling.nameLeaf.text, 'Still usable');
+});
+
+test('initial resource tracking failures release acquired image references even after draw succeeds', async t => {
+  const background = `${resourcePath}/field-center/image/card-background.png`;
+  const previousUse = Resource.get(background)?.use ?? 0;
+  const originalError = new Error('Initial resource tracking failed');
+  let partial;
+  let acquired;
+  class InvalidCard extends FieldCenterCard {
+    initLeafer() {
+      super.initLeafer();
+      partial = this;
+      const images = this._readiness.images;
+      const sync = images.sync.bind(images);
+      images.sync = (...args) => {
+        sync(...args);
+        acquired = images.records.get(background).image;
+        throw originalError;
+      };
+    }
+  }
+  t.after(() => partial?.leafer.destroy(true));
+  assert.throws(() => new InvalidCard({ resourcePath, skia, data: { image: photo } }), error => error === originalError);
+  await assert.rejects(partial.ready, error => error === originalError);
+  assert.equal(partial._readiness.hasDrawn, true);
+  assert.equal(partial._readiness.disposed, true);
+  assert.equal(partial.leafer.destroyed, true);
+  assert.equal(partial._readiness.images.records.size, 0);
+  assert.equal(acquired.use, previousUse);
+});
+
+test('later draw failures keep the existing card and resources available for retry', async t => {
+  const card = makeCard(t, YugiohCard, { image: photo });
+  await card.ready;
+  const leafer = card.leafer;
+  const image = card._readiness.images.records.get(photo);
+  let originalError;
+  assert.throws(() => card.setData({ language: 'unsupported-language' }), error => {
+    originalError = error;
+    return error instanceof TypeError;
+  });
+  await assert.rejects(card.ready, error => error === originalError);
+  assert.equal(card._readiness.disposed, false);
+  assert.notEqual(leafer.destroyed, true);
+  assert.equal(card._readiness.images.records.get(photo), image);
+  const failed = card.ready;
+  card.setData({ language: 'sc', name: 'Recovered after draw failure' });
+  assert.notEqual(card.ready, failed);
+  await card.ready;
+  assert.equal(card.leafer, leafer);
+  assert.equal(card.nameLeaf.text, 'Recovered after draw failure');
+});
+
 test('delayed images keep readiness pending and obsolete A cannot replace image B', async t => {
   const request = controlImages(t);
   const a = request('ready-test:obsolete-a');
@@ -67,6 +159,8 @@ test('delayed images keep readiness pending and obsolete A cannot replace image 
   const ready = card.ready;
   await a.started.promise;
   card.setData({ image: 'ready-test:current-b' });
+  // 引擎可能先结束唯一运行中的 A 才启动 B；A 此时已失效，其失败不能影响新画面。
+  a.gate.reject(new Error('obsolete A failed'));
   await b.started.promise;
   assert.equal(card.imageLeaf.fill.url, 'ready-test:current-b');
   assert.equal(card.ready, ready);
@@ -75,8 +169,6 @@ test('delayed images keep readiness pending and obsolete A cannot replace image 
   await flush();
   assert.equal(completed, false);
   b.gate.resolve();
-  // 全局 Leafer 任务仍包括 A；A 失败也不能作为 B 的错误。
-  a.gate.reject(new Error('obsolete A failed'));
   await ready;
   assert.equal(card.imageLeaf.fill.url, 'ready-test:current-b');
   assert.equal(a.calls, 1);

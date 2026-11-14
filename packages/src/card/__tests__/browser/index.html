@@ -72,6 +72,34 @@ document.querySelector('#start').onclick = async event => {
     check(a.nameLeaf.text === 'Cached synchronous update' && a.drawCount === draws + 1 && a.ready !== old, '缓存后的 setData 同步更新节点并建立新 Promise');
     await a.ready;
     check(a.drawCount === draws + 1, '缓存更新没有额外完整排版');
+    for (const [label, data] of [['空对象', {}], ['完全相同的数据', { ...a.data }]]) {
+      const previous = a.ready;
+      a.setData(data);
+      check(a.ready !== previous, `${label}更新建立新 Promise`);
+      await a.ready;
+      check(a.leafer.imageReady, `${label}更新在真实引擎中正常完成`);
+    }
+    let partial, constructionError;
+    class InvalidCard extends ObservedCard {
+      initLeafer() { super.initLeafer(); partial = this; }
+    }
+    try {
+      new InvalidCard({ ...options, data: { ...options.data, language: 'unsupported-language' } });
+    } catch (error) { constructionError = error; }
+    try {
+      check(constructionError && partial?._readiness.disposed && partial.leafer.destroyed && !partial.leafer.children?.length, '构造失败后自动清理协调器、节点和画布');
+      try { await partial.ready; check(false, '构造失败应拒绝 ready'); }
+      catch (error) { check(error === constructionError, '构造失败保留原始异常'); }
+    } finally { partial?.leafer.destroy(true); }
+    const view = a.leafer;
+    let updateError;
+    try { a.setData({ language: 'unsupported-language' }); }
+    catch (error) { updateError = error; }
+    try { await a.ready; check(false, '更新失败应拒绝 ready'); }
+    catch (error) { check(error === updateError && !a._readiness.disposed && !view.destroyed, '后续更新失败保留实例和原始异常'); }
+    a.setData({ language: 'en' });
+    await a.ready;
+    check(a.leafer === view && a.nameLeaf.text === 'Cached synchronous update', '修正数据后原实例可以继续使用');
     a.setData({ image: '/ready-resources/retry.jpg' });
     try { await a.ready; check(false, '必需图片失败应拒绝'); }
     catch (error) { check(error.code === 'RESOURCE_FAILED' && error.resourceType === 'image', '必需图片失败严格拒绝 ready'); }

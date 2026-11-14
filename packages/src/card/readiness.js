@@ -60,12 +60,17 @@ export class CardReadiness {
     }
     this.revision++;
     this.cancelView?.();
+    const initial = !this.hasDrawn;
     try {
-      const initial = !this.hasDrawn;
       this.draw();
       this.images.sync(retry || initial);
     } catch (error) {
       this.finish(error);
+      // 构造失败时调用方拿不到实例，必须在这里释放本卡资源。
+      if (initial) {
+        this.destroy();
+        this.leafer.destroy(true);
+      }
       throw error;
     }
     this.schedule();
