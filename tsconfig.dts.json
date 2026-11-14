@@ -10,7 +10,6 @@
     "declarationMap": false,
     "stripInternal": false,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"

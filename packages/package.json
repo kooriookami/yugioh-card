@@ -30,12 +30,12 @@
   "author": "kooriookami",
   "license": "MIT",
   "dependencies": {
-    "@leafer/node": "^2.0.4",
+    "@leafer/node": "^2.3.4",
     "css-line-break": "^2.1.0",
-    "leafer": "^2.0.4",
+    "leafer": "^2.3.4",
     "leafer-unified": "^1.0.3",
-    "lodash": "^4.17.23",
-    "lodash-es": "^4.17.23",
+    "lodash": "^4.18.1",
+    "lodash-es": "^4.18.1",
     "lodash-unified": "^1.0.3"
   }
 }

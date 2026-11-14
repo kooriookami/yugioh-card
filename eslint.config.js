@@ -1,11 +1,12 @@
 import { defineConfig } from 'eslint/config';
+import { fixupConfigRules } from '@eslint/compat';
 import pluginVue from 'eslint-plugin-vue';
 import importPlugin from 'eslint-plugin-import';
 import globals from 'globals';
 
 export default defineConfig([
   ...pluginVue.configs['flat/recommended'],
-  importPlugin.flatConfigs.recommended,
+  ...fixupConfigRules(importPlugin.flatConfigs.recommended),
   {
     languageOptions: {
       sourceType: 'module',
@@ -77,6 +78,7 @@ export default defineConfig([
   {
     ignores: [
       'node_modules',
+      'dist',
       'docs',
       'public',
     ],

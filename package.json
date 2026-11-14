@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "packageManager": "pnpm@10.32.1",
+  "packageManager": "pnpm@12.18.0",
   "scripts": {
     "dev": "vite",
     "dev:node": "vite-node --watch src/server.js",
@@ -32,41 +32,38 @@
   "license": "ISC",
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
-    "@leafer/node": "^2.0.4",
+    "@leafer/node": "^2.3.4",
     "css-line-break": "^2.1.0",
-    "element-plus": "^2.13.6",
-    "json-editor-vue": "^0.18.1",
-    "leafer": "^2.0.4",
+    "element-plus": "^2.14.8",
+    "json-editor-vue": "^0.19.2",
+    "leafer": "^2.3.4",
     "leafer-unified": "^1.0.3",
-    "lodash": "^4.17.23",
-    "lodash-es": "^4.17.23",
+    "lodash": "^4.18.1",
+    "lodash-es": "^4.18.1",
     "lodash-unified": "^1.0.3",
     "normalize.css": "^8.0.1",
-    "skia-canvas": "^2.0.2",
-    "vue": "^3.5.30",
+    "skia-canvas": "^4.0.0",
+    "vue": "^3.5.45",
     "yugioh-card": "file:packages",
     "yugioh-card-v190": "npm:yugioh-card@1.9.2"
   },
   "devDependencies": {
-    "@iconify/vue": "^5.0.0",
-    "@vitejs/plugin-vue": "^6.0.5",
-    "eslint": "^10.1.0",
+    "@eslint/compat": "^2.1.1",
+    "@iconify/vue": "^5.0.5",
+    "@typescript/typescript6": "^6.0.2",
+    "@vitejs/plugin-vue": "^6.0.11",
+    "eslint": "^10.15.0",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-vue": "^10.8.0",
-    "globals": "^17.4.0",
-    "sass-embedded": "^1.98.0",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.2",
+    "eslint-plugin-vue": "^10.12.1",
+    "globals": "^17.14.0",
+    "sass-embedded": "^1.108.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
     "vite-node": "^6.0.0",
-    "vite-plugin-dts": "^4.5.4",
-    "vite-plugin-static-copy": "^4.0.0"
+    "vite-plugin-dts": "^5.1.2",
+    "vite-plugin-static-copy": "^4.1.1"
   },
   "engines": {
-    "node": ">= 22"
-  },
-  "pnpm": {
-    "allowBuilds": [
-      "skia-canvas"
-    ]
+    "node": "^22.13.0 || >=24.0.0"
   }
 }

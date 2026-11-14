@@ -41,14 +41,14 @@
 
 ## ⚡ 快速开始
 
-开发环境要求：Node.js 22+，pnpm。
+开发环境要求：Node.js 22.13+（22.x）或 24+，pnpm 12。
 
 `pnpm add yugioh-card`
 
 ### 仓库开发
 
 ```bash
-# Node.js 22+
+# Node.js 22.13+（22.x）或 24+
 pnpm install
 pnpm dev
 pnpm build
@@ -78,9 +78,9 @@ card.leafer.export('xxx.png', {
 
 ### Node.js
 
-运行 Node.js 示例前，请先确保本地 Node.js 版本为 22 或更高。
+运行 Node.js 示例前，请先确保本地 Node.js 版本为 22.13+（22.x）或 24+。
 
-`pnpm add skia-canvas@2`
+`pnpm add skia-canvas@4`
 
 ```js
 import http from 'http';

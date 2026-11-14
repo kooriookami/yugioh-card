@@ -1,0 +1,17 @@
+packages:
+  - packages
+
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  skia-canvas: true
+  vue-demi: true
+
+peerDependencyRules:
+  allowedVersions:
+    # ESLint 10 support is provided by @eslint/compat in eslint.config.js.
+    'eslint-plugin-import>eslint': '^10.0.0'
+
+minimumReleaseAgeExclude:
+  - '@eslint/config-array@0.23.6'
+  - eslint@10.15.0

@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue';
 import dts from 'vite-plugin-dts';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
-const packageManifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'packages/package.json'), 'utf8'));
+const packageManifest = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, 'packages/package.json'), 'utf8'));
 const packageExternalSet = new Set([
   ...Object.keys(packageManifest.dependencies ?? {}),
   ...Object.keys(packageManifest.peerDependencies ?? {}),
@@ -22,7 +22,7 @@ const preserveModulesOutput = {
 const buildLib = {
   outDir: 'dist',
   lib: {
-    entry: path.resolve(__dirname, 'packages/index.js'),
+    entry: path.resolve(import.meta.dirname, 'packages/index.js'),
     formats: ['es'],
   },
   rolldownOptions: {
@@ -56,9 +56,10 @@ export default defineConfig(({ mode }) => {
           { src: ['LICENSE', 'README.md', 'README.en.md'], dest: '.' },
         ],
       }), dts({
-        tsconfigPath: path.resolve(__dirname, 'tsconfig.dts.json'),
+        processor: 'ts',
+        tsconfigPath: path.resolve(import.meta.dirname, 'tsconfig.dts.json'),
         include: ['packages/**/*.js'],
-        outDir: 'dist',
+        outDirs: 'dist',
         entryRoot: 'packages',
         copyDtsFiles: false,
         insertTypesEntry: false,
@@ -67,7 +68,7 @@ export default defineConfig(({ mode }) => {
     ],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, 'src'),
+        '@': path.resolve(import.meta.dirname, 'src'),
       },
     },
     build: buildConfigMap[buildTarget],
