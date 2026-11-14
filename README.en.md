@@ -67,10 +67,12 @@ const card = new YugiohCard({
     ..., // see Data properties below
   },
   resourcePath: 'xxx', // path to static resources, copy src/assets/yugioh-card folder to your project or server
+  readyTimeout: 30000, // Optional: card readiness timeout in milliseconds; defaults to 30000 (30 seconds)
 });
 
 // Export image, for more export options refer to https://www.leaferjs.com/ui/guide/basic/export.html
-card.leafer.export('xxx.png', {
+await card.ready;
+await card.leafer.export('xxx.png', {
   screenshot: true,
   pixelRatio: devicePixelRatio,
 });
@@ -87,25 +89,50 @@ import http from 'http';
 import skia from 'skia-canvas';
 import { YugiohCard } from 'yugioh-card';
 
-http.createServer((req, res) => {
-  const card = new YugiohCard({
-    data: {
-      ..., // see Data properties below
-    },
-    resourcePath: 'xxx', // path to static resources, copy src/assets/yugioh-card folder to your project or server
-    skia: skia,
-  });
-  card.leafer.export('png', {
-    screenshot: true,
-  }).then(result => {
+http.createServer(async (req, res) => {
+  let card;
+  try {
+    card = new YugiohCard({
+      data: {
+        ..., // see Data properties below
+      },
+      resourcePath: 'xxx', // absolute path to the local static resource directory
+      readyTimeout: 30000, // Optional: card readiness timeout in milliseconds; defaults to 30000 (30 seconds)
+      skia: skia,
+    });
+    await card.ready;
+    const result = await card.leafer.export('png', { screenshot: true });
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.write(`<img src="${result.data}" />`);
-    res.end();
-  });
+    res.end(`<img src="${result.data}" />`);
+  } catch (error) {
+    console.error(error);
+    res.writeHead(500);
+    res.end('Card rendering failed');
+  } finally {
+    card?.leafer.destroy(true);
+  }
 }).listen(3000, () => {
     console.log('server is running at http://localhost:3000');
 });
 ```
+
+In Node, `data.image` must also use an absolute local path or a full HTTP(S) URL. The `/src/...` browser URL returned by a Vite image import cannot be used directly for Node rendering.
+
+### Waiting for a card
+
+All five card classes expose a read-only `card.ready: Promise<void>`. Construction and `setData()` update the preview immediately, using fallback fonts while browser fonts load. Before reading final text bounds or exporting, wait for the required fonts, images, final layout, and rendering to succeed:
+
+```js
+card.setData({ name: 'Blue-Eyes White Dragon' });
+await card.ready;
+// Read final bounds or call card.leafer.export().
+```
+
+Updates during a pending cycle share one Promise and wait for the latest stable view. The next `setData()` after success or failure creates a new Promise, so read `ready` again after each update. It does not lock a data snapshot or track arbitrary direct changes to Leafer nodes.
+
+Required resource failures reject `ready` while preserving the preview. Catch the error and call `setData()` to retry. Failed preloaded fonts that this card does not use do not fail this card. The constructor option `readyTimeout` sets the cycle timeout in milliseconds (default `30000`; a positive finite number). Errors have a `code` such as `RESOURCE_FAILED`, `READY_TIMEOUT`, or `CARD_DESTROYED`. Resource errors also include `resourceType`, `resource`, and `cause`. Existing synchronous Node font registration errors still throw synchronously.
+
+`card.leafer.destroy()` rejects pending readiness and removes this card's listeners. Leafer uses a global resource queue, so other cards or unused preloaded resources can delay completion. `ready` does not guarantee export encoding, cross-origin canvas access, or file writing; handle errors from `export()` separately.
 
 ## 🔎 Example Code
 

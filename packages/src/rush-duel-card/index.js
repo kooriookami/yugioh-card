@@ -51,6 +51,7 @@ export class RushDuelCard extends Card {
     scale: 1,
   };
 
+  /** @param {import('../card/index.js').CardOptions} [data={}] */
   constructor(data = {}) {
     super(data);
 
@@ -97,7 +98,7 @@ export class RushDuelCard extends Card {
     const { name } = this.style;
 
     if (!this.nameLeaf) {
-      this.nameLeaf = new CompressText();
+      this.nameLeaf = new CompressText({ rtFontFamily: 'rd-tip' });
       this.leafer.add(this.nameLeaf);
     }
     this.nameLeaf.set({
@@ -172,9 +173,9 @@ export class RushDuelCard extends Card {
     if (!this.spellTrapLeaf) {
       this.spellTrapLeaf = new Group();
 
-      const leftText = new CompressText();
+      const leftText = new CompressText({ rtFontFamily: 'rd-tip' });
       const spellTrapIcon = new Image();
-      const rightText = new CompressText();
+      const rightText = new CompressText({ rtFontFamily: 'rd-tip' });
 
       this.spellTrapLeaf.add(leftText);
       this.spellTrapLeaf.add(spellTrapIcon);
@@ -269,7 +270,7 @@ export class RushDuelCard extends Card {
 
   drawPackage() {
     if (!this.packageLeaf) {
-      this.packageLeaf = new CompressText();
+      this.packageLeaf = new CompressText({ rtFontFamily: 'rd-tip' });
       this.leafer.add(this.packageLeaf);
     }
 
@@ -289,7 +290,7 @@ export class RushDuelCard extends Card {
 
   drawMonsterType() {
     if (!this.monsterTypeLeaf) {
-      this.monsterTypeLeaf = new CompressText();
+      this.monsterTypeLeaf = new CompressText({ rtFontFamily: 'rd-tip' });
       this.leafer.add(this.monsterTypeLeaf);
     }
 
@@ -319,7 +320,7 @@ export class RushDuelCard extends Card {
 
   drawDescription() {
     if (!this.descriptionLeaf) {
-      this.descriptionLeaf = new CompressText();
+      this.descriptionLeaf = new CompressText({ rtFontFamily: 'rd-tip' });
       this.leafer.add(this.descriptionLeaf);
     }
 

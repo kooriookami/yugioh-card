@@ -15,6 +15,7 @@ export class FieldCenterCard extends Card {
     scale: 1,
   };
 
+  /** @param {import('../card/index.js').CardOptions} [data={}] */
   constructor(data = {}) {
     super(data);
 

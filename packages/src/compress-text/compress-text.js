@@ -17,7 +17,9 @@
  */
 import { Group, Text } from 'leafer-unified';
 import { isBrowser } from '../utils/index.js';
+import { fontFamilies } from '../utils/font-loader.js';
 import { splitBreakWordWithBracket } from './split-break-word.js';
+import { getTextLayoutContext } from './layout-context.js';
 
 const rubyTokenPattern = /(\[[^\[\]()]*\([^\[\]()]*\)])/g;
 const rubyRtPattern = /^\[([^\[\]()]+)\(([^\[\]()]*)\)]$/;
@@ -93,14 +95,22 @@ export class CompressText extends Group {
       zIndex: 0,
     };
 
+    this.fontLayoutVersion = getTextLayoutContext()?.fontVersion;
     this.initData(data);
 
-    if (isBrowser) {
-      document.fonts.ready.then(() => {
-        setTimeout(() => {
-          this.compressText();
-        }, 250);
-      });
+    if (isBrowser && this.fontLayoutVersion === undefined) {
+      this.onFontsLoaded = event => {
+        const families = [this.fontFamily, this.rtFontFamily].flatMap(fontFamilies);
+        if (event?.fontfaces && !event.fontfaces.some(face => families.includes(face.family.replace(/^['"]|['"]$/g, '')))) return;
+        if (this.fontLayoutQueued || this.destroyed) return;
+        this.fontLayoutQueued = true;
+        queueMicrotask(() => {
+          this.fontLayoutQueued = false;
+          if (!this.destroyed) this.compressText();
+        });
+      };
+      document.fonts.addEventListener('loadingdone', this.onFontsLoaded);
+      document.fonts.ready.then(() => this.onFontsLoaded?.());
     }
   }
 
@@ -113,7 +123,9 @@ export class CompressText extends Group {
    * @param {object} [data={}] 需要更新的配置项。
    */
   set(data = {}) {
-    let needCompressText = false;
+    const version = getTextLayoutContext()?.fontVersion;
+    let needCompressText = version !== undefined && this.fontLayoutVersion !== version;
+    if (version !== undefined) this.fontLayoutVersion = version;
     Object.keys(data).forEach(key => {
       const value = data[key] ?? this.defaultData[key];
       if (!Object.is(this[key], value)) {
@@ -124,6 +136,12 @@ export class CompressText extends Group {
     if (needCompressText) {
       this.compressText();
     }
+  }
+
+  destroy() {
+    if (this.onFontsLoaded) document.fonts.removeEventListener('loadingdone', this.onFontsLoaded);
+    this.onFontsLoaded = null;
+    super.destroy();
   }
 
   /**

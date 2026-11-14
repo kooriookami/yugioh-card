@@ -67,10 +67,12 @@ const card = new YugiohCard({
     ..., // 参数见下方 Data 属性
   },
   resourcePath: 'xxx', // 静态资源路径，把 src/assets/yugioh-card 文件夹复制到你的项目中或者服务器上
+  readyTimeout: 30000, // 可选：等待卡片就绪的超时毫秒数，默认 30000（30 秒）
 });
 
 // 导出图片，更多导出参数请参考 https://www.leaferjs.com/ui/guide/basic/export.html
-card.leafer.export('xxx.png', {
+await card.ready;
+await card.leafer.export('xxx.png', {
   screenshot: true,
   pixelRatio: devicePixelRatio,
 });
@@ -87,25 +89,50 @@ import http from 'http';
 import skia from 'skia-canvas';
 import { YugiohCard } from 'yugioh-card';
 
-http.createServer((req, res) => {
-  const card = new YugiohCard({
-    data: {
-      ..., // 参数见下方 Data 属性
-    },
-    resourcePath: 'xxx', // 静态资源路径，把 src/assets/yugioh-card 文件夹复制到你的项目中或者服务器上
-    skia: skia,
-  });
-  card.leafer.export('png', {
-    screenshot: true,
-  }).then(result => {
+http.createServer(async (req, res) => {
+  let card;
+  try {
+    card = new YugiohCard({
+      data: {
+        ..., // 参数见下方 Data 属性
+      },
+      resourcePath: 'xxx', // 本地静态资源目录的绝对路径
+      readyTimeout: 30000, // 可选：等待卡片就绪的超时毫秒数，默认 30000（30 秒）
+      skia: skia,
+    });
+    await card.ready;
+    const result = await card.leafer.export('png', { screenshot: true });
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.write(`<img src="${result.data}" />`);
-    res.end();
-  });
+    res.end(`<img src="${result.data}" />`);
+  } catch (error) {
+    console.error(error);
+    res.writeHead(500);
+    res.end('Card rendering failed');
+  } finally {
+    card?.leafer.destroy(true);
+  }
 }).listen(3000, () => {
     console.log('server is running at http://localhost:3000');
 });
 ```
+
+Node 环境的 `data.image` 也需要使用本地绝对路径或完整的 HTTP(S) 地址；Vite 图片 `import` 返回的 `/src/...` 浏览器地址不能直接用于 Node 渲染。
+
+### 等待卡片就绪
+
+全部五种卡片都提供只读的 `card.ready: Promise<void>`。构造和 `setData()` 会立即更新预览；浏览器字体未加载时先显示 fallback 字体。需要最终文字尺寸或导出时，等待本卡必需的字体、图片、最终排版和渲染全部成功：
+
+```js
+card.setData({ name: '青眼白龙' });
+await card.ready;
+// 此时可以读取最终边界，或调用 card.leafer.export()
+```
+
+同一 pending 周期内的更新共用一个 Promise，等待最新画面稳定；成功或失败后的下一次 `setData()` 建立新 Promise，因此每次更新后都应重新读取 `ready`。它不锁定数据快照；任意直接修改 Leafer 节点不在此接口的跟踪范围内。
+
+必需资源失败会拒绝 `ready`，预览仍保留；捕获错误后可调用 `setData()` 重试。未使用的预加载字体失败不会使本卡失败。构造参数 `readyTimeout` 可设置每轮等待的超时毫秒数（默认 `30000`，必须为正有限数）。错误的 `code` 包括 `RESOURCE_FAILED`、`READY_TIMEOUT` 和 `CARD_DESTROYED`；资源错误还提供 `resourceType`、`resource` 和 `cause`。Node 原有的同步字体注册错误仍会同步抛出。
+
+`card.leafer.destroy()` 会拒绝尚未完成的等待并清理本卡监听。Leafer 的资源队列是全局的，其他卡片或本卡未使用的预加载资源可能延迟完成通知。`ready` 不保证后续的导出编码、跨域画布读取或文件写入成功，仍须处理 `export()` 的错误。
 
 ## 🔎 示例代码
 
