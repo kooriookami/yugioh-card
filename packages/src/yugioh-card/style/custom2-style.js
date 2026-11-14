@@ -20,7 +20,7 @@ export default inheritProp({
     fontSize: 36,
     lineHeight: 1.2,
   },
-  effect: {
+  monsterType: {
     top: 1525,
     fontSize: 44,
     lineHeight: 1.2,

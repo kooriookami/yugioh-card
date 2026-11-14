@@ -14,7 +14,7 @@ export class YugiohSeries2Card extends Card {
   imageLeaf = null;
   maskLeaf = null;
   packageLeaf = null;
-  effectLeaf = null;
+  monsterTypeLeaf = null;
   descriptionLeaf = null;
   atkDefLeaf = null;
   passwordLeaf = null;
@@ -74,7 +74,7 @@ export class YugiohSeries2Card extends Card {
     this.drawImage();
     this.drawMask();
     this.drawPackage();
-    this.drawEffect();
+    this.drawMonsterType();
     this.drawDescription();
     this.drawAtkDef();
     this.drawPassword();
@@ -285,32 +285,32 @@ export class YugiohSeries2Card extends Card {
     this.packageLeaf.x = this.cardWidth - 170 - bounds.width;
   }
 
-  drawEffect() {
-    if (!this.effectLeaf) {
-      this.effectLeaf = new CompressText();
-      this.leafer.add(this.effectLeaf);
+  drawMonsterType() {
+    if (!this.monsterTypeLeaf) {
+      this.monsterTypeLeaf = new CompressText();
+      this.leafer.add(this.monsterTypeLeaf);
     }
 
-    const { effect } = this.style;
+    const { monsterType } = this.style;
 
     const leftBracket = '【';
     const rightBracket = '】';
 
-    this.effectLeaf.set({
+    this.monsterTypeLeaf.set({
       text: leftBracket + this.data.monsterType + rightBracket,
-      fontFamily: effect.fontFamily,
-      fontSize: effect.fontSize,
+      fontFamily: monsterType.fontFamily,
+      fontSize: monsterType.fontSize,
       strokeWidth: this.data.descriptionWeight,
-      lineHeight: effect.lineHeight,
-      letterSpacing: effect.letterSpacing || 0,
-      rtFontSize: effect.rtFontSize,
+      lineHeight: monsterType.lineHeight,
+      letterSpacing: monsterType.letterSpacing || 0,
+      rtFontSize: monsterType.rtFontSize,
       rtStrokeWidth: this.data.descriptionWeight,
-      rtTop: effect.rtTop,
+      rtTop: monsterType.rtTop,
       width: this.data.type === 'monster' ? 710 : 1095,
       height: 70,
-      x: 149 + (effect.textIndent || 0),
-      y: effect.top,
-      visible: this.showEffect,
+      x: 149 + (monsterType.textIndent || 0),
+      y: monsterType.top,
+      visible: this.showMonsterType,
       zIndex: 30,
     });
   }
@@ -321,11 +321,11 @@ export class YugiohSeries2Card extends Card {
       this.leafer.add(this.descriptionLeaf);
     }
 
-    const { effect, description } = this.style;
+    const { monsterType, description } = this.style;
 
-    let effectHeight = effect.minHeight || 0;
-    if (this.showEffect) {
-      effectHeight = effect.fontSize * effect.lineHeight;
+    let monsterTypeHeight = monsterType.minHeight || 0;
+    if (this.showMonsterType) {
+      monsterTypeHeight = monsterType.fontSize * monsterType.lineHeight;
     }
 
     this.descriptionLeaf.set({
@@ -344,7 +344,7 @@ export class YugiohSeries2Card extends Card {
       width: this.data.type === 'monster' ? 710 : 1095,
       height: ['spell', 'trap'].includes(this.data.type) ? 240 : 170,
       x: 149,
-      y: effect.top + effectHeight,
+      y: monsterType.top + monsterTypeHeight,
       zIndex: 30,
     });
   }
@@ -532,7 +532,7 @@ export class YugiohSeries2Card extends Card {
     return name;
   }
 
-  get showEffect() {
+  get showMonsterType() {
     return this.data.type === 'monster' && this.data.monsterType;
   }
 

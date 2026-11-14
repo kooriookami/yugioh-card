@@ -24,7 +24,7 @@ export class YugiohCard extends Card {
   pendulumDescriptionLeaf = null;
   packageLeaf = null;
   linkArrowLeaf = null;
-  effectLeaf = null;
+  monsterTypeLeaf = null;
   descriptionLeaf = null;
   atkDefLinkLeaf = null;
   passwordLeaf = null;
@@ -99,7 +99,7 @@ export class YugiohCard extends Card {
     this.drawPendulumDescription();
     this.drawPackage();
     this.drawLinkArrow();
-    this.drawEffect();
+    this.drawMonsterType();
     this.drawDescription();
     this.drawAtkDefLink();
     this.drawPassword();
@@ -472,33 +472,33 @@ export class YugiohCard extends Card {
     });
   }
 
-  drawEffect() {
-    if (!this.effectLeaf) {
-      this.effectLeaf = new CompressText();
-      this.leafer.add(this.effectLeaf);
+  drawMonsterType() {
+    if (!this.monsterTypeLeaf) {
+      this.monsterTypeLeaf = new CompressText();
+      this.leafer.add(this.monsterTypeLeaf);
     }
 
-    const { effect } = this.style;
+    const { monsterType } = this.style;
 
     const leftBracket = ['en', 'kr'].includes(this.data.language) ? '[' : '【';
     const rightBracket = ['en', 'kr'].includes(this.data.language) ? ']' : '】';
 
-    this.effectLeaf.set({
+    this.monsterTypeLeaf.set({
       text: leftBracket + this.data.monsterType + rightBracket,
-      fontFamily: effect.fontFamily,
-      fontSize: effect.fontSize,
+      fontFamily: monsterType.fontFamily,
+      fontSize: monsterType.fontSize,
       strokeWidth: this.data.descriptionWeight,
-      lineHeight: effect.lineHeight,
-      letterSpacing: effect.letterSpacing || 0,
-      wordSpacing: effect.wordSpacing || 0,
-      rtFontSize: effect.rtFontSize,
+      lineHeight: monsterType.lineHeight,
+      letterSpacing: monsterType.letterSpacing || 0,
+      wordSpacing: monsterType.wordSpacing || 0,
+      rtFontSize: monsterType.rtFontSize,
       rtStrokeWidth: this.data.descriptionWeight,
-      rtTop: effect.rtTop,
+      rtTop: monsterType.rtTop,
       width: 1175,
       height: 100,
-      x: 109 + (effect.textIndent || 0),
-      y: effect.top,
-      visible: this.showEffect,
+      x: 109 + (monsterType.textIndent || 0),
+      y: monsterType.top,
+      visible: this.showMonsterType,
       zIndex: 30,
     });
   }
@@ -509,11 +509,11 @@ export class YugiohCard extends Card {
       this.leafer.add(this.descriptionLeaf);
     }
 
-    const { effect, description } = this.style;
+    const { monsterType, description } = this.style;
 
-    let effectHeight = effect.minHeight || 0;
-    if (this.showEffect) {
-      effectHeight = effect.fontSize * effect.lineHeight;
+    let monsterTypeHeight = monsterType.minHeight || 0;
+    if (this.showMonsterType) {
+      monsterTypeHeight = monsterType.fontSize * monsterType.lineHeight;
     }
 
     let fontFamily = description.fontFamily;
@@ -524,8 +524,8 @@ export class YugiohCard extends Card {
 
     let height = 385;
     if (!['spell', 'trap'].includes(this.data.type)) {
-      if (this.showEffect) {
-        height -= effectHeight;
+      if (this.showMonsterType) {
+        height -= monsterTypeHeight;
       }
       if (this.data.atkBar) {
         height -= 60;
@@ -551,7 +551,7 @@ export class YugiohCard extends Card {
       width: 1175,
       height,
       x: 109,
-      y: effect.top + effectHeight,
+      y: monsterType.top + monsterTypeHeight,
       zIndex: 30,
     });
   }
@@ -891,7 +891,7 @@ export class YugiohCard extends Card {
     return show;
   }
 
-  get showEffect() {
+  get showMonsterType() {
     return ['monster', 'pendulum'].includes(this.data.type) && this.data.monsterType;
   }
 
