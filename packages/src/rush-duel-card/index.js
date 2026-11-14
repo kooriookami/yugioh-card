@@ -13,7 +13,7 @@ export class RushDuelCard extends Card {
   imageLeaf = null;
   maskLeaf = null;
   packageLeaf = null;
-  effectLeaf = null;
+  monsterTypeLeaf = null;
   descriptionLeaf = null;
   maximumAtkLeaf = null;
   atkDefLeaf = null;
@@ -71,7 +71,7 @@ export class RushDuelCard extends Card {
     this.drawImage();
     this.drawMask();
     this.drawPackage();
-    this.drawEffect();
+    this.drawMonsterType();
     this.drawDescription();
     this.drawMaximumAtk();
     this.drawAtkDef();
@@ -287,31 +287,31 @@ export class RushDuelCard extends Card {
     this.packageLeaf.x = this.cardWidth - 130 - bounds.width;
   }
 
-  drawEffect() {
-    if (!this.effectLeaf) {
-      this.effectLeaf = new CompressText();
-      this.leafer.add(this.effectLeaf);
+  drawMonsterType() {
+    if (!this.monsterTypeLeaf) {
+      this.monsterTypeLeaf = new CompressText();
+      this.leafer.add(this.monsterTypeLeaf);
     }
 
-    const { effect } = this.style;
+    const { monsterType } = this.style;
 
     const leftBracket = '【';
     const rightBracket = '】';
 
-    this.effectLeaf.set({
+    this.monsterTypeLeaf.set({
       text: leftBracket + this.data.monsterType + rightBracket,
-      fontFamily: effect.fontFamily,
-      fontSize: effect.fontSize,
-      fontWeight: effect.fontWeight,
+      fontFamily: monsterType.fontFamily,
+      fontSize: monsterType.fontSize,
+      fontWeight: monsterType.fontWeight,
       strokeWidth: this.data.descriptionWeight,
-      letterSpacing: effect.letterSpacing || 0,
-      rtFontSize: effect.rtFontSize,
+      letterSpacing: monsterType.letterSpacing || 0,
+      rtFontSize: monsterType.rtFontSize,
       rtStrokeWidth: this.data.descriptionWeight,
-      rtTop: effect.rtTop,
+      rtTop: monsterType.rtTop,
       width: 1000,
       height: 80,
-      x: 99 + (effect.textIndent || 0),
-      y: effect.top,
+      x: 99 + (monsterType.textIndent || 0),
+      y: monsterType.top,
       visible: this.data.type === 'monster' && this.data.monsterType,
       zIndex: 30,
     });

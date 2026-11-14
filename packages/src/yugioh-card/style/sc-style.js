@@ -22,7 +22,7 @@ export default inheritProp({
     letterSpacing: 2,
     lineHeight: 1.2,
   },
-  effect: {
+  monsterType: {
     top: 1528,
     fontSize: 44,
     letterSpacing: 2,
