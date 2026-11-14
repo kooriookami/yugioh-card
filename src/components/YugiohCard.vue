@@ -69,6 +69,7 @@
 <script setup>
 import { Icon } from '@iconify/vue';
 import { ZoomIn, ZoomOut } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { FieldCenterCard, RushDuelCard, YugiohBackCard, YugiohCard, YugiohSeries2Card } from 'yugioh-card';
 import JsonEditorVue from 'json-editor-vue';
@@ -154,11 +155,18 @@ const changeCard = () => {
   jsonData.value = form.data;
 };
 
-const exportImage = () => {
-  cardLeaf.value.leafer.export('卡片.png', {
-    screenshot: true,
-    pixelRatio: devicePixelRatio,
-  });
+const exportImage = async () => {
+  const current = cardLeaf.value;
+  try {
+    await current.ready;
+    if (current !== cardLeaf.value || current.leafer.destroyed) return;
+    await current.leafer.export('卡片.png', {
+      screenshot: true,
+      pixelRatio: devicePixelRatio,
+    });
+  } catch (error) {
+    ElMessage.error(`导出失败：${error.message}`);
+  }
 };
 
 watch(() => jsonData.value, () => {
