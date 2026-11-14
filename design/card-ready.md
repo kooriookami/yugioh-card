@@ -308,6 +308,8 @@ Leafer 2.3.4 的 `imageReady` 实际依赖 `viewReady && Resource.isComplete`，
 
 资源失败提供 `CardReadyError` 的 `code: 'RESOURCE_FAILED'`，并附带 `resourceType`、`resource`、`cause`；整卡等待超时使用 `READY_TIMEOUT`，销毁使用 `CARD_DESTROYED`。字体资源超时记录在资源错误的 `cause.code: 'RESOURCE_TIMEOUT'`。同步 Node 字体注册和同步绘制的原有异常继续同步抛出。
 
+每轮检查先扫描当前依赖的已知失败，再决定是否继续等待；仍在加载的字体清单、字体或其他图片不能遮蔽已经失败的必需图片。演示页在切换卡片或卸载组件后忽略旧导出任务的结果与错误，当前实例的实际加载、导出错误仍正常提示。
+
 | 实现位置 | 职责 |
 | --- | --- |
 | [字体适配](../packages/src/utils/font-loader.js) | 按 FontFaceSet / FontLibrary 缓存实际资源记录，区分清单与字体完成状态，复用进行中的任务并允许新周期重试 |
@@ -320,6 +322,8 @@ Leafer 2.3.4 的 `imageReady` 实际依赖 `viewReady && Resource.isComplete`，
 自动回归测试位于 [卡片测试](../packages/src/card/__tests__/) 与 [字体测试](../packages/src/utils/__tests__/)；保留真实 Skia 字体测量、五种卡片 PNG 导出，以及可控的异步加载、失败和销毁用例。运行 `pnpm test`。
 
 浏览器验证入口为 [受控资源服务](../packages/src/card/__tests__/browser/server.mjs)。在仓库根目录运行 `node packages/src/card/__tests__/browser/server.mjs`，使用外部 Edge 打开 `http://127.0.0.1:5175/ready-fixture`，先检查 fallback 预览，再点击“释放资源并验证”。该页面使用真实 FontFace 和 Leafer，控制字体清单、字体与图片的返回时机，并校验缓存、重排、失败重试、独立 CompressText、销毁及最终 PNG 导出。
+
+同一服务的 `http://127.0.0.1:5175/export-fixture` 挂载真实演示组件并延迟字体清单；先点“导出图片”，再切换卡片或点“卸载组件”，累计错误提示应保持为零。导出处理函数的自动回归位于 [组件测试](../src/components/__tests__/export-image.test.js)，同时覆盖当前卡片的真实错误提示。
 
 ## 13. 参考资料
 

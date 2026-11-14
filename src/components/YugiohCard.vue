@@ -116,6 +116,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
   cardLeaf.value?.leafer.destroy();
+  cardLeaf.value = null;
 });
 
 const changeCard = () => {
@@ -157,6 +158,7 @@ const changeCard = () => {
 
 const exportImage = async () => {
   const current = cardLeaf.value;
+  if (!current) return;
   try {
     await current.ready;
     if (current !== cardLeaf.value || current.leafer.destroyed) return;
@@ -165,6 +167,7 @@ const exportImage = async () => {
       pixelRatio: devicePixelRatio,
     });
   } catch (error) {
+    if (current !== cardLeaf.value || current.leafer.destroyed) return;
     ElMessage.error(`导出失败：${error.message}`);
   }
 };

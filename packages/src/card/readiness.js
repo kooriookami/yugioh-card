@@ -127,6 +127,12 @@ export class CardReadiness {
 
   check() {
     const required = this.requiredFonts();
+    let imagesPending = false;
+    // 先检查所有已知失败，避免被仍在加载的字体或其他图片遮蔽。
+    for (const record of this.images.records.values()) {
+      if (record.status === 'failed') throw record.error;
+      if (record.status !== 'loaded') imagesPending = true;
+    }
     if (!required || required.some(([, entry]) => entry.status !== 'loaded')) return;
     if (required.some(([family, entry]) => this.loadedFonts.get(family) !== entry)) {
       this.cancelView?.();
@@ -136,10 +142,7 @@ export class CardReadiness {
       this.schedule();
       return;
     }
-    for (const record of this.images.records.values()) {
-      if (record.status === 'failed') throw record.error;
-      if (record.status !== 'loaded') return;
-    }
+    if (imagesPending) return;
     if (!this.cancelView) this.waitForView();
   }
 

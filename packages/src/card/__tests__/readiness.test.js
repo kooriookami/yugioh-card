@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import path from 'node:path';
-import { Group, Text, LeaferEvent, useCanvas } from 'leafer-unified';
+import { Group, Text, ImageManager, LeaferEvent, useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
 import { CompressText } from '../../compress-text/compress-text.js';
+import { resourceError } from '../../utils/resource-error.js';
 import { CardReadiness } from '../readiness.js';
 
 useCanvas('skia', skia);
@@ -64,6 +65,11 @@ const fixture = (t, fonts = null, timeout) => {
     card.leafer.children.forEach(node => node.destroy());
   });
   return { card, readiness };
+};
+
+const trackImage = (readiness, url, status, error = null) => {
+  const image = ImageManager.get({ url });
+  readiness.images.records.set(url, { image, targets: [], status, error });
 };
 
 test('pending updates share one promise and stay synchronous; a completed cycle gets a new promise', async t => {
@@ -233,4 +239,58 @@ test('readiness has a bounded timeout and keeps synchronous draw errors synchron
   card.draw = () => { throw failure; };
   assert.throws(() => card.setData({}), failure);
   await assert.rejects(card.ready, failure);
+});
+
+for (const stage of ['manifest', 'font']) {
+  test(`known image errors take priority over a pending ${stage}`, async t => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const fonts = fontResource(['ygo-sc']);
+    if (stage === 'font') fonts.status = 'loaded';
+    const { card, readiness } = fixture(t, fonts, 100);
+    card.setData({ family: 'ygo-sc' });
+    const url = `ready-error:${stage}/failed.png`;
+    const cause = new Error('Required image failed');
+    const failure = resourceError('image', url, cause);
+    trackImage(readiness, url, 'failed', failure);
+    await flush();
+    t.mock.timers.tick(100);
+    await assert.rejects(card.ready, error => error === failure && error.resource === url && error.cause === cause);
+  });
+}
+
+test('a loading image cannot hide a later required image error', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { card, readiness } = fixture(t, null, 100);
+  card.setData({});
+  const failure = resourceError('image', 'ready-error:later-failed.png', new Error('Second image failed'));
+  trackImage(readiness, 'ready-error:first-loading.png', 'loading');
+  trackImage(readiness, failure.resource, 'failed', failure);
+  await flush();
+  t.mock.timers.tick(100);
+  await assert.rejects(card.ready, error => error === failure);
+});
+
+test('a loading font or image cannot hide a required font error', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const fonts = fontResource(['waiting-font', 'failed-font']);
+  fonts.status = 'loaded';
+  const failure = resourceError('font', '/font/failed-font.woff2', new Error('Required font failed'));
+  Object.assign(fonts.fonts.get('failed-font'), { status: 'failed', error: failure });
+  const { card, readiness } = fixture(t, fonts, 100);
+  card.setData({ family: 'waiting-font, failed-font' });
+  trackImage(readiness, 'ready-error:waiting-for-font.png', 'loading');
+  await flush();
+  t.mock.timers.tick(100);
+  await assert.rejects(card.ready, error => error === failure);
+});
+
+test('pending resources without a known failure still wait until the normal timeout', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { card, readiness } = fixture(t, fontResource(['ygo-sc']), 100);
+  card.setData({ family: 'ygo-sc' });
+  trackImage(readiness, 'ready-error:only-loading.png', 'loading');
+  await flush();
+  assert.equal(readiness.pending, true);
+  t.mock.timers.tick(100);
+  await assert.rejects(card.ready, { code: 'READY_TIMEOUT' });
 });

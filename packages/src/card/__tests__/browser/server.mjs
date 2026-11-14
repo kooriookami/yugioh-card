@@ -25,6 +25,7 @@ const server = await createServer({
     configureServer(vite) {
       vite.middlewares.use(async (req, res, next) => {
         const url = new URL(req.url, 'http://127.0.0.1');
+        if (url.pathname.startsWith('/ready-test/')) res.setHeader('Access-Control-Allow-Origin', '*');
         if (url.pathname === '/ready-test/reset') {
           reset();
           res.end('ok');
@@ -33,6 +34,11 @@ const server = await createServer({
         if (url.pathname === '/ready-fixture') {
           res.setHeader('Content-Type', 'text/html; charset=utf-8');
           res.end(await vite.transformIndexHtml('/ready-fixture', await fs.readFile(path.join(import.meta.dirname, 'index.html'), 'utf8')));
+          return;
+        }
+        if (url.pathname === '/export-fixture') {
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.end(await vite.transformIndexHtml('/export-fixture', await fs.readFile(path.join(root, 'src/components/__tests__/browser/export.html'), 'utf8')));
           return;
         }
         if (url.pathname.startsWith('/ready-test/release/')) {
@@ -46,6 +52,10 @@ const server = await createServer({
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify(counts));
           return;
+        }
+        if (/^\/src\/assets\/yugioh-card\/.+\/font\/font-list\.json$/.test(url.pathname)) {
+          await gates.get('manifest').promise;
+          return next();
         }
         if (!url.pathname.startsWith('/ready-resources/')) return next();
         const file = url.pathname.slice('/ready-resources/'.length);

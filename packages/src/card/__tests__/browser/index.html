@@ -12,7 +12,7 @@ h1 {font-size:24px} button {font:inherit;padding:10px 16px;cursor:pointer} .card
 <div class="cards"><div id="a" class="card"></div><div id="b" class="card"></div></div>
 <pre id="report">初始化中</pre><img id="export" alt="等待导出">
 <script type="module">
-import { YugiohCard } from '/packages/index.js';
+import { FieldCenterCard, YugiohCard } from '/packages/index.js';
 import { CompressText } from '/packages/src/compress-text/compress-text.js';
 import { Leafer } from 'leafer-unified';
 const report = document.querySelector('#report');
@@ -24,8 +24,10 @@ const check = (condition, label) => {
   report.textContent = results.join('\n');
   if (!condition) throw new Error(label);
 };
-const release = name => fetch(`/ready-test/release/${name}`, { method: 'POST' });
-await fetch('/ready-test/reset', { method: 'POST' });
+// 控制请求使用另一个主机名，避免被故意挂起的资源占满同源连接。
+const controlOrigin = `${location.protocol}//${location.hostname === 'localhost' ? '127.0.0.1' : 'localhost'}:${location.port}`;
+const release = name => fetch(`${controlOrigin}/ready-test/release/${name}`, { method: 'POST' });
+await fetch(`${controlOrigin}/ready-test/reset`, { method: 'POST' });
 const baseline = {};
 const waitFor = async predicate => {
   const deadline = performance.now() + 20000;
@@ -44,6 +46,14 @@ const options = {
 };
 const a = new ObservedCard({ ...options, view: 'a' });
 const b = new ObservedCard({ ...options, view: 'b' });
+class FailedMaskCard extends FieldCenterCard {
+  drawMask() { super.drawMask(); this.maskLeaf.url = '/ready-resources/missing-mask.png'; }
+}
+const fontProbe = new ObservedCard({ ...options, data: { ...options.data, image: '/ready-resources/retry.jpg' } });
+const imageProbe = new FailedMaskCard({ ...options, data: { scale: 0.1, image: '/ready-resources/photo.jpg' } });
+let fontProbeError, imageProbeError;
+fontProbe.ready.catch(error => { fontProbeError = error; });
+imageProbe.ready.catch(error => { imageProbeError = error; });
 let state = 'pending';
 a.ready.then(() => { state = 'ready'; }, error => { state = error.code; });
 const initial = { name: a.nameLeaf.bounds.width, race: a.monsterTypeLeaf.textScale, packageX: a.packageLeaf.x };
@@ -53,6 +63,14 @@ check(state === 'pending' && a.nameLeaf.rubyList.length > 0 && initial.name > 0,
 document.querySelector('#start').onclick = async event => {
   event.target.disabled = true;
   try {
+    try {
+      await waitFor(() => fontProbeError && imageProbeError);
+      check(fontProbeError.code === 'RESOURCE_FAILED' && fontProbeError.resource.endsWith('/retry.jpg') && fontProbeError.cause && a._readiness.fonts.status !== 'loaded', '字体清单仍在等待时，已知图片失败立即保留资源和原因返回');
+      check(imageProbeError.code === 'RESOURCE_FAILED' && imageProbeError.resource.endsWith('/missing-mask.png') && imageProbeError.cause && imageProbe._readiness.images.records.get('/ready-resources/photo.jpg').status === 'loading', '前面的图片仍在加载时，后面的图片失败立即返回');
+    } finally {
+      fontProbe.leafer.destroy(true);
+      imageProbe.leafer.destroy(true);
+    }
     await release('manifest');
     await waitFor(() => document.fonts.size > 0);
     check(state === 'pending', 'FontFace 已注册但未加载时不提前完成');
@@ -65,7 +83,7 @@ document.querySelector('#start').onclick = async event => {
     await release('photo');
     await Promise.all([a.ready, b.ready]);
     check(state === 'ready' && a.leafer.imageReady && b.leafer.imageReady, '两张卡片的资源、排版和实际渲染全部完成');
-    const counts = await (await fetch('/ready-test/counts')).json();
+    const counts = await (await fetch(`${controlOrigin}/ready-test/counts`)).json();
     check(counts['yugioh/font/font-list.json'] - (baseline['yugioh/font/font-list.json'] || 0) === 1 && counts['yugioh/font/ygo-en.woff2'] - (baseline['yugioh/font/ygo-en.woff2'] || 0) === 1, '并发卡片共用一次真实字体请求');
     const old = a.ready, draws = a.drawCount;
     a.setData({ name: 'Cached synchronous update' });
