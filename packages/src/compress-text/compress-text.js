@@ -1280,8 +1280,10 @@ export class CompressText extends Group {
       const lastRuby = lineList[lineList.length - 1];
       const lastRubyLeaf = lastRuby.rubyLeaf;
       const lastPaddingRight = lastRuby.paddingRight || 0;
-      this.bounds.width = Math.max(this.bounds.width, lastRubyLeaf.x + lastRuby.width + lastPaddingRight) * this.scaleX;
-      this.bounds.height = Math.max(this.bounds.height, lastRubyLeaf.y + lastRuby.height) * this.scaleY;
+      this.bounds.width = Math.max(this.bounds.width, lastRubyLeaf.x + lastRuby.width + lastPaddingRight);
+      this.bounds.height = Math.max(this.bounds.height, lastRubyLeaf.y + lastRuby.height);
     });
+    this.bounds.width *= this.scaleX;
+    this.bounds.height *= this.scaleY;
   }
 }
