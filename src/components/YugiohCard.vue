@@ -1,7 +1,20 @@
 <template>
   <div class="yugioh-card-container">
     <div class="yugioh-card">
-      <div ref="card" class="card" />
+      <div ref="preview" class="preview">
+        <div class="preview-content">
+          <div ref="card" class="card" :style="{ zoom: previewScale }" />
+        </div>
+      </div>
+      <el-button
+        class="fit-height-button"
+        circle
+        :icon="fitHeight ? ZoomIn : ZoomOut"
+        :title="fitHeight ? '原始大小' : '适应高度'"
+        :aria-label="fitHeight ? '原始大小' : '适应高度'"
+        :aria-pressed="fitHeight"
+        @click="fitHeight = !fitHeight"
+      />
     </div>
     <div class="form">
       <div class="form-header">
@@ -55,7 +68,8 @@
 
 <script setup>
 import { Icon } from '@iconify/vue';
-import { onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue';
+import { ZoomIn, ZoomOut } from '@element-plus/icons-vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { FieldCenterCard, RushDuelCard, YugiohBackCard, YugiohCard, YugiohSeries2Card } from 'yugioh-card';
 import JsonEditorVue from 'json-editor-vue';
 import fieldCenterDemo from '@/assets/demo/field-center-demo';
@@ -65,6 +79,15 @@ import yugiohDemo from '@/assets/demo/yugioh-demo';
 import yugiohSeries2Demo from '@/assets/demo/yugioh-series-2-demo';
 
 const card = ref(null);
+const preview = ref(null);
+const fitHeight = ref(false);
+const previewSize = reactive({ width: 0, height: 0 });
+const cardSize = reactive({ width: 0, height: 0 });
+const previewScale = computed(() => {
+  if (!fitHeight.value || !cardSize.width || !cardSize.height) return 1;
+  return Math.max(0.01, Math.min(1, (previewSize.height - 40) / cardSize.height, (previewSize.width - 40) / cardSize.width));
+});
+let resizeObserver;
 const cardLeaf = shallowRef(null);
 const form = reactive({
   card: 'yugioh',
@@ -77,15 +100,26 @@ const jsonOption = reactive({
 });
 
 onMounted(() => {
+  resizeObserver = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      const size = entry.target === preview.value ? previewSize : cardSize;
+      size.width = entry.contentRect.width;
+      size.height = entry.contentRect.height;
+    }
+  });
+  resizeObserver.observe(preview.value);
+  resizeObserver.observe(card.value);
   changeCard();
 });
 
 onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
   cardLeaf.value?.leafer.destroy();
 });
 
 const changeCard = () => {
-  cardLeaf.value?.leafer.destroy();
+  // 先同步移除旧画布，避免 Leafer 将新画布设为绝对定位，导致预览容器尺寸归零。
+  cardLeaf.value?.leafer.destroy(true);
   let Card;
   switch (form.card) {
     case 'yugioh':
@@ -149,14 +183,30 @@ const toGithub = () => {
 
   .yugioh-card {
     height: 100%;
-    overflow: auto;
+    min-width: 0;
     flex-grow: 1;
     position: relative;
-    padding: 20px;
+
+    .preview {
+      height: 100%;
+      overflow: auto;
+    }
+
+    .preview-content {
+      width: max-content;
+      min-width: 100%;
+      padding: 20px;
+    }
 
     .card {
       display: inline-block;
       vertical-align: top;
+    }
+
+    .fit-height-button {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
     }
   }
 
