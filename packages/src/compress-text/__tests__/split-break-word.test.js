@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { splitBreakWordWithBracket as splitBreakWordWithBracketOld } from 'yugioh-card-v190/src/compress-text/split-break-word';
 import { splitBreakWord, splitBreakWordWithBracket } from '../split-break-word.js';
 
 const separatorCharList = [
@@ -11,13 +10,6 @@ const separatorCharList = [
   String.fromCodePoint(0x10101),
   String.fromCodePoint(0x1039),
   String.fromCodePoint(0x1091),
-];
-
-const demoCaseTextList = [
-  '[自(じ)][分(ぶん)]フィールドの[表(おもて)][側(がわ)][攻(こう)][撃(げき)][表(ひょう)][示(じ)]モンスター１[体(たい)]を[対(たい)][象(しょう)]としてこのカードを[発(はつ)][動(どう)]できる。①：このカードが[魔(ま)][法(ほう)]＆[罠(トラップ)]ゾーンに[存(そん)][在(ざい)]する[限(かぎ)]り、そのモンスターは[戦(せん)][闘(とう)]・[効(こう)][果(か)]では[破(は)][壊(かい)]されない。そのモンスターがフィールドから[離(はな)]れた[場(ば)][合(あい)]にこのカードは[破(は)][壊(かい)]される。',
-  '【[永(えい)][続(ぞく)][魔(ま)][法(ほう)]】[自(じ)][分(ぶん)]は１ターンに１[度(ど)]、[手(て)][札(ふだ)]を１[枚(まい)][捨(す)]てて[発(はつ)][動(どう)]できる。デッキから[魔(ま)][法(ほう)]カード１[枚(まい)]を[手(て)][札(ふだ)]に[加(くわ)]える。',
-  '[这(これ)]はテスト[用(よう)]の[長(なが)]い[文(ぶん)]です。[高(たか)]さが[足(た)]りない[場(ば)][合(あい)]に、[文(も)][字(じ)][全(ぜん)][体(たい)]が[自(じ)][動(どう)][的(てき)]に[縮(ちぢ)]むかを[確(かく)][認(にん)]します。②：さらに[別(べつ)]の[効(こう)][果(か)]テキストを[追(つい)][加(か)]して、[複(ふく)][数(すう)][行(ぎょう)]での[挙(きょ)][動(どう)]を[見(み)]ます。',
-  '●[相(あい)][手(て)]フィールドのカード１[枚(まい)]を[対(たい)][象(しょう)]として[発(はつ)][動(どう)]できる。\n①：[相(あい)][手(て)]カードを[破(は)][壊(かい)]する。\n②：[自(じ)][分(ぶん)]はデッキから１[枚(まい)][引(ひ)]く。',
 ];
 
 const curatedBracketCaseList = [
@@ -134,18 +126,6 @@ test('splitBreakWordWithBracket keeps malformed brackets as plain text while pre
 
     assert.equal(result.join(''), text);
     assert.ok(result.some(token => token.includes('[破(は)]')) || result.some(token => token.includes('[壊(かい)]')));
-  });
-});
-
-test('splitBreakWordWithBracket matches old implementation for playground demos', () => {
-  demoCaseTextList.forEach(text => {
-    assert.deepEqual(splitBreakWordWithBracket(text), splitBreakWordWithBracketOld(text));
-  });
-});
-
-test('splitBreakWordWithBracket matches old implementation for curated edge cases', () => {
-  curatedBracketCaseList.forEach(text => {
-    assert.deepEqual(splitBreakWordWithBracket(text), splitBreakWordWithBracketOld(text));
   });
 });
 

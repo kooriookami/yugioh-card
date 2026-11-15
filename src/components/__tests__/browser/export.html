@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="UTF-8">
+<title>导出取消 · Edge 验证</title>
+<style>
+#controls { padding: 12px; background: #eef4fb; font: 15px system-ui; display: flex; gap: 16px; align-items: center; }
+#controls button { padding: 6px 12px; cursor: pointer; }
+</style>
+<div id="controls">
+  <button id="release">释放字体清单</button>
+  <button id="unmount">卸载组件</button>
+  <output id="report">初始化中</output>
+  <span>累计错误提示：<b id="errors">0</b></span>
+</div>
+<div id="app"></div>
+<script type="module">
+import { createApp } from 'vue';
+import ElementPlus from 'element-plus';
+import 'element-plus/dist/index.css';
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import YugiohCard from '/src/components/YugiohCard.vue';
+import 'normalize.css';
+import '/src/styles/main.scss';
+
+// 测试真实组件，延迟清单以便在 ready 等待期间切换卡片或卸载。
+await fetch('/ready-test/reset', { method: 'POST' });
+const app = createApp(YugiohCard).use(ElementPlus, { locale: zhCn });
+app.mount('#app');
+const report = document.querySelector('#report');
+report.textContent = '组件已挂载，字体清单等待中';
+let errors = 0;
+const seen = new WeakSet();
+new MutationObserver(() => {
+  for (const message of document.querySelectorAll('.el-message--error')) {
+    if (seen.has(message)) continue;
+    seen.add(message);
+    document.querySelector('#errors').textContent = String(++errors);
+  }
+}).observe(document.body, { childList: true, subtree: true });
+document.querySelector('#release').onclick = async event => {
+  event.target.disabled = true;
+  await fetch('/ready-test/release/manifest', { method: 'POST' });
+  report.textContent = '字体清单已释放';
+};
+document.querySelector('#unmount').onclick = event => {
+  app.unmount();
+  event.target.disabled = true;
+  report.textContent = '组件已卸载，旧导出等待已取消';
+};
+</script>
+</html>
