@@ -310,6 +310,10 @@ Leafer 2.3.4 的 `imageReady` 实际依赖 `viewReady && Resource.isComplete`，
 
 每轮检查先扫描当前依赖的已知失败，再决定是否继续等待；仍在加载的字体清单、字体或其他图片不能遮蔽已经失败的必需图片。演示页在切换卡片或卸载组件后忽略旧导出任务的结果与错误，当前实例的实际加载、导出错误仍正常提示。
 
+字体依赖查找和独立 `CompressText` 的加载通知使用相同的字体名比较规则，忽略大小写及外层引号；FontFace 注册名称、清单键和资源地址保留原始大小写。验证覆盖正文、注音和备用字体列表，确保初次 `document.fonts.ready` 完成后加载的相关字体仍会重新测量，无关字体不会触发重排。
+
+演示页根据当前卡片的 `ready` 显示加载提示，成功时隐藏，失败时显示错误；导出等待和编码期间，按钮显示对应状态并防止重复操作。提示以实例及 Promise 身份校验结果，连续更新、切换卡片或卸载后，旧任务不能覆盖新的状态。
+
 | 实现位置 | 职责 |
 | --- | --- |
 | [字体适配](../packages/src/utils/font-loader.js) | 按 FontFaceSet / FontLibrary 缓存实际资源记录，区分清单与字体完成状态，复用进行中的任务并允许新周期重试 |
@@ -324,6 +328,8 @@ Leafer 2.3.4 的 `imageReady` 实际依赖 `viewReady && Resource.isComplete`，
 浏览器验证入口为 [受控资源服务](../packages/src/card/__tests__/browser/server.mjs)。在仓库根目录运行 `node packages/src/card/__tests__/browser/server.mjs`，使用外部 Edge 打开 `http://127.0.0.1:5175/ready-fixture`，先检查 fallback 预览，再点击“释放资源并验证”。该页面使用真实 FontFace 和 Leafer，控制字体清单、字体与图片的返回时机，并校验缓存、重排、失败重试、独立 CompressText、销毁及最终 PNG 导出。
 
 同一服务的 `http://127.0.0.1:5175/export-fixture` 挂载真实演示组件并延迟字体清单；先点“导出图片”，再切换卡片或点“卸载组件”，累计错误提示应保持为零。导出处理函数的自动回归位于 [组件测试](../src/components/__tests__/export-image.test.js)，同时覆盖当前卡片的真实错误提示。
+
+通用开发与验证约定统一维护在根目录 [AGENTS.md](../AGENTS.md)。
 
 ## 13. 参考资料
 
