@@ -208,7 +208,7 @@ test('CompressText overflow helper reflects current layout height', () => {
   assert.equal(instance.doesOverflowHeight(lastRuby), true);
 });
 
-test('CompressText stops height compression after reaching one-line height limit', () => {
+test('CompressText keeps unresolvable one-line height readable and stops searching', () => {
   const instance = new CompressText({
     ...baseConfig,
     text: '[自(じ)][分(ぶん)]フィールドのカード１枚を対象として発動できる。',
@@ -226,8 +226,8 @@ test('CompressText stops height compression after reaching one-line height limit
   instance.set({ height: 12 });
 
   const lastRuby = instance.rubyList[instance.rubyList.length - 1];
-  assert.equal(instance.currentLine, 0);
-  assert.equal(instance.reachedSingleLineHeightLimit(lastRuby), true);
+  assert.equal(instance.textScale, 1);
+  assert.ok(instance.rubyList.every(ruby => ruby.rubyLeaf.scaleX > 0));
   assert.equal(instance.doesOverflowHeight(lastRuby), true);
   assert.ok(updateTextScaleCount < 40);
 });
