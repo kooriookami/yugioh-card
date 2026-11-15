@@ -21,43 +21,14 @@
           <p>{{ currentCase.description }}</p>
         </div>
 
-        <div class="compare-grid">
-          <div class="compare-card">
-            <div class="compare-card-header">
-              <div class="compare-card-title">
-                <h3>新版本</h3>
-                <span :class="['render-metric', getRenderMetricClass(renderCost.newMs)]">
-                  最近一次渲染 {{ formatRenderCost(renderCost.newMs) }}
-                </span>
-              </div>
-              <span class="compare-tag compare-tag-new">current</span>
-            </div>
-            <div ref="newLeaferRef" class="leafer-host" />
+        <div class="render-preview">
+          <div class="render-header">
+            <h3>当前预览</h3>
+            <span :class="['render-metric', getRenderMetricClass(renderCost)]">
+              最近一次渲染 {{ formatRenderCost(renderCost) }}
+            </span>
           </div>
-
-          <div class="compare-card">
-            <div class="compare-card-header">
-              <div class="compare-card-title">
-                <h3>旧版本</h3>
-                <span :class="['render-metric', getRenderMetricClass(renderCost.oldMs)]">
-                  {{ oldPreviewEnabled ? `最近一次渲染 ${formatRenderCost(renderCost.oldMs)}` : '预览已关闭' }}
-                </span>
-              </div>
-              <div class="compare-card-actions">
-                <span class="compare-tag compare-tag-old">yugioh-card@1.9.0</span>
-                <el-switch
-                  v-model="oldPreviewEnabled"
-                  inline-prompt
-                  active-text="开"
-                  inactive-text="关"
-                />
-              </div>
-            </div>
-            <div v-if="oldPreviewEnabled" ref="oldLeaferRef" class="leafer-host" />
-            <div v-else class="compare-placeholder">
-              旧版本预览已关闭。可以用这个开关确认卡顿是否来自旧版本渲染。
-            </div>
-          </div>
+          <div ref="leaferRef" class="leafer-host" />
         </div>
       </section>
 
@@ -155,39 +126,15 @@
         </div>
 
         <div class="info-block">
-          <div class="info-header">
-            <h3>分词结果</h3>
-            <span :class="['compare-chip', isSplitConsistent ? 'compare-chip-match' : 'compare-chip-diff']">
-              {{ isSplitConsistent ? '新旧一致' : '新旧不一致' }}
-            </span>
-          </div>
-
-          <div class="split-compare-grid">
-            <div>
-              <h4>新版本</h4>
-              <div class="token-list">
-                <div
-                  v-for="row in splitDiffRows"
-                  :key="`new-${row.index}`"
-                  :class="['token-row', row.isDifferent && 'token-row-diff']"
-                >
-                  <span class="token-index">{{ row.index + 1 }}</span>
-                  <span class="token-value">{{ row.newToken ?? '∅' }}</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h4>旧版本</h4>
-              <div class="token-list">
-                <div
-                  v-for="row in splitDiffRows"
-                  :key="`old-${row.index}`"
-                  :class="['token-row', row.isDifferent && 'token-row-diff']"
-                >
-                  <span class="token-index">{{ row.index + 1 }}</span>
-                  <span class="token-value">{{ row.oldToken ?? '∅' }}</span>
-                </div>
-              </div>
+          <h3>分词结果</h3>
+          <div class="token-list">
+            <div
+              v-for="(token, index) in splitResult"
+              :key="index"
+              class="token-row"
+            >
+              <span class="token-index">{{ index + 1 }}</span>
+              <span class="token-value">{{ token }}</span>
             </div>
           </div>
         </div>
@@ -198,21 +145,15 @@
 
 <script setup>
 import { Leafer } from 'leafer-unified';
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
-import { CompressText as OldCompressText } from 'yugioh-card-v190/src/compress-text/compress-text';
-import { splitBreakWordWithBracket as splitBreakWordWithBracketOld } from 'yugioh-card-v190/src/compress-text/split-break-word';
-import { CompressText as NewCompressText, splitBreakWordWithBracket as splitBreakWordWithBracketNew } from '/packages/src/compress-text';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { CompressText, splitBreakWordWithBracket } from '/packages/src/compress-text';
 
 const rubyPlainTextPattern = /\[([^\[\]()]+)\(([^\[\]()]*)\)]/g;
 
-const newLeaferRef = ref(null);
-const oldLeaferRef = ref(null);
-const newLeaferInstanceRef = ref(null);
-const oldLeaferInstanceRef = ref(null);
-const newCompressTextRef = ref(null);
-const oldCompressTextRef = ref(null);
+const leaferRef = ref(null);
+const leaferInstanceRef = ref(null);
+const compressTextRef = ref(null);
 const selectedCaseId = ref('ruby-basic');
-const oldPreviewEnabled = ref(true);
 
 const previewBaseConfig = {
   text: '',
@@ -230,10 +171,7 @@ const previewBaseConfig = {
 };
 
 const editableConfig = reactive({ ...previewBaseConfig });
-const renderCost = reactive({
-  newMs: null,
-  oldMs: null,
-});
+const renderCost = ref(null);
 
 // 移除假名
 const removeKanjiKana = (text = '') => {
@@ -283,7 +221,7 @@ const cases = [
   {
     id: 'long-unbreakable',
     label: '超长连续串',
-    description: '验证中文夹长 Latin 连续串时，新版会强制断开而不是越过画布。',
+    description: '验证中文夹长 Latin 连续串时的强制换行行为。',
     config: {
       text: '汉字汉字汉字汉字汉字汉字汉字汉字汉字longlonglonglonglonglonglonglonglonglonglong汉字汉字汉字汉字汉字汉字汉字汉字汉字汉字',
       width: 360,
@@ -299,32 +237,8 @@ const plainText = computed(() => {
   return removeKanjiKana(editableConfig.text);
 });
 
-const splitResultNew = computed(() => {
-  return splitBreakWordWithBracketNew(editableConfig.text);
-});
-
-const splitResultOld = computed(() => {
-  return splitBreakWordWithBracketOld(editableConfig.text);
-});
-
-const splitDiffRows = computed(() => {
-  const maxLength = Math.max(splitResultNew.value.length, splitResultOld.value.length);
-
-  return Array.from({ length: maxLength }, (_, index) => {
-    const newToken = splitResultNew.value[index];
-    const oldToken = splitResultOld.value[index];
-
-    return {
-      index,
-      newToken,
-      oldToken,
-      isDifferent: newToken !== oldToken,
-    };
-  });
-});
-
-const isSplitConsistent = computed(() => {
-  return splitDiffRows.value.every(row => !row.isDifferent);
+const splitResult = computed(() => {
+  return splitBreakWordWithBracket(editableConfig.text);
 });
 
 const currentConfigText = computed(() => {
@@ -375,84 +289,38 @@ const getRenderMetricClass = value => {
   return 'render-metric-ok';
 };
 
-const createOldPreview = () => {
-  if (oldLeaferInstanceRef.value || !oldLeaferRef.value) {
-    return;
-  }
-
-  const oldLeafer = new Leafer({
-    view: oldLeaferRef.value,
-    grow: true,
-  });
-  const oldCompressText = new OldCompressText();
-
-  oldLeafer.add(oldCompressText);
-  oldLeaferInstanceRef.value = oldLeafer;
-  oldCompressTextRef.value = oldCompressText;
-};
-
-const destroyOldPreview = () => {
-  oldCompressTextRef.value = null;
-  oldLeaferInstanceRef.value?.destroy();
-  oldLeaferInstanceRef.value = null;
-  renderCost.oldMs = null;
-};
-
 const updatePreview = () => {
-  if (!newCompressTextRef.value) {
+  if (!compressTextRef.value) {
     return;
   }
 
   const nextConfig = getCurrentPreviewConfig();
 
-  renderCost.newMs = measureRenderCost(() => {
-    newCompressTextRef.value.set({ ...nextConfig });
+  renderCost.value = measureRenderCost(() => {
+    compressTextRef.value.set({ ...nextConfig });
   });
-
-  if (oldPreviewEnabled.value && oldCompressTextRef.value) {
-    renderCost.oldMs = measureRenderCost(() => {
-      oldCompressTextRef.value.set({ ...nextConfig });
-    });
-  }
 };
 
 onMounted(() => {
-  const newLeafer = new Leafer({
-    view: newLeaferRef.value,
+  const leafer = new Leafer({
+    view: leaferRef.value,
     grow: true,
   });
-  const newCompressText = new NewCompressText();
+  const compressText = new CompressText();
 
-  newLeaferInstanceRef.value = newLeafer;
-  newCompressTextRef.value = newCompressText;
-
-  newLeafer.add(newCompressText);
-
-  if (oldPreviewEnabled.value) {
-    createOldPreview();
-  }
+  leaferInstanceRef.value = leafer;
+  compressTextRef.value = compressText;
+  leafer.add(compressText);
 
   updatePreview();
 });
 
 onBeforeUnmount(() => {
-  newLeaferInstanceRef.value?.destroy();
-  destroyOldPreview();
+  leaferInstanceRef.value?.destroy();
 });
 
 watch(selectedCaseId, () => {
   loadCaseConfig();
-});
-
-watch(oldPreviewEnabled, async enabled => {
-  if (enabled) {
-    await nextTick();
-    createOldPreview();
-    updatePreview();
-    return;
-  }
-
-  destroyOldPreview();
 });
 
 watch(editableConfig, () => {
@@ -517,20 +385,14 @@ loadCaseConfig();
   padding: 20px;
 }
 
-.compare-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+.render-preview {
   margin-top: 20px;
-}
-
-.compare-card {
   padding: 16px;
   border-radius: 18px;
   background: rgba(248, 250, 252, 0.78);
 }
 
-.compare-card-header {
+.render-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -538,14 +400,8 @@ loadCaseConfig();
   margin-bottom: 12px;
 }
 
-.compare-card-header h3,
-.split-compare-grid h4 {
+.render-header h3 {
   margin: 0;
-}
-
-.compare-card-title {
-  display: grid;
-  gap: 4px;
 }
 
 .render-metric {
@@ -570,38 +426,6 @@ loadCaseConfig();
   color: #b91c1c;
 }
 
-.compare-card-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.compare-tag,
-.compare-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.compare-tag-new,
-.compare-chip-match {
-  color: #0f766e;
-  background: rgba(20, 184, 166, 0.14);
-}
-
-.compare-tag-old {
-  color: #92400e;
-  background: rgba(245, 158, 11, 0.18);
-}
-
-.compare-chip-diff {
-  color: #b91c1c;
-  background: rgba(239, 68, 68, 0.14);
-}
-
 .preview-header h2,
 .info-block h3 {
   margin: 0;
@@ -621,19 +445,6 @@ loadCaseConfig();
     linear-gradient(90deg, rgba(148, 163, 184, 0.2) 1px, transparent 1px),
     linear-gradient(rgba(148, 163, 184, 0.2) 1px, transparent 1px);
   background-size: auto, 24px 24px, 24px 24px;
-}
-
-.compare-placeholder {
-  min-height: 420px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  border-radius: 20px;
-  color: rgba(15, 23, 42, 0.68);
-  text-align: center;
-  background: rgba(241, 245, 249, 0.72);
-  border: 1px dashed rgba(148, 163, 184, 0.5);
 }
 
 .info-block {
@@ -699,13 +510,6 @@ loadCaseConfig();
   overflow: auto;
 }
 
-.split-compare-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 12px;
-}
-
 .token-list {
   display: grid;
   gap: 8px;
@@ -720,11 +524,6 @@ loadCaseConfig();
   padding: 8px 10px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.75);
-}
-
-.token-row-diff {
-  background: rgba(239, 68, 68, 0.12);
-  outline: 1px solid rgba(239, 68, 68, 0.22);
 }
 
 .token-index {
@@ -758,9 +557,7 @@ loadCaseConfig();
     grid-template-columns: 1fr;
   }
 
-  .inspector-grid,
-  .compare-grid,
-  .split-compare-grid {
+  .inspector-grid {
     grid-template-columns: 1fr;
   }
 
