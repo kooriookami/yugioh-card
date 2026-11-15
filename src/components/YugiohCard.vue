@@ -31,6 +31,16 @@
         <div class="form-description">
           <span>一个使用 Canvas 渲染游戏王卡片的工具</span>
         </div>
+        <div
+          v-if="cardPending || cardError"
+          class="card-status"
+          :class="{ 'is-error': cardError }"
+          role="status"
+          aria-live="polite"
+        >
+          <el-icon v-if="cardPending" class="is-loading" aria-hidden="true"><Loading /></el-icon>
+          <span>{{ cardPending ? '卡片加载中…' : `卡片加载失败：${cardError}` }}</span>
+        </div>
       </div>
 
       <div class="form-main">
@@ -59,7 +69,9 @@
         </el-form>
 
         <div class="button-group">
-          <el-button type="primary" @click="exportImage">导出图片</el-button>
+          <el-button type="primary" :loading="exporting" @click="exportImage">
+            {{ exporting ? (cardPending ? '正在准备卡片…' : '正在导出…') : '导出图片' }}
+          </el-button>
         </div>
       </div>
     </div>
@@ -68,7 +80,7 @@
 
 <script setup>
 import { Icon } from '@iconify/vue';
-import { ZoomIn, ZoomOut } from '@element-plus/icons-vue';
+import { Loading, ZoomIn, ZoomOut } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { FieldCenterCard, RushDuelCard, YugiohBackCard, YugiohCard, YugiohSeries2Card } from 'yugioh-card';
@@ -90,6 +102,11 @@ const previewScale = computed(() => {
 });
 let resizeObserver;
 const cardLeaf = shallowRef(null);
+const cardPending = ref(false);
+const cardError = ref('');
+const exporting = ref(false);
+let observedReady;
+let exportRequest;
 const form = reactive({
   card: 'yugioh',
   data: {},
@@ -115,11 +132,38 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
+  cancelExport();
   cardLeaf.value?.leafer.destroy();
   cardLeaf.value = null;
+  cardPending.value = false;
+  cardError.value = '';
 });
 
+const trackReady = async () => {
+  const current = cardLeaf.value;
+  if (!current) return;
+  const ready = current.ready;
+  if (ready === observedReady) return;
+  observedReady = ready;
+  cardPending.value = true;
+  cardError.value = '';
+  const isCurrent = () => current === cardLeaf.value && ready === current.ready && !current.leafer.destroyed;
+  try {
+    await ready;
+  } catch (error) {
+    if (isCurrent()) cardError.value = error.message;
+  } finally {
+    if (isCurrent()) cardPending.value = false;
+  }
+};
+
+const cancelExport = () => {
+  exportRequest = null;
+  exporting.value = false;
+};
+
 const changeCard = () => {
+  cancelExport();
   // 先同步移除旧画布，避免 Leafer 将新画布设为绝对定位，导致预览容器尺寸归零。
   cardLeaf.value?.leafer.destroy(true);
   let Card;
@@ -154,11 +198,14 @@ const changeCard = () => {
     resourcePath: process.env.NODE_ENV === 'production' ? 'https://raw.githubusercontent.com/kooriookami/yugioh-card/refs/heads/master/src/assets/yugioh-card' : 'src/assets/yugioh-card',
   });
   jsonData.value = form.data;
+  trackReady();
 };
 
 const exportImage = async () => {
   const current = cardLeaf.value;
-  if (!current) return;
+  if (!current || exporting.value) return;
+  const request = exportRequest = {};
+  exporting.value = true;
   try {
     await current.ready;
     if (current !== cardLeaf.value || current.leafer.destroyed) return;
@@ -169,6 +216,8 @@ const exportImage = async () => {
   } catch (error) {
     if (current !== cardLeaf.value || current.leafer.destroyed) return;
     ElMessage.error(`导出失败：${error.message}`);
+  } finally {
+    if (request === exportRequest) cancelExport();
   }
 };
 
@@ -178,6 +227,8 @@ watch(() => jsonData.value, () => {
     cardLeaf.value.setData(form.data);
   } catch (e) {
 
+  } finally {
+    trackReady();
   }
 });
 
@@ -250,6 +301,21 @@ const toGithub = () => {
         font-size: 12px;
         font-weight: normal;
         color: var(--info-color);
+      }
+
+      .card-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 16px;
+        font-size: 13px;
+        font-weight: normal;
+        overflow-wrap: anywhere;
+        color: var(--el-color-primary);
+
+        &.is-error {
+          color: var(--el-color-danger);
+        }
       }
     }
 
