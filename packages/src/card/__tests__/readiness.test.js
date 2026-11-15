@@ -72,6 +72,46 @@ const trackImage = (readiness, url, status, error = null) => {
   readiness.images.records.set(url, { image, targets: [], status, error });
 };
 
+test('case-insensitive font dependencies wait, remeasure and retain the registered spelling', async t => {
+  const fonts = fontResource(['MiXeD-Font']);
+  fonts.status = 'loaded';
+  const { card, readiness } = fixture(t, fonts);
+  card.setData({ family: '"MIXED-FONT", sans-serif' });
+  card.leafer.render();
+  await flush();
+  const pending = card.ready;
+  let completed = false;
+  pending.then(() => { completed = true; });
+  await flush();
+  assert.equal(completed, false);
+  fonts.fonts.get('MiXeD-Font').status = 'loaded';
+  fonts.notify();
+  await flush();
+  assert.equal(card.draws, 2);
+  assert.equal(readiness.loadedFonts.get('MiXeD-Font'), fonts.fonts.get('MiXeD-Font'));
+  card.leafer.render();
+  await pending;
+  assert.equal(completed, true);
+});
+
+test('mixed-case required font failures preserve their resource address and original cause', async t => {
+  const fonts = fontResource(['MiXeD-Font']);
+  fonts.status = 'loaded';
+  const failure = resourceError('font', '/font/MiXeD-Font.woff2', new Error('Font request failed'));
+  Object.assign(fonts.fonts.get('MiXeD-Font'), { status: 'failed', error: failure });
+  const { card } = fixture(t, fonts);
+  card.setData({ family: 'mixed-font' });
+  await assert.rejects(card.ready, error => error === failure);
+});
+
+test('missing project fonts are detected regardless of name casing', async t => {
+  const fonts = fontResource([]);
+  fonts.status = 'loaded';
+  const { card } = fixture(t, fonts);
+  card.setData({ family: 'YGO-MISSING' });
+  await assert.rejects(card.ready, { code: 'RESOURCE_FAILED', resource: '/font/YGO-MISSING.woff2' });
+});
+
 test('pending updates share one promise and stay synchronous; a completed cycle gets a new promise', async t => {
   const { card } = fixture(t);
   const first = card.ready;

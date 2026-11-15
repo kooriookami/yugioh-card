@@ -17,8 +17,9 @@ const browser = (t, manifest) => {
   const fonts = new Set();
   globalThis.document = { baseURI: 'http://localhost/app/', fonts };
   globalThis.FontFace = class {
-    constructor(family) {
+    constructor(family, source) {
       this.family = family;
+      this.source = source;
       this.loading = deferred();
       faces.push(this);
     }
@@ -75,6 +76,22 @@ test('manifest failures are observable and a new cycle retries rather than cachi
   env.faces[0].loading.resolve();
   await next.promise;
   assert.equal(env.requests, 2);
+});
+
+test('mixed-case manifest spelling is preserved in font registration and retry URLs', async t => {
+  const env = browser(t, async () => ({ ok: true, json: async () => ['MiXeD-Font'] }));
+  const first = getBrowserFontResource('/mixed-case');
+  await flush();
+  assert.equal(env.faces[0].family, 'MiXeD-Font');
+  assert.equal(env.faces[0].source, 'url(http://localhost/mixed-case/MiXeD-Font.woff2) format(\'woff2\')');
+  env.faces[0].loading.reject(new Error('Retry this font'));
+  await first.promise;
+  const next = getBrowserFontResource('/mixed-case', true);
+  await flush();
+  assert.equal(env.faces[1].family, env.faces[0].family);
+  assert.equal(env.faces[1].source, env.faces[0].source);
+  env.faces[1].loading.resolve();
+  await next.promise;
 });
 
 test('individual font failures remain recorded and retries reuse successful faces', async t => {

@@ -131,18 +131,35 @@ document.querySelector('#start').onclick = async event => {
     a.setData({ language: 'jp', type: 'spell', name: '[青眼(ブルーアイズ)]', description: '[魔法(まほう)]カードのテスト。', icon: 'continuous' });
     await a.ready;
     check(a.spellTrapLeaf.visible && a.nameLeaf.rubyList.length > 0, '切换语言、注音和魔陷布局后等待最终画面');
-    const standaloneView = new Leafer({ width: 250, height: 80 });
-    const text = new CompressText({ text: 'WWWWWWiiiiii', fontFamily: 'ready-standalone', width: 240, fontSize: 30, textAlign: 'left' });
-    standaloneView.add(text);
-    await document.fonts.ready;
-    await new Promise(requestAnimationFrame);
-    const before = text.bounds.width;
-    const face = new FontFace('ready-standalone', 'url(/ready-resources/yugioh/font/ygo-en-race.woff2)');
-    document.fonts.add(face);
-    await face.load();
-    await waitFor(() => text.bounds.width !== before);
-    check(text.bounds.width !== before, '独立 CompressText 在后续字体加载完成后正确重排');
-    standaloneView.destroy(true);
+    for (const [label, data, family, part] of [
+      ['正文大小写', { text: 'WWWWWWiiiiii', fontFamily: 'READY-Body' }, 'ready-body', 'ruby'],
+      ['注音大小写', { text: '[A(WWWWWWiiiiii)]', fontFamily: 'serif', rtFontFamily: 'READY-Ruby' }, 'ready-ruby', 'rt'],
+      ['带引号备用字体', { text: 'WWWWWWiiiiii', fontFamily: '\"Missing Font\", \"READY-Fallback\", serif' }, 'ready-fallback', 'ruby'],
+    ]) {
+      const standaloneView = new Leafer({ width: 250, height: 80 });
+      const text = new CompressText({ ...data, width: 240, fontSize: 30, rtFontSize: 20, textAlign: 'left' });
+      standaloneView.add(text);
+      try {
+        await document.fonts.ready;
+        await new Promise(requestAnimationFrame);
+        const measured = () => text.flatItemList[0][part].originalWidth;
+        const before = measured();
+        let layouts = 0;
+        const compress = text.compressText.bind(text);
+        text.compressText = () => { layouts++; compress(); };
+        const unrelated = new FontFace(`${family}-unrelated`, 'url(/ready-resources/yugioh/font/ygo-en-race.woff2)');
+        document.fonts.add(unrelated);
+        await unrelated.load();
+        await document.fonts.ready;
+        await new Promise(requestAnimationFrame);
+        check(layouts === 0, `${label}：无关字体加载不触发重排`);
+        const face = new FontFace(family, 'url(/ready-resources/yugioh/font/ygo-en-race.woff2)');
+        document.fonts.add(face);
+        await face.load();
+        await waitFor(() => measured() !== before);
+        check(layouts === 1 && measured() !== before, `${label}：初次 fonts.ready 后加载真实字体仍会正确重排`);
+      } finally { standaloneView.destroy(true); }
+    }
     const doomed = new ObservedCard({ ...options, data: { ...options.data, image: '/ready-resources/destroy.jpg' } });
     const promise = doomed.ready;
     doomed.leafer.destroy(true);

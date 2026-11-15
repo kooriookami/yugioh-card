@@ -5,6 +5,8 @@ const browserCaches = new WeakMap();
 const nodeCaches = new WeakMap();
 
 export const fontFamilies = value => String(value || '').split(',').map(name => name.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+// 仅用于字体名比较；资源清单、文件名和 FontFace 注册名称保留原值。
+export const fontFamilyKey = value => String(value || '').trim().replace(/^['"]|['"]$/g, '').toLowerCase();
 
 const cacheFor = (caches, owner) => {
   if (!caches.has(owner)) caches.set(owner, new Map());

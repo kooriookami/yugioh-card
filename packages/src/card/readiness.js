@@ -1,5 +1,6 @@
 import { LeaferEvent } from 'leafer-unified';
 import { withTextLayoutContext } from '../compress-text/layout-context.js';
+import { fontFamilyKey } from '../utils/font-loader.js';
 import { defaultResourceTimeout, readyError, resourceError } from '../utils/resource-error.js';
 import { CardImages, collectFonts } from './resources.js';
 
@@ -113,12 +114,15 @@ export class CardReadiness {
     if (this.fonts.status === 'failed') throw this.fonts.error;
     if (this.fonts.status !== 'loaded') return null;
     const required = [];
+    const available = new Map([...this.fonts.fonts].map(([family, entry]) => [fontFamilyKey(family), [family, entry]]));
     for (const family of this.families) {
-      const entry = this.fonts.fonts.get(family);
-      if (entry) {
+      const key = fontFamilyKey(family);
+      const match = available.get(key);
+      if (match) {
+        const [, entry] = match;
         if (entry.status === 'failed') throw entry.error;
-        required.push([family, entry]);
-      } else if (projectFont.test(family)) {
+        required.push(match);
+      } else if (projectFont.test(key)) {
         throw resourceError('font', `${this.fonts.path}/${family}.woff2`, new Error('Font is missing from font-list.json'));
       }
     }

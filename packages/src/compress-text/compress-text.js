@@ -17,7 +17,7 @@
  */
 import { Group, Text } from 'leafer-unified';
 import { isBrowser } from '../utils/index.js';
-import { fontFamilies } from '../utils/font-loader.js';
+import { fontFamilies, fontFamilyKey } from '../utils/font-loader.js';
 import { splitBreakWordWithBracket } from './split-break-word.js';
 import { getTextLayoutContext } from './layout-context.js';
 
@@ -100,8 +100,8 @@ export class CompressText extends Group {
 
     if (isBrowser && this.fontLayoutVersion === undefined) {
       this.onFontsLoaded = event => {
-        const families = [this.fontFamily, this.rtFontFamily].flatMap(fontFamilies);
-        if (event?.fontfaces && !event.fontfaces.some(face => families.includes(face.family.replace(/^['"]|['"]$/g, '')))) return;
+        const families = new Set([this.fontFamily, this.rtFontFamily].flatMap(fontFamilies).map(fontFamilyKey));
+        if (event?.fontfaces && !event.fontfaces.some(face => families.has(fontFamilyKey(face.family)))) return;
         if (this.fontLayoutQueued || this.destroyed) return;
         this.fontLayoutQueued = true;
         queueMicrotask(() => {
