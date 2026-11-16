@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs';
-import { getBrowserFontResource, getNodeFontResource } from '../font-loader.js';
+import { getBrowserFontResource, getLoadedFontEntry, getNodeFontResource, subscribeFontChanges } from '../font-loader.js';
+import { getFontInfo } from '../font-info.js';
 
 const deferred = () => {
   let resolve, reject;
@@ -11,7 +12,7 @@ const deferred = () => {
 };
 const flush = async () => { await new Promise(resolve => setImmediate(resolve)); };
 
-const browser = (t, manifest) => {
+const browser = (t, manifest, fontForUrl = () => 'ygo-sc') => {
   const originals = new Map(['document', 'FontFace', 'fetch'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   const faces = [];
   const fontRequests = [];
@@ -30,7 +31,7 @@ const browser = (t, manifest) => {
   globalThis.fetch = async url => {
     if (String(url).endsWith('.woff2')) {
       fontRequests.push(String(url));
-      const data = fs.readFileSync(path.resolve('src/assets/yugioh-card/yugioh/font/ygo-sc.woff2'));
+      const data = fs.readFileSync(path.resolve(`src/assets/yugioh-card/yugioh/font/${fontForUrl(String(url))}.woff2`));
       return { ok: true, arrayBuffer: async () => data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) };
     }
     requests++;
@@ -68,6 +69,59 @@ test('concurrent browser font requests share the actual pending manifest and fon
   await b.promise;
   assert.equal(env.faces.length, 2);
   assert.equal(a.fonts.get('ygo-tip').status, 'loaded');
+});
+
+for (const order of [[0, 1], [1, 0]]) {
+  test(`same-family metadata follows successful registration order ${order.join(' → ')}`, async t => {
+    const env = browser(t, async () => ({ ok: true, json: async () => ['shared-font'] }), url => url.includes('/fonts-a/') ? 'ygo-jp' : 'ygo-sc');
+    const resources = [getBrowserFontResource('/fonts-a'), getBrowserFontResource('/fonts-b')];
+    const notified = [];
+    const unsubscribe = subscribeFontChanges(event => {
+      const face = event.fontfaces[0];
+      assert.ok(getLoadedFontEntry(face.family)?.face === face, 'notification observes the font that was just registered');
+      notified.push(face);
+    });
+    t.after(() => {
+      unsubscribe();
+      env.faces.forEach(face => face.loading.resolve());
+    });
+    await flush();
+    assert.equal(getLoadedFontEntry('shared-font'), null);
+    for (const index of order) {
+      env.faces[index].loading.resolve();
+      await resources[index].promise;
+      const entry = resources[index].fonts.get('shared-font');
+      assert.ok(getLoadedFontEntry('SHARED-FONT') === entry);
+      assert.equal([...env.fonts].at(-1), entry.face);
+      assert.equal(getFontInfo(entry).unitsPerEm, index === 0 ? 1024 : 1000);
+    }
+    assert.deepEqual(notified, order.map(index => env.faces[index]));
+    getBrowserFontResource(order.at(-1) === 0 ? '/fonts-b' : '/fonts-a');
+    assert.equal(getLoadedFontEntry('shared-font'), resources[order.at(-1)].fonts.get('shared-font'), 'a cache hit does not register a face again');
+  });
+}
+
+test('pending and failed replacement fonts keep the previous successful metadata until retry succeeds', async t => {
+  const env = browser(t, async () => ({ ok: true, json: async () => ['shared-font'] }));
+  t.after(() => env.faces.forEach(face => face.loading.resolve()));
+  const original = getBrowserFontResource('/original-font');
+  await flush();
+  env.faces[0].loading.resolve();
+  await original.promise;
+  const previous = original.fonts.get('shared-font');
+  const replacement = getBrowserFontResource('/replacement-font');
+  await flush();
+  assert.equal(getLoadedFontEntry('shared-font'), previous, 'pending replacement preserves the font still used for drawing');
+  env.faces[1].loading.reject(new Error('Replacement failed'));
+  await replacement.promise;
+  assert.equal(getLoadedFontEntry('shared-font'), previous);
+  assert.deepEqual([...env.fonts], [previous.face]);
+  const retry = getBrowserFontResource('/replacement-font', true);
+  await flush();
+  assert.equal(getLoadedFontEntry('shared-font'), previous);
+  env.faces[2].loading.resolve();
+  await retry.promise;
+  assert.equal(getLoadedFontEntry('shared-font'), retry.fonts.get('shared-font'));
 });
 
 test('manifest failures are observable and a new cycle retries rather than caching failure forever', async t => {

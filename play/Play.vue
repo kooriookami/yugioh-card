@@ -326,7 +326,10 @@ const updatePreview = () => {
 };
 
 onMounted(() => {
-  loadFontBrowser('/src/assets/yugioh-card/yugioh/font').catch(error => console.error('Playground font loading failed', error));
+  const fontPath = import.meta.env.PROD
+    ? 'https://raw.githubusercontent.com/kooriookami/yugioh-card/refs/heads/master/src/assets/yugioh-card/yugioh/font'
+    : '/src/assets/yugioh-card/yugioh/font';
+  loadFontBrowser(fontPath).catch(error => console.error('Playground font loading failed', error));
   const leafer = new Leafer({
     view: leaferRef.value,
     grow: true,

@@ -381,7 +381,7 @@ export class YugiohSeries2Card extends Card {
     atk.set({
       text: this.atkName + atkText,
       fontFamily: 'ygo-jp',
-      sideBearingRatio: this.style.sideBearingRatio ?? 1,
+      sideBearingRatio: jpStyle.sideBearingRatio,
       fontSize: 84,
       textAlign: 'justify',
       textJustifyLast: true,
@@ -403,7 +403,7 @@ export class YugiohSeries2Card extends Card {
     def.set({
       text: this.defName + defText,
       fontFamily: 'ygo-jp',
-      sideBearingRatio: this.style.sideBearingRatio ?? 1,
+      sideBearingRatio: jpStyle.sideBearingRatio,
       fontSize: 84,
       textAlign: 'justify',
       textJustifyLast: true,

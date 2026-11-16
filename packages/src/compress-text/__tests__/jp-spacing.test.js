@@ -236,3 +236,25 @@ test('both Japanese card styles propagate the internal ratio and still become re
     }
   }
 });
+
+test('Series 2 custom fonts preserve Japanese spacing for fixed-font attack and defense labels', async t => {
+  const card = new YugiohSeries2Card({ resourcePath, skia, data: { language: 'jp', type: 'monster', scale: 0.1, name: '日あー', description: '日あー', atk: 3000, def: 2500 } });
+  t.after(() => card.leafer.destroy(true));
+  await card.ready;
+  const labels = () => card.atkDefLeaf.children.map(text => text.rubyList.find(ruby => ruby.text === '攻' || ruby.text === '守'));
+  const normalWidths = labels().map(ruby => ruby.normalWidth);
+  for (const font of ['custom1', 'custom2', '']) {
+    card.setData({ font });
+    await card.ready;
+    labels().forEach((ruby, index) => {
+      assert.ok(ruby.bodyRun, `fixed Japanese label remains trimmed with ${font || 'default'}`);
+      close(ruby.normalWidth, normalWidths[index]);
+    });
+    assert.equal(card.nameLeaf.fontFamily, font || 'ygo-jp');
+    assert.equal(card.nameLeaf.rubyList.some(ruby => ruby.bodyRun), !font);
+    for (const text of card.atkDefLeaf.children) {
+      assert.equal(text.fontFamily, 'ygo-jp');
+      assert.ok(text.rubyList.filter(ruby => /^\d+$/.test(ruby.text)).every(ruby => !ruby.bodyRun));
+    }
+  }
+});

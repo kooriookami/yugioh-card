@@ -68,7 +68,6 @@ const loadBrowserFace = (resource, family, fontSet) => {
   const url = `${resource.path}/${family}.woff2`;
   const entry = { status: 'loading', error: null, promise: null, face: null };
   resource.fonts.set(family, entry);
-  registerFont(fontSet, family, entry);
   const abort = new AbortController();
   entry.promise = loadWithTimeout(async () => {
     // 同一份字节既交给浏览器绘制，也供按需读取 cmap/units；不重复下载。
@@ -81,6 +80,8 @@ const loadBrowserFace = (resource, family, fontSet) => {
     if (entry.status === 'loading') fontSet.add(face);
   }, url, () => abort.abort()).then(() => {
     entry.status = 'loaded';
+    // 跟随实际加入 FontFaceSet 的顺序，pending/失败的替换不覆盖正在使用的字体。
+    registerFont(fontSet, family, entry);
     for (const listener of fontListeners.get(fontSet) ?? []) listener({ fontfaces: [entry.face] });
   }, cause => {
     entry.status = 'failed';

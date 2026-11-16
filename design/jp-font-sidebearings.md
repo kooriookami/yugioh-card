@@ -301,6 +301,16 @@ node packages/src/compress-text/__tests__/browser/jp-spacing-server.mjs
 
 Playground 增加「日文留白」和「日文原始留白」两个内部样例，使用相同文字对照，不新增用户可调参数。
 
+### 13.1 审查后的边界修复
+
+2026-11-16 根据 PR 审查补充：
+
+- 浏览器字体记录在字体成功加入 FontFaceSet 后才更新，跟随实际注册顺序；同名字体并发加载时，不再按请求发起顺序选择度量。未完成或失败的替换保留上一份成功记录，重试成功后再切换。
+- 第二期卡片的「攻」「守」标签固定使用 `ygo-jp`，因此读取 `jpStyle.sideBearingRatio`，不随卡名、正文的 `custom1/custom2` 样式关闭留白缩减。
+- Playground 开发环境读取本地字体，生产构建使用主页面相同的 GitHub `master` 静态资源地址。
+- 新增正序/乱序完成、失败重试和自定义字体切换回归，全量测试为 124 项，通过；修改文件 ESLint、库、网站与 Playground 独立构建通过。构建产物检查确认生产字体地址指向 `master`，未保留开发环境的 `/src/assets/...` 地址。
+- Edge 中的源码和独立 `.tgz` 各通过 15 项补充检查：同名字体先 B 后 A 完成时，以全角数字实际绘制占宽 1024→702 核对字体与度量一致；同时验证替换失败、自定义字体切换、ready 和 PNG 导出。
+
 ## 参考
 
 - [Leafer Text 与 content 包围盒](https://www.leaferjs.com/ui/reference/display/Text.html)：用于原生文字和坐标接口。
