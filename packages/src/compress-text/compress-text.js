@@ -17,9 +17,16 @@
  */
 import { Group, Text } from 'leafer-unified';
 import { isBrowser } from '../utils/index.js';
-import { fontFamilies, fontFamilyKey } from '../utils/font-loader.js';
+import { fontFamilies, fontFamilyKey, subscribeFontChanges } from '../utils/font-loader.js';
 import { splitBreakWordWithBracket } from './split-break-word.js';
 import { getTextLayoutContext } from './layout-context.js';
+import { getGlyphMetrics, textGraphemes } from './glyph-metrics.js';
+import { createBodyRun } from './body-run.js';
+
+// 只由内部样式传递，不增加卡片数据字段或对外实例属性。
+const sideBearingRatios = new WeakMap();
+const layoutFonts = new WeakMap();
+const glyphResolvers = new WeakMap();
 
 const rubyTokenPattern = /(\[[^\[\]()]*\([^\[\]()]*\)])/g;
 const rubyRtPattern = /^\[([^\[\]()]+)\(([^\[\]()]*)\)]$/;
@@ -111,6 +118,7 @@ export class CompressText extends Group {
         });
       };
       document.fonts.addEventListener('loadingdone', this.onFontsLoaded);
+      this.unsubscribeFontChanges = subscribeFontChanges(this.onFontsLoaded);
       document.fonts.ready.then(() => this.onFontsLoaded?.());
     }
   }
@@ -124,10 +132,20 @@ export class CompressText extends Group {
    * @param {object} [data={}] 需要更新的配置项。
    */
   set(data = {}) {
-    const version = getTextLayoutContext()?.fontVersion;
+    const context = getTextLayoutContext();
+    const version = context?.fontVersion;
+    if (context) layoutFonts.set(this, context.loadedFonts);
     let needCompressText = version !== undefined && this.fontLayoutVersion !== version;
     if (version !== undefined) this.fontLayoutVersion = version;
     Object.keys(data).forEach(key => {
+      if (key === 'sideBearingRatio') {
+        const value = Number.isFinite(data[key]) ? Math.max(0, Math.min(1, data[key])) : 1;
+        if (!Object.is(sideBearingRatios.get(this) ?? 1, value)) {
+          sideBearingRatios.set(this, value);
+          needCompressText = true;
+        }
+        return;
+      }
       const value = data[key] ?? this.defaultData[key];
       if (!Object.is(this[key], value)) {
         this[key] = value;
@@ -142,6 +160,7 @@ export class CompressText extends Group {
   destroy() {
     if (this.onFontsLoaded) document.fonts.removeEventListener('loadingdone', this.onFontsLoaded);
     this.onFontsLoaded = null;
+    this.unsubscribeFontChanges?.();
     super.destroy();
   }
 
@@ -348,15 +367,15 @@ export class CompressText extends Group {
   }
 
   /**
-   * 将字符串按 Unicode 字符边界拆成字符数组。
+   * 将字符串按字素簇边界拆分，保留组合字符和变体选择符。
    *
-   * 使用 Array.from 可以避免 surrogate pair 被错误拆分，适合处理中日韩字符和扩展字符。
+   * 超宽回退切段也不能拆开一个字素簇。
    *
    * @param {string} text 原始文本。
    * @returns {string[]} 字符数组。
    */
   getTextCharList(text) {
-    return Array.from(text);
+    return textGraphemes(text);
   }
 
   /**
@@ -446,14 +465,17 @@ export class CompressText extends Group {
    * 对于空格字符，会额外叠加 wordSpacing。
    *
    * @param {object} ruby ruby 布局对象。
-   * @returns {Text} 创建出的 Leafer Text 实例。
+   * @returns {Text|Group} 原生 Text 或承载调整后正文的 Group。
    */
   createRubyLeaf(ruby) {
-    const rubyLeaf = new Text(this.getRubyTextStyle(ruby));
-    const bounds = ruby.text === '\n' ? { width: 0 } : rubyLeaf.getBounds('content', 'inner');
+    const metrics = glyphResolvers.get(this);
+    const bodyRun = createBodyRun(this.getRubyTextStyle(ruby), metrics);
+    const rubyLeaf = bodyRun?.leaf ?? new Text(this.getRubyTextStyle(ruby));
+    const bounds = ruby.text === '\n' ? { width: 0 } : bodyRun ? { width: bodyRun.width } : rubyLeaf.getBounds('content', 'inner');
     const spacingWidth = ruby.text === ' ' ? this.wordSpacing : 0;
 
     ruby.rubyLeaf = rubyLeaf;
+    ruby.bodyRun = bodyRun;
     ruby.originalWidth = bounds.width + spacingWidth;
     ruby.normalWidth = ruby.originalWidth;
     ruby.originalHeight = ruby.text === '\n' ? 0 : this.getLineHeight();
@@ -538,6 +560,7 @@ export class CompressText extends Group {
    * 6. 将结果挂入当前 Group。
    */
   compressText() {
+    glyphResolvers.set(this, getGlyphMetrics(this.fontFamily, sideBearingRatios.get(this) ?? 1, layoutFonts.get(this)));
     this.resetCompressionState();
     this.rebuildParseCache();
     this.resetGroup();
@@ -1103,10 +1126,14 @@ export class CompressText extends Group {
     const sizePercent = fontSize / this.fontSize;
     this.rubyList.forEach(ruby => {
       const rubyLeaf = ruby.rubyLeaf;
-      rubyLeaf.fontSize = fontSize * this.fontScale;
-      rubyLeaf.lineHeight = this.getLineHeight();
-      // 从本次排版的原字号测量计算，保留正常小字效果并避免恢复候选时累计缩放。
-      ruby.width = ruby.originalWidth = ruby.normalWidth * sizePercent;
+      if (ruby.bodyRun) {
+        ruby.width = ruby.originalWidth = ruby.bodyRun.resize(fontSize * this.fontScale, this.getLineHeight());
+      } else {
+        rubyLeaf.fontSize = fontSize * this.fontScale;
+        rubyLeaf.lineHeight = this.getLineHeight();
+        // 从本次排版的原字号测量计算，避免恢复候选时累计缩放。
+        ruby.width = ruby.originalWidth = ruby.normalWidth * sizePercent;
+      }
       ruby.height = ruby.originalHeight = ruby.text === '\n' ? 0 : this.getLineHeight();
     });
     this.updateTextScale();
@@ -1171,7 +1198,7 @@ export class CompressText extends Group {
    * 获取注音布局所需的上下文信息。
    *
    * @param {{ruby: object, rt: object}} item 包含 ruby 与 rt 的文本项。
-   * @returns {{ruby: object, rt: object, rubyLeaf: Text, rtLeaf: Text, paddingLeft: number, paddingRight: number, rubyWidth: number}} 注音布局上下文。
+   * @returns {{ruby: object, rt: object, rubyLeaf: Text|Group, rtLeaf: Text, paddingLeft: number, paddingRight: number, rubyWidth: number}} 注音布局上下文。
    */
   getRtLayoutContext(item) {
     const ruby = item.ruby;
@@ -1196,7 +1223,7 @@ export class CompressText extends Group {
   /**
    * 执行注音的基础定位。
    *
-   * @param {{rubyLeaf: Text, rtLeaf: Text, paddingLeft: number, rubyWidth: number}} context 注音布局上下文。
+   * @param {{rubyLeaf: Text|Group, rtLeaf: Text, paddingLeft: number, rubyWidth: number}} context 注音布局上下文。
    */
   positionRtBase(context) {
     const { rubyLeaf, rtLeaf, paddingLeft, rubyWidth } = context;
@@ -1299,7 +1326,7 @@ export class CompressText extends Group {
       const fontSize = this.getCurrentFontSize();
       this.rubyList.forEach(ruby => {
         const rubyLeaf = ruby.rubyLeaf;
-        rubyLeaf.set({
+        const paint = {
           fill: {
             type: 'linear',
             stops: [
@@ -1319,7 +1346,9 @@ export class CompressText extends Group {
             y: fontSize * gradientShadowOffsetYRate * this.fontScale,
             color: gradientStrokeColor,
           },
-        });
+        };
+        if (ruby.bodyRun) ruby.bodyRun.paint(paint);
+        else rubyLeaf.set(paint);
       });
     }
   }

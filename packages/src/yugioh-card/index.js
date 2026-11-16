@@ -134,6 +134,7 @@ export class YugiohCard extends Card {
     this.nameLeaf.set({
       text: this.data.name,
       fontFamily: name.fontFamily,
+      sideBearingRatio: name.sideBearingRatio ?? 1,
       fontSize: name.fontSize,
       letterSpacing: name.letterSpacing || 0,
       wordSpacing: name.wordSpacing || 0,
@@ -256,6 +257,7 @@ export class YugiohCard extends Card {
     rightText.set({
       text: rightBracket,
       fontFamily: spellTrap.fontFamily,
+      sideBearingRatio: spellTrap.sideBearingRatio ?? 1,
       fontSize: spellTrap.fontSize,
       letterSpacing,
       wordSpacing,
@@ -274,6 +276,7 @@ export class YugiohCard extends Card {
     leftText.set({
       text: leftBracket + this.spellTrapName,
       fontFamily: spellTrap.fontFamily,
+      sideBearingRatio: spellTrap.sideBearingRatio ?? 1,
       fontSize: spellTrap.fontSize,
       letterSpacing,
       wordSpacing,
@@ -384,6 +387,7 @@ export class YugiohCard extends Card {
     this.pendulumDescriptionLeaf.set({
       text: this.data.pendulumDescription,
       fontFamily: pendulumDescription.fontFamily,
+      sideBearingRatio: pendulumDescription.sideBearingRatio ?? 1,
       fontSize: pendulumDescription.fontSize,
       fontScale: this.data.descriptionZoom,
       strokeWidth: this.data.descriptionWeight,
@@ -487,6 +491,7 @@ export class YugiohCard extends Card {
     this.monsterTypeLeaf.set({
       text: leftBracket + this.data.monsterType + rightBracket,
       fontFamily: monsterType.fontFamily,
+      sideBearingRatio: monsterType.sideBearingRatio ?? 1,
       fontSize: monsterType.fontSize,
       strokeWidth: this.data.descriptionWeight,
       lineHeight: monsterType.lineHeight,
@@ -536,6 +541,7 @@ export class YugiohCard extends Card {
     this.descriptionLeaf.set({
       text: this.data.description,
       fontFamily,
+      sideBearingRatio: description.sideBearingRatio ?? 1,
       fontSize: description.fontSize,
       fontScale: this.data.descriptionZoom,
       textAlign: this.data.descriptionAlign ? 'center' : 'justify',

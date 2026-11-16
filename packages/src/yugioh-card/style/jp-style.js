@@ -2,6 +2,7 @@ import { inheritProp } from '../../utils/index.js';
 
 export default inheritProp({
   fontFamily: 'ygo-jp',
+  sideBearingRatio: 0.5,
   name: {
     top: 98,
     fontSize: 108,

@@ -106,6 +106,7 @@ export class YugiohSeries2Card extends Card {
     this.nameLeaf.set({
       text: this.data.name,
       fontFamily: name.fontFamily,
+      sideBearingRatio: name.sideBearingRatio ?? 1,
       fontSize: name.fontSize,
       letterSpacing: name.letterSpacing || 0,
       textAlign: this.data.align || 'left',
@@ -198,6 +199,7 @@ export class YugiohSeries2Card extends Card {
     rightText.set({
       text: rightBracket,
       fontFamily: spellTrap.fontFamily,
+      sideBearingRatio: spellTrap.sideBearingRatio ?? 1,
       fontSize: spellTrap.fontSize,
       letterSpacing,
       y: spellTrap.top,
@@ -214,6 +216,7 @@ export class YugiohSeries2Card extends Card {
     leftText.set({
       text: leftBracket + this.spellTrapName,
       fontFamily: spellTrap.fontFamily,
+      sideBearingRatio: spellTrap.sideBearingRatio ?? 1,
       fontSize: spellTrap.fontSize,
       letterSpacing,
       scaleY: spellTrap.scaleY || 1,
@@ -300,6 +303,7 @@ export class YugiohSeries2Card extends Card {
     this.monsterTypeLeaf.set({
       text: leftBracket + this.data.monsterType + rightBracket,
       fontFamily: monsterType.fontFamily,
+      sideBearingRatio: monsterType.sideBearingRatio ?? 1,
       fontSize: monsterType.fontSize,
       strokeWidth: this.data.descriptionWeight,
       lineHeight: monsterType.lineHeight,
@@ -332,6 +336,7 @@ export class YugiohSeries2Card extends Card {
     this.descriptionLeaf.set({
       text: this.data.description,
       fontFamily: description.fontFamily,
+      sideBearingRatio: description.sideBearingRatio ?? 1,
       fontSize: description.fontSize,
       fontScale: this.data.descriptionZoom,
       textAlign: this.data.descriptionAlign ? 'center' : 'justify',
@@ -376,6 +381,7 @@ export class YugiohSeries2Card extends Card {
     atk.set({
       text: this.atkName + atkText,
       fontFamily: 'ygo-jp',
+      sideBearingRatio: this.style.sideBearingRatio ?? 1,
       fontSize: 84,
       textAlign: 'justify',
       textJustifyLast: true,
@@ -397,6 +403,7 @@ export class YugiohSeries2Card extends Card {
     def.set({
       text: this.defName + defText,
       fontFamily: 'ygo-jp',
+      sideBearingRatio: this.style.sideBearingRatio ?? 1,
       fontSize: 84,
       textAlign: 'justify',
       textJustifyLast: true,

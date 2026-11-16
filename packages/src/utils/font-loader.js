@@ -3,6 +3,32 @@ import { loadWithTimeout, resourceError } from './resource-error.js';
 
 const browserCaches = new WeakMap();
 const nodeCaches = new WeakMap();
+const registeredFonts = new WeakMap();
+const fontListeners = new WeakMap();
+let nodeFontOwner;
+
+const registerFont = (owner, family, entry) => {
+  if (!registeredFonts.has(owner)) registeredFonts.set(owner, new Map());
+  registeredFonts.get(owner).set(fontFamilyKey(family), entry);
+};
+
+/** 内部排版使用加载器登记的字体身份，不以 fonts.check 推断 fallback。 */
+export const getLoadedFontEntry = family => {
+  const owner = typeof document !== 'undefined' ? document.fonts : nodeFontOwner;
+  const entry = owner && registeredFonts.get(owner)?.get(fontFamilyKey(family));
+  if (entry?.status !== 'loaded') return null;
+  if (entry.face && !owner.has(entry.face)) return null;
+  return entry;
+};
+
+/** 独立 CompressText 也要收到由二进制数据注册的字体完成信号。 */
+export const subscribeFontChanges = callback => {
+  const owner = document.fonts;
+  if (!fontListeners.has(owner)) fontListeners.set(owner, new Set());
+  const listeners = fontListeners.get(owner);
+  listeners.add(callback);
+  return () => listeners.delete(callback);
+};
 
 export const fontFamilies = value => String(value || '').split(',').map(name => name.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
 // 仅用于字体名比较；资源清单、文件名和 FontFace 注册名称保留原值。
@@ -42,12 +68,20 @@ const loadBrowserFace = (resource, family, fontSet) => {
   const url = `${resource.path}/${family}.woff2`;
   const entry = { status: 'loading', error: null, promise: null, face: null };
   resource.fonts.set(family, entry);
+  registerFont(fontSet, family, entry);
+  const abort = new AbortController();
   entry.promise = loadWithTimeout(async () => {
-    const face = entry.face = new FontFace(family, `url(${url}) format('woff2')`, { display: 'swap' });
-    fontSet.add(face);
+    // 同一份字节既交给浏览器绘制，也供按需读取 cmap/units；不重复下载。
+    const response = await fetch(url, { signal: abort.signal, cache: 'no-cache' });
+    if (!response.ok) throw new Error(`Font returned HTTP ${response.status}`);
+    const data = await response.arrayBuffer();
+    entry.fontData = new Uint8Array(data);
+    const face = entry.face = new FontFace(family, data, { display: 'swap' });
     await face.load();
-  }, url).then(() => {
+    if (entry.status === 'loading') fontSet.add(face);
+  }, url, () => abort.abort()).then(() => {
     entry.status = 'loaded';
+    for (const listener of fontListeners.get(fontSet) ?? []) listener({ fontfaces: [entry.face] });
   }, cause => {
     entry.status = 'failed';
     entry.error = resourceError('font', url, cause);
@@ -110,11 +144,18 @@ export const getNodeFontResource = (fontPath, skia) => {
   const fs = process.getBuiltinModule('node:fs');
   const path = process.getBuiltinModule('node:path').resolve(fontPath);
   const cache = cacheFor(nodeCaches, skia.FontLibrary);
-  if (cache.has(path)) return cache.get(path);
+  nodeFontOwner = skia.FontLibrary;
+  if (cache.has(path)) {
+    const resource = cache.get(path);
+    for (const [family, entry] of resource.fonts) registerFont(nodeFontOwner, family, entry);
+    return resource;
+  }
   const resource = createResource(path);
   for (const family of validateManifest(JSON.parse(fs.readFileSync(`${path}/font-list.json`, 'utf8')))) {
     skia.FontLibrary.use(family, [`${path}/${family}.woff2`]);
-    resource.fonts.set(family, { status: 'loaded', error: null, promise: Promise.resolve() });
+    const entry = { status: 'loaded', error: null, promise: Promise.resolve(), fontData: new Uint8Array(fs.readFileSync(`${path}/${family}.woff2`)) };
+    resource.fonts.set(family, entry);
+    registerFont(nodeFontOwner, family, entry);
   }
   resource.status = 'loaded';
   resource.promise = Promise.resolve();

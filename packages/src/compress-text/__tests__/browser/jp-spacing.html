@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="UTF-8">
+<title>日文留白排版验证</title>
+<style>
+body { margin:28px auto; padding:0 24px; max-width:1380px; color:#24344c; background:#f5f7fa; font:15px system-ui; }
+h1 { font-size:25px; } h2 { font-size:18px; margin:0 0 14px; }
+#status { font-size:18px; color:#567; } .pass { color:#167044 !important; } .fail { color:#a32b37 !important; }
+.row { display:flex; flex-wrap:wrap; gap:18px; margin:20px 0; } article, pre { padding:18px; background:white; border:1px solid #d6dfeb; border-radius:10px; }
+.host { width:620px; height:220px; border:1px dashed #c5d3e1; } .card { width:280px; height:420px; }
+pre { line-height:1.7; white-space:pre-wrap; } textarea { box-sizing:border-box; width:100%; padding:10px; font:16px system-ui; }
+button { margin-top:10px; padding:8px 20px; cursor:pointer; }
+</style>
+<h1>日文留白排版验证</h1>
+<p id="status">正在检查字体加载和排版…</p>
+<textarea id="input" rows="2">[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)] コーヒー スーパー 々〆゛゜ゝゞー ０１２３４５６７８９ AV。</textarea>
+<button id="update">更新对照</button>
+<div class="row"><article><h2>字体原始留白</h2><div id="original" class="host"></div></article><article><h2>缩减左右留白</h2><div id="trimmed" class="host"></div></article></div>
+<div class="row"><article><h2>OCG 日文卡片</h2><div id="ocg" class="card"></div></article><article><h2>第二期日文卡片</h2><div id="series2" class="card"></div></article></div>
+<pre id="report"></pre>
+<script type="module">
+const mode = new URLSearchParams(location.search).has('package') ? 'package' : 'source';
+const results = [], temporary = [], views = [], cards = [], unhandled = [];
+const status = document.querySelector('#status');
+const report = document.querySelector('#report');
+const check = (condition, label) => {
+  results.push(`${condition ? 'PASS' : 'FAIL'} ${label}`);
+  report.textContent = results.join('\n');
+  if (!condition) throw new Error(label);
+};
+const equal = (a, b) => Math.abs(a - b) < 1e-7;
+window.addEventListener('unhandledrejection', event => unhandled.push(String(event.reason)));
+try {
+  await fetch('/jp-test-reset', { method: 'POST' });
+  const entry = mode === 'package' ? '/node_modules/.cache/jp-package-consumer/browser.mjs' : './jp-spacing-runtime.js';
+  const { Leafer, CompressText, YugiohCard, YugiohSeries2Card, getBrowserFontResource, getFontInfo } = await import(entry);
+  const resourcePath = '/src/assets/yugioh-card';
+  const data = {
+    language: 'jp', scale: 0.2, name: '[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)]',
+    monsterType: 'ドラゴン族／通常', description: '[高(たか)]い[攻撃力(こうげきりょく)]を[誇(ほこ)]るドラゴン。\nコーヒーとスーパー、０１２３４５６７８９。',
+    image: '/src/assets/image/blue-eyes.jpg',
+  };
+  for (const [Card, id] of [[YugiohCard, 'ocg'], [YugiohSeries2Card, 'series2']]) {
+    cards.push(new Card({ resourcePath, view: document.querySelector(`#${id}`), data }));
+  }
+  const make = (content, ratio = 0.5, extra = {}) => {
+    const text = new CompressText({ text: content, fontFamily: 'ygo-jp', fontSize: 38, width: 1000, textAlign: 'left', sideBearingRatio: ratio, ...extra });
+    temporary.push(text); return text;
+  };
+  const before = make('日あー');
+  check(before.bounds.width > 0 && before.rubyList.every(ruby => !ruby.bodyRun), '字体未加载时 fallback 预览可见，尚未裁减留白');
+  const resource = getBrowserFontResource(`${resourcePath}/yugioh/font`);
+  while (!resource.fonts.has('ygo-jp')) await new Promise(requestAnimationFrame);
+  check(resource.fonts.get('ygo-jp').status === 'loading' && cards.every(card => card._readiness.pending), '字体请求受控等待时 ready 保持 pending');
+  await fetch('/jp-test-release', { method: 'POST' });
+  await resource.promise;
+  await Promise.all(cards.map(card => card.ready));
+  check(before.rubyList.some(ruby => ruby.bodyRun), '独立 CompressText 在二进制字体注册完成后自动重排');
+  const font = getFontInfo(resource.fonts.get('ygo-jp'));
+  check(font.unitsPerEm === 1024 && font.hasGlyphForCodePoint(0x65E5), '从实际 WOFF2 动态读取字体单位和字符覆盖');
+  check(equal(make('日').bounds.width, 774 * 38 / 1024), '日：占宽为 774/1024 em');
+  check(equal(make('あ').bounds.width, 861 * 38 / 1024), 'あ：占宽为 861/1024 em');
+  check(equal(make('０').bounds.width, 702 * 38 / 1024), '全角数字保留供体 702 占宽');
+  check(equal(make('日', 1).bounds.width, 38) && equal(make('日', 0).bounds.width, 523 * 38 / 1024), '原始留白和零留白边界均正确');
+  for (const content of ['コーヒー', 'スーパー', 'ーー', '々〆゛゜ゝゞ']) {
+    const text = make(content);
+    check(text.bounds.width < make(content, 1).bounds.width && text.rubyList.some(ruby => ruby.bodyRun), `假名及额外字符参与缩减：${content}`);
+  }
+  for (const content of ['０１２３', 'ＡＢＣ', 'AV', 'ΩЖ', '。、「」【】（）！？・', '𠮷']) {
+    const text = make(content);
+    check(equal(text.bounds.width, make(content, 1).bounds.width) && text.rubyList.every(ruby => !ruby.bodyRun), `原生度量保留：${content}`);
+  }
+  check(make('日日', 0.5, { width: 60 }).currentLine === 0 && make('日日', 1, { width: 60 }).currentLine === 1, '换行依据缩减后的逻辑占宽');
+  const cluster = make('葛\u{E0100}か\u3099A\u0301', 0.5, { width: 1 });
+  check(cluster.rubyList.every(ruby => !ruby.bodyRun) && cluster.rubyList.map(ruby => ruby.text).join('') === '葛\u{E0100}か\u3099A\u0301', '字素簇与 IVS 保留完整');
+  const small = make('[日あー(X)]\n[日あー(X)]', 0.5, { height: 30, autoSmallSize: true, smallFontSize: 10, lineHeight: 1.1, letterSpacing: 2 });
+  check(small.isSmallSize && small.rubyList.filter(ruby => ruby.bodyRun).every(ruby => equal(ruby.width, ruby.bodyRun.width * ruby.rubyLeaf.scaleX)), '小字回退同时更新逻辑宽度和内部绘制位置');
+  const other = make('日', 0.5, { fontFamily: 'ygo-sc' });
+  check(getFontInfo(resource.fonts.get('ygo-sc')).unitsPerEm === 1000 && other.rubyList[0].bodyRun && other.bounds.width < make('日', 1, { fontFamily: 'ygo-sc' }).bounds.width, '另一字体、1000 单位字框同样可用，无固定字体配置');
+  const samples = [];
+  for (const [host, ratio] of [['original', 1], ['trimmed', 0.5]]) {
+    const view = new Leafer({ view: document.querySelector(`#${host}`), width: 620, height: 220 }); views.push(view);
+    const text = new CompressText({ text: document.querySelector('#input').value, fontFamily: 'ygo-jp', fontSize: 32, rtFontSize: 13, rtTop: -8, width: 596, height: 190, x: 12, y: 22, textAlign: 'left', sideBearingRatio: ratio });
+    view.add(text); samples.push(text);
+  }
+  document.querySelector('#update').onclick = () => samples.forEach(text => text.set({ text: document.querySelector('#input').value }));
+  const mixed = make('[日AV。　あ(X)]', 0.5, { gradient: true, letterSpacing: 2 });
+  const leaves = mixed.rubyList[0].rubyLeaf.children;
+  check(leaves.map(leaf => leaf.text).join('|') === '日|AV。　|あ' && leaves.every(leaf => leaf.fill.type === 'linear'), '混合文字保留西文段、全角空格和渐变');
+  check(equal(leaves[0].x + leaves[0].fill.from.x, leaves[1].x + leaves[1].fill.from.x), '子字形使用共同的渐变坐标');
+  const exports = [];
+  for (const card of cards) {
+    check(card.nameLeaf.rubyList.some(ruby => ruby.bodyRun) && card.descriptionLeaf.rubyList.some(ruby => ruby.bodyRun), `${card.tag} 日文样式传递比例并完成 ready`);
+    const png = (await card.leafer.export('png', { screenshot: true })).data;
+    check(png.startsWith('data:image/png;base64,') && png.length > 10000, `${card.tag} 实际 PNG 导出成功`);
+    exports.push(png.length);
+  }
+  cards[0].setData({ language: 'en', name: 'Normal English', description: 'Normal English' });
+  await cards[0].ready;
+  check(cards[0].nameLeaf.rubyList.every(ruby => !ruby.bodyRun), '切换英文后恢复原生路径');
+  cards[0].setData({ ...data, type: 'pendulum', pendulumDescription: 'コーヒー 日あー' });
+  await cards[0].ready;
+  check(cards[0].pendulumDescriptionLeaf.rubyList.some(ruby => ruby.bodyRun), '切回日文并切换灵摆时正确更新留白');
+  cards[1].setData({ type: 'monster', atk: 3000, def: 2500 });
+  await cards[1].ready;
+  check(cards[1].atkDefLeaf.children.every(text => text.rubyList.some(ruby => ruby.bodyRun)), '第二期攻守文字也使用日文内部比例');
+  check(unhandled.length === 0, '没有未处理 Promise 拒绝');
+  status.className = 'pass'; status.textContent = `${mode === 'package' ? '发布包' : '源码'}：全部 ${results.length} 项检查通过`;
+  await fetch(`/jp-test-report?mode=${mode}`, { method: 'POST', body: JSON.stringify({ ok: true, checks: results.length, results, exports, userAgent: navigator.userAgent }) });
+} catch (error) {
+  await fetch('/jp-test-release', { method: 'POST' });
+  status.className = 'fail'; status.textContent = `${mode}：${error.message}`;
+  report.textContent += `\n${error.stack}`;
+  await fetch(`/jp-test-report?mode=${mode}`, { method: 'POST', body: JSON.stringify({ ok: false, results, error: error.stack, unhandled }) });
+} finally {
+  temporary.forEach(text => text.destroy());
+}
+window.addEventListener('pagehide', () => { cards.forEach(card => card.leafer.destroy(true)); views.forEach(view => view.destroy(true)); });
+</script>
+</html>

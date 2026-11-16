@@ -12,7 +12,7 @@ export const numberToFull = value => {
 
 // 继承css样式
 export const inheritProp = (obj, parentObj = {}) => {
-  const inheritPropList = ['fontFamily', 'fontSize', 'fontStyle', 'fontWeight', 'lineHeight', 'letterSpacing', 'wordSpacing'];
+  const inheritPropList = ['fontFamily', 'fontSize', 'fontStyle', 'fontWeight', 'lineHeight', 'letterSpacing', 'wordSpacing', 'sideBearingRatio'];
   inheritPropList.forEach(inherit => {
     if (!Object.hasOwn(obj, inherit) && Object.hasOwn(parentObj, inherit)) {
       obj[inherit] = parentObj[inherit];

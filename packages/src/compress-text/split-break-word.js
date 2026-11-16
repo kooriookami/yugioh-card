@@ -9,6 +9,7 @@
  * 模块输出的片段顺序会保持与原始文本一致，供后续 ruby/rt 解析、换行与压缩流程复用。
  */
 import { fromCodePoint, LineBreaker, toCodePoints } from 'css-line-break';
+import { mergeGraphemeTokens } from './text-graphemes.js';
 
 const wordSeparators = new Set([0x0020, 0x00A0, 0x1361, 0x10100, 0x10101, 0x1039, 0x1091]);
 const rubyPlaceholderPattern = /\[[^\[\]()]*\([^\[\]()]*\)]/g;
@@ -60,7 +61,7 @@ export const splitBreakWord = text => {
     }
   }
 
-  return words;
+  return mergeGraphemeTokens(text, words, wordSeparators);
 };
 
 /**

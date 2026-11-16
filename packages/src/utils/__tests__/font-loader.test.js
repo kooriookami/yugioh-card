@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import fs from 'node:fs';
 import { getBrowserFontResource, getNodeFontResource } from '../font-loader.js';
 
 const deferred = () => {
@@ -13,6 +14,7 @@ const flush = async () => { await new Promise(resolve => setImmediate(resolve));
 const browser = (t, manifest) => {
   const originals = new Map(['document', 'FontFace', 'fetch'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   const faces = [];
+  const fontRequests = [];
   let requests = 0;
   const fonts = new Set();
   globalThis.document = { baseURI: 'http://localhost/app/', fonts };
@@ -25,7 +27,12 @@ const browser = (t, manifest) => {
     }
     load() { return this.loading.promise; }
   };
-  globalThis.fetch = async () => {
+  globalThis.fetch = async url => {
+    if (String(url).endsWith('.woff2')) {
+      fontRequests.push(String(url));
+      const data = fs.readFileSync(path.resolve('src/assets/yugioh-card/yugioh/font/ygo-sc.woff2'));
+      return { ok: true, arrayBuffer: async () => data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) };
+    }
     requests++;
     return manifest();
   };
@@ -35,7 +42,7 @@ const browser = (t, manifest) => {
       else delete globalThis[key];
     }
   });
-  return { faces, fonts, get requests() { return requests; } };
+  return { faces, fonts, fontRequests, get requests() { return requests; } };
 };
 
 test('concurrent browser font requests share the actual pending manifest and font promises', async t => {
@@ -83,13 +90,15 @@ test('mixed-case manifest spelling is preserved in font registration and retry U
   const first = getBrowserFontResource('/mixed-case');
   await flush();
   assert.equal(env.faces[0].family, 'MiXeD-Font');
-  assert.equal(env.faces[0].source, 'url(http://localhost/mixed-case/MiXeD-Font.woff2) format(\'woff2\')');
+  assert.equal(env.fontRequests[0], 'http://localhost/mixed-case/MiXeD-Font.woff2');
+  assert.ok(env.faces[0].source instanceof ArrayBuffer);
   env.faces[0].loading.reject(new Error('Retry this font'));
   await first.promise;
   const next = getBrowserFontResource('/mixed-case', true);
   await flush();
   assert.equal(env.faces[1].family, env.faces[0].family);
-  assert.equal(env.faces[1].source, env.faces[0].source);
+  assert.equal(env.fontRequests[1], env.fontRequests[0]);
+  assert.deepEqual(new Uint8Array(env.faces[1].source), new Uint8Array(env.faces[0].source));
   env.faces[1].loading.resolve();
   await next.promise;
 });

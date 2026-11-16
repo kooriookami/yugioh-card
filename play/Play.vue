@@ -147,6 +147,7 @@
 import { Leafer } from 'leafer-unified';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { CompressText, splitBreakWordWithBracket } from '/packages/src/compress-text';
+import { loadFontBrowser } from '/packages/src/utils/font-loader.js';
 
 const rubyPlainTextPattern = /\[([^\[\]()]+)\(([^\[\]()]*)\)]/g;
 
@@ -157,6 +158,8 @@ const selectedCaseId = ref('ruby-basic');
 
 const previewBaseConfig = {
   text: '',
+  fontFamily: 'ygo-sc',
+  sideBearingRatio: 1,
   width: 0,
   height: 0,
   y: 14,
@@ -179,6 +182,27 @@ const removeKanjiKana = (text = '') => {
 };
 
 const cases = [
+  {
+    id: 'jp-spacing',
+    label: '日文留白',
+    description: '检查汉字、假名、长音符与混合数字的留白、注音及换行。',
+    config: {
+      text: '[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)]\nコーヒー スーパー 々〆゛゜ゝゞー\n０１２３４５６７８９ AV。',
+      fontFamily: 'ygo-jp',
+      sideBearingRatio: 0.5,
+      width: 540,
+    },
+  },
+  {
+    id: 'jp-original-spacing',
+    label: '日文原始留白',
+    description: '使用相同字体和文字，对照原始留白下的占宽与换行。',
+    config: {
+      text: '[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)]\nコーヒー スーパー 々〆゛゜ゝゞー\n０１２３４５６７８９ AV。',
+      fontFamily: 'ygo-jp',
+      width: 540,
+    },
+  },
   {
     id: 'ruby-basic',
     label: '注音长文本',
@@ -242,7 +266,7 @@ const splitResult = computed(() => {
 });
 
 const currentConfigText = computed(() => {
-  const { text, ...rest } = editableConfig;
+  const { text, sideBearingRatio, ...rest } = editableConfig;
   return JSON.stringify(rest, null, 2);
 });
 
@@ -302,6 +326,7 @@ const updatePreview = () => {
 };
 
 onMounted(() => {
+  loadFontBrowser('/src/assets/yugioh-card/yugioh/font').catch(error => console.error('Playground font loading failed', error));
   const leafer = new Leafer({
     view: leaferRef.value,
     grow: true,

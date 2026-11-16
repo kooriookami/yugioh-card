@@ -35,6 +35,7 @@
     "@leafer/node": "^2.3.4",
     "css-line-break": "^2.1.0",
     "element-plus": "^2.14.8",
+    "fontkit": "^3.0.0",
     "json-editor-vue": "^0.19.2",
     "leafer": "^2.3.4",
     "leafer-unified": "^1.0.3",

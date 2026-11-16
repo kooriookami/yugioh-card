@@ -89,7 +89,7 @@ export class CardReadiness {
       };
       this.card.leafer.children.forEach(invalidate);
     }
-    withTextLayoutContext({ fontVersion: this.fontVersion }, () => this.card.draw());
+    withTextLayoutContext({ fontVersion: this.fontVersion, loadedFonts: loaded }, () => this.card.draw());
     this.loadedFonts = loaded;
     this.hasDrawn = true;
     this.families = collectFonts(this.card);
