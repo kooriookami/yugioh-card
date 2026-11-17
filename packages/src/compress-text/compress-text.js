@@ -220,10 +220,12 @@ export class CompressText extends Group {
   getParseList() {
     const text = String(this.text).trimEnd();
     const cached = parsedTexts.get(this);
-    if (cached?.text === text) {
+    if (cached?.text === text && cached.tokens) {
       return cached.tokens.map(items => items.map(([ruby, rt, bold]) => this.createTextItem(ruby, rt, bold)));
     }
-    const tokens = [];
+    // 首次出现的文本不分配第二份解析树；确实重排同一文本时再建立缓存。
+    const tokens = cached?.text === text ? [] : null;
+    const list = [];
     let bold = false;
     // 正则的捕获圆括号不要随意修改
     text.split(new RegExp(`(<b>|</b>|\n|[${noCompressText}])`)).filter(value => value).forEach(value => {
@@ -238,6 +240,7 @@ export class CompressText extends Group {
       const splitList = splitBreakWordWithBracket(value);
       splitList.forEach(value => {
         const itemList = [];
+        const itemTokens = tokens ? [] : null;
         value.split(rubyTokenPattern).filter(value => value).forEach(value => {
           let rubyText = value;
           let rtText = '';
@@ -246,13 +249,15 @@ export class CompressText extends Group {
             rubyText = rubyRtMatch[1];
             rtText = rubyRtMatch[2];
           }
-          itemList.push([rubyText, rtText, bold]);
+          itemList.push(this.createTextItem(rubyText, rtText, bold));
+          itemTokens?.push([rubyText, rtText, bold]);
         });
-        tokens.push(itemList);
+        list.push(itemList);
+        tokens?.push(itemTokens);
       });
     });
     parsedTexts.set(this, { text, tokens });
-    return tokens.map(items => items.map(([ruby, rt, bold]) => this.createTextItem(ruby, rt, bold)));
+    return list;
   }
 
   /**
@@ -637,6 +642,7 @@ export class CompressText extends Group {
     let low = start;
     let high = textList.length;
     let bestItem = null;
+    let bestEnd = start + 1;
 
     while (low < high) {
       const mid = Math.ceil((low + high) / 2);
@@ -645,6 +651,7 @@ export class CompressText extends Group {
       if (nextItem.ruby.width <= this.width) {
         this.destroyRubyLeaf(bestItem?.ruby);
         bestItem = nextItem;
+        bestEnd = mid;
         low = mid;
       } else {
         this.destroyRubyLeaf(nextItem.ruby);
@@ -652,7 +659,9 @@ export class CompressText extends Group {
       }
     }
 
-    return bestItem ?? this.createMeasuredPlainTextItem(textList[start], bold);
+    const item = bestItem ?? this.createMeasuredPlainTextItem(textList[start], bold);
+    if (defaultMeasurementMethods.every(([name, method]) => this[name] === method)) fittingEnds.set(item, bestEnd);
+    return item;
   }
 
   /**
@@ -674,7 +683,7 @@ export class CompressText extends Group {
       const bestItem = this.findLargestFittingTextSegment(textList, start, item.ruby.bold);
 
       itemList.push([bestItem]);
-      start += this.getTextCharLength(bestItem.ruby.text);
+      start = fittingEnds.get(bestItem) ?? start + this.getTextCharLength(bestItem.ruby.text);
     }
 
     return itemList;
@@ -1420,4 +1429,10 @@ const defaultLayoutMethods = [
   'updateTextScale', 'layoutNewlineItems', 'layoutItemList', 'updateItemRubyScale', 'updateRubyScale',
   'getItemWidth', 'shouldWrapItemList', 'positionItemListRuby', 'positionRuby', 'addLine',
   'removeLineLastSpace', 'resetLayoutPosition', 'getPaddingWidth', 'getLineHeight', 'getCurrentFontSize', 'doesOverflowHeight', 'getLayoutHeight',
+].map(name => [name, CompressText.prototype[name]]);
+
+const fittingEnds = new WeakMap();
+const defaultMeasurementMethods = [
+  'createMeasuredPlainTextItem', 'createRubyLeaf', 'createPlainTextItem', 'createTextItem',
+  'getRubyTextStyle', 'getTextCharList', 'getTextCharLength', 'destroyRubyLeaf',
 ].map(name => [name, CompressText.prototype[name]]);

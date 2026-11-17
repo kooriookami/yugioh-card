@@ -80,3 +80,17 @@ test('reused parsing never retains mutable layout or caller changes', () => {
     }
   } finally { text.destroy(); }
 });
+
+test('long native words preserve shaping, bold state and restored input across repeated fits', () => {
+  const data = { text: 'W'.repeat(300), fontFamily: 'ygo-en', fontSize: 38, width: 300 };
+  const text = new CompressText(data);
+  try {
+    for (const update of [{ width: 180 }, { text: `<b>${'AVffi'.repeat(80)}</b>` }, { width: 450, fontSize: 30 }, { text: data.text, fontSize: 38, width: 300 }]) {
+      Object.assign(data, update);
+      text.set(update);
+      const fresh = new CompressText(data);
+      try { assert.deepEqual(textSnapshot(text), textSnapshot(fresh)); }
+      finally { fresh.destroy(); }
+    }
+  } finally { text.destroy(); }
+});
