@@ -95,6 +95,14 @@ export const batchData = (defaults, index, images) => {
   };
 };
 
+export const classData = (name, defaults, index, images) => {
+  const data = batchData(defaults, index === 3 ? 0 : index, images);
+  const input = name === 'YugiohBackCard' ? { ...defaults, logo: index % 3 === 1 ? 'tcg' : 'ocg', konami: index % 3 !== 2 }
+    : name === 'FieldCenterCard' ? { ...defaults, image: data.image, cardBack: index % 3 === 2 }
+      : { ...data, type: name === 'YugiohCard' ? data.type : 'monster', language: name === 'YugiohSeries2Card' ? 'jp' : name === 'RushDuelCard' && data.language === 'en' ? 'sc' : data.language };
+  return { ...input, scale: 0.15 };
+};
+
 const properties = ['tag', 'text', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'fill', 'stroke', 'strokeWidth', 'strokeAlign', 'shadow', 'around', 'x', 'y', 'scaleX', 'scaleY', 'visible', 'opacity', 'zIndex'];
 export const nodeSnapshot = node => ({
   ...Object.fromEntries(properties.map(key => [key, node[key]])),

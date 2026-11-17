@@ -4,13 +4,14 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { performance } from 'node:perf_hooks';
-import { Leafer, useCanvas } from 'leafer-unified';
-import skia from 'skia-canvas';
-import { textCases, updateCases, batchData, textSnapshot, nodeSnapshot } from './layout-cases.js';
+import { textCases, updateCases, batchData, classData, textSnapshot, nodeSnapshot } from './layout-cases.js';
 
 const args = Object.fromEntries(process.argv.slice(2).map(arg => arg.replace(/^--/, '').split('=')));
 const root = path.resolve(args.root || '.');
 const entry = path.resolve(root, args.entry || 'packages');
+const runtime = args.runtime ? await import(pathToFileURL(path.resolve(args.runtime))) : null;
+const { Leafer, useCanvas } = runtime || await import('leafer-unified');
+const skia = runtime?.skia || (await import('skia-canvas')).default;
 const moduleAt = file => import(pathToFileURL(path.join(entry, file)));
 const { CompressText } = await moduleAt('src/compress-text/compress-text.js');
 const cards = await moduleAt('index.js');
@@ -32,14 +33,15 @@ const pixels = async view => {
 };
 const capture = async (text, view, withPixels) => ({ layout: textSnapshot(text), pixels: withPixels ? await pixels(view) : undefined });
 
-for (const [index, data] of (args['resume-classes'] ? [] : textCases).entries()) {
+const skipText = args['resume-classes'] || args['batch-only'];
+for (const [index, data] of (skipText ? [] : textCases).entries()) {
   const view = new Leafer({ width: 1400, height: 650 });
   const text = new CompressText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtTop: -6, width: 1175, sideBearingRatio: 0.5, ...data });
   view.add(text);
   try { output.text.push(await capture(text, view, args.pixels === '1')); }
   finally { view.destroy(true); }
 }
-for (const extra of (args['resume-classes'] ? [] : [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingRatio: 1 }, { height: 35, autoSmallSize: true, smallFontSize: 12 }])) {
+for (const extra of (skipText ? [] : [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingRatio: 1 }, { height: 35, autoSmallSize: true, smallFontSize: 12 }])) {
   const view = new Leafer({ width: 1400, height: 650 });
   const text = new CompressText({ text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingRatio: 0.5, ...extra });
   view.add(text);
@@ -84,11 +86,7 @@ for (const name of ['YugiohCard', 'YugiohSeries2Card', 'RushDuelCard', 'FieldCen
   const samples = [];
   try {
     for (let index = 0; index < 4; index++) {
-      const data = batchData(defaults, index === 3 ? 0 : index, images);
-      const input = name === 'YugiohBackCard' ? { ...defaults, logo: index % 3 === 1 ? 'tcg' : 'ocg', konami: index % 3 !== 2 }
-        : name === 'FieldCenterCard' ? { ...defaults, image: data.image, cardBack: index % 3 === 2 }
-          : { ...data, type: name === 'YugiohCard' ? data.type : 'monster', language: name === 'YugiohSeries2Card' ? 'jp' : name === 'RushDuelCard' && data.language === 'en' ? 'sc' : data.language };
-      card.setData({ ...input, scale: 0.15 });
+      card.setData(classData(name, defaults, index, images));
       await card.ready;
       samples.push(await pixels(card.leafer));
     }

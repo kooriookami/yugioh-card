@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="UTF-8">
+<title>排版等价与批量导出验证</title>
+<style>body{font:16px system-ui;margin:24px;color:#234}#status{font-size:20px}.pass{color:#167044}.fail{color:#a22}#host{width:1400px;height:650px}pre{white-space:pre-wrap}</style>
+<h1>排版等价与批量导出验证</h1><p id="status">正在加载测试运行时…</p><pre id="summary"></pre><div id="host"></div>
+<script type="module">
+import { textCases, updateCases, batchData, classData, textSnapshot, nodeSnapshot } from './layout-cases.js';
+const mode = new URLSearchParams(location.search).get('mode') || 'source';
+const debugImages = new URLSearchParams(location.search).has('images');
+const output = { text: [], updates: [], batch: [], classes: [] };
+const status = document.querySelector('#status');
+const summary = document.querySelector('#summary');
+const host = document.querySelector('#host');
+const unhandled = [];
+window.addEventListener('unhandledrejection', event => unhandled.push(String(event.reason)));
+const progress = text => { status.textContent = `${mode}：${text}`; };
+const digest = async data => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', data))).map(byte => byte.toString(16).padStart(2, '0')).join('');
+const pixels = async (view, label) => {
+  // 固定 CPU 2D 导出与像素倍率，减少图片缩放后端对像素对照的干扰。
+  const result = await view.export('png', { screenshot: true, pixelRatio: devicePixelRatio, contextSettings: { willReadFrequently: true } });
+  if (debugImages && label) await fetch(`/layout-image?mode=${mode}&label=${label}`, { method: 'POST', body: result.data });
+  const image = new window.Image(); image.src = result.data; await image.decode();
+  const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+  const context = canvas.getContext('2d', { willReadFrequently: true }); context.drawImage(image, 0, 0);
+  const rgba = await digest(context.getImageData(0, 0, image.width, image.height).data);
+  canvas.width = canvas.height = 0;
+  return { width: image.width, height: image.height, rgba };
+};
+try {
+  const runtime = mode.startsWith('baseline') ? '/node_modules/.cache/layout-perf/baseline-3cc42eb/runtime.js'
+    : mode === 'package' ? '/node_modules/.cache/layout-perf/package-consumer/runtime.js' : './browser-runtime.js';
+  const api = await import(/* @vite-ignore */ runtime);
+  const { Leafer, CompressText, getBrowserFontResource } = api;
+  await getBrowserFontResource('/src/assets/yugioh-card/yugioh/font').promise;
+  const capture = async (text, view) => ({ layout: textSnapshot(text), pixels: await pixels(view) });
+  for (const [index, data] of textCases.entries()) {
+    progress(`文本 ${index + 1}/${textCases.length}`);
+    const view = new Leafer({ view: host, width: 1400, height: 650 });
+    const text = new CompressText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtTop: -6, width: 1175, sideBearingRatio: 0.5, ...data });
+    view.add(text);
+    try { output.text.push(await capture(text, view)); }
+    finally { view.destroy(true); }
+  }
+  for (const extra of [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingRatio: 1 }, { height: 35, autoSmallSize: true, smallFontSize: 12 }]) {
+    const view = new Leafer({ view: host, width: 1400, height: 650 });
+    const text = new CompressText({ text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingRatio: 0.5, ...extra });
+    view.add(text);
+    try {
+      const steps = [await capture(text, view)];
+      for (const update of updateCases) {
+        progress(`更新序列 ${output.updates.length + 1}/5，步骤 ${steps.length}/${updateCases.length}`);
+        text.set(update); steps.push(await capture(text, view));
+      }
+      output.updates.push(steps);
+    } finally { view.destroy(true); }
+  }
+  const images = [0, 1, 2].map(index => `/node_modules/.cache/layout-perf/browser-images/${index}.png`);
+  const card = new api.YugiohCard({ view: host, resourcePath: '/src/assets/yugioh-card', data: { scale: 1 } });
+  const defaults = structuredClone(card.data);
+  try {
+    for (let index = 0; index < 100; index++) {
+      progress(`批量 ${index + 1}/100`);
+      const data = batchData(defaults, index, images); card.setData(data); await card.ready;
+      output.batch.push({ name: data.name, pixels: await pixels(card.leafer, index < 4 ? `batch-${index}` : null), nodes: JSON.parse(JSON.stringify(nodeSnapshot(card.leafer))) });
+    }
+  } finally { card.leafer.destroy(true); }
+  for (const name of ['YugiohCard', 'YugiohSeries2Card', 'RushDuelCard', 'FieldCenterCard', 'YugiohBackCard']) {
+    progress(`卡片类 ${name}`);
+    const card = new api[name]({ view: host, resourcePath: '/src/assets/yugioh-card', data: { scale: 0.15 } });
+    const defaults = structuredClone(card.data), samples = [], layouts = [];
+    try {
+      for (let index = 0; index < 4; index++) { card.setData(classData(name, defaults, index, images)); await card.ready; samples.push(await pixels(card.leafer, `${name}-${index}`)); layouts.push(JSON.parse(JSON.stringify(nodeSnapshot(card.leafer)))); }
+      if (JSON.stringify(samples[0]) !== JSON.stringify(samples[3]) || JSON.stringify(layouts[0]) !== JSON.stringify(layouts[3])) throw new Error(`${name}: A → B → A 未恢复原输出`);
+      output.classes.push({ name, samples, layouts });
+    } finally { card.leafer.destroy(true); }
+  }
+  if (unhandled.length) throw new Error(unhandled.join('\n'));
+  const response = await fetch(`/layout-report?mode=${mode}`, { method: 'POST', body: JSON.stringify(output) });
+  const result = await response.json();
+  if (!result.ok) throw new Error(result.error);
+  status.className = 'pass'; status.textContent = `${mode}：全部验证通过`;
+  summary.textContent = JSON.stringify(result, null, 2);
+} catch (error) {
+  status.className = 'fail'; status.textContent = `${mode}：${error.message}`;
+  summary.textContent = error.stack;
+  await fetch(`/layout-error?mode=${mode}`, { method: 'POST', body: JSON.stringify({ error: error.stack, unhandled }) });
+}
+</script>
+</html>

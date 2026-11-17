@@ -1,6 +1,6 @@
-# 文字排版与卡片更新性能优化草案
+# 文字排版与卡片更新性能优化设计
 
-- 状态：草案，待 review；本次只新增设计文档。
+- 状态：已完成本轮实施和验收；收益不足的测量复用、卡片区域分派继续保留原实现。
 - 日期：2026-11-17。
 - 分支：`codex/jp-font-spacing`，在现有 checkout 开发。
 - 对照基线：`3cc42ebb2f75836ef66b67caeefcea4164516f03`，已包含同名字体跨资源目录的排版修复。
@@ -258,6 +258,108 @@ Node 使用独立进程运行基线和候选；浏览器分别使用独立页面
 实施涉及库代码时，执行相关回归、修改文件 ESLint、全量 `pnpm test` 和 `pnpm build:lib`。阶段性可交付版本将 `.tgz` 安装到独立消费项目，使用真实 Edge 与 Node 验证浏览器及 Node 都在运行发布产物，完成布局比较、`ready` 和 PNG 导出。涉及演示应用时再补网站构建与对应界面验证。
 
 主要落点为 `packages/src/compress-text/`、`packages/src/card/` 及相关卡片类；按照阶段需要改动，不为了目录整齐预先拆分所有类。对外用法保持一致，开发与验收记录在本文件追加。
+
+## 8. 实施记录
+
+### 8.1 已采用的实现与取舍
+
+- 行尾扫描从本轮最后一个已定位项开始；直接调用行尾辅助方法时仍保留完整扫描。自定义排版辅助方法会保守回退，避免假定其定位顺序。
+- `x / y / visible / zIndex` 直接更新容器；关闭渐变且正文、注音颜色均为字符串时，只更新填充和既有描边。字体上下文变化、未知字段、复杂颜色、无效内部 Group、子类和自定义方法保留完整更新。
+- 每实例只保存当前文本的不可变解析元组。第一次出现的文本不复制解析树；第二次确实重排相同文本时建立缓存，之后重新创建可变布局对象。更换文本覆盖缓存，销毁时清理。
+- 高度二分的中间候选只计算行框高度；原始逐项求和、候选顺序、精度、小字和注音策略保留。最后一次候选仍同步节点，直接调用 `findHeightScale()` 可以观察到原有的布局状态；自定义辅助方法继续逐轮执行原路径。
+- 连续文本只复用已选前缀的字素结束索引。独立测量 Text 的复用原型虽通过效果对比，但原生西文压力样本明显变慢，已撤回；保留原生整段测量、临时对象和搜索顺序。
+- `CardReadiness.draw()` 之后一次遍历同时收集可见字体和图片，交给原有资源协调器。未缓存跨绘制周期的场景依赖，没有改变 `ready`、失败重试、引用释放或 `setData()` 合并语义。
+- 卡片区域字段分派暂不实施：现有攻击力等更新已经避免不必要的文字重排，批量时间主要在导出；增加区域依赖表的收益尚不足以支持扩大维护范围。
+
+新增的快捷路径只减少项目自身计算和节点维护，不把多轮布局误算成多次画布重绘；不增加外部参数。
+
+按最终确认，本轮保留 `Card.resetAttr()` 对默认行高的现有设置，以及各卡片的字号、坐标和局部行高；不混入行高迁移或 `y` 补偿。
+
+### 8.2 可复现验证工具
+
+全部验证目录位于忽略的 `node_modules/.cache/layout-perf/`，不切换分支、不创建 worktree，也不提交快照、图片或打包文件。
+
+```sh
+node tools/perf/prepare-baseline.mjs
+node tools/perf/prepare-images.mjs
+node tools/perf/check-layout.mjs --root=node_modules/.cache/layout-perf/baseline-3cc42eb --pixels=1 --batch=100 --output=node_modules/.cache/layout-perf/baseline.json
+node tools/perf/check-layout.mjs --pixels=1 --batch=100 --output=node_modules/.cache/layout-perf/candidate.json --compare=node_modules/.cache/layout-perf/baseline.json
+```
+
+独立大图对照在两个命令上均增加 `--batch-only=1 --images-dir=node_modules/.cache/layout-perf/batch-images`，并使用另一组输出 / 对照文件。包含 100 张独立 JPEG，尺寸轮换 800×1000、1200×1500、1600×2000；每张带不同像素标记。
+
+`benchmark-layout.mjs` 使用相同的 `--root` / `--entry` 选择基线或候选，每类交互预热 15 次并采集 61 次，连续文本构造预热 5 次并采集 31 次。基线与候选顺序运行，计时期间不执行其他基准。
+
+```sh
+node tools/perf/benchmark-layout.mjs --root=node_modules/.cache/layout-perf/baseline-3cc42eb --output=node_modules/.cache/layout-perf/benchmark-before.json
+node tools/perf/benchmark-layout.mjs --output=node_modules/.cache/layout-perf/benchmark-after.json
+node --expose-gc tools/perf/benchmark-batch.mjs --rounds=3 --images-dir=node_modules/.cache/layout-perf/batch-images --save-dir=node_modules/.cache/layout-perf/batch-output --output=node_modules/.cache/layout-perf/batch-after.json
+```
+
+批量基准逐张导出和写盘，只有一张输出在处理中；不保存所有 Base64 / Buffer。三个批次分别释放实例，记录每 25 张的内存、销毁后的引用数和内存；显式 GC 仅用于批次结束后的诊断，不纳入吞吐计时。保存目录中的同名输出按批次覆盖。
+
+浏览器工具为 `node tools/perf/browser-server.mjs`，在 Edge 中依次使用独立文档打开：
+
+```text
+http://127.0.0.1:5182/tools/perf/browser.html?mode=baseline
+http://127.0.0.1:5182/tools/perf/browser.html?mode=source
+http://127.0.0.1:5182/tools/perf/browser.html?mode=package
+```
+
+`baseline-repeat` 可检查原版的重复运行；`images=1` 额外保存前四张及恢复序列的 PNG 供定位。基线和候选的文本、每步更新、卡片节点及解码后的 RGBA 哈希严格比较，不四舍五入布局数值、不放宽像素容差。
+
+打包验证先执行 `pnpm build:lib`，在 `dist` 中用 `pnpm pack --pack-destination ../node_modules/.cache/layout-perf/package` 生成包，再安装到独立消费目录。消费目录的 `runtime.js` 从自己安装的 `leafer-unified`、`yugioh-card`、`yugioh-card/src/compress-text/compress-text` 和 `yugioh-card/src/utils/font-loader` 导出页面所需接口；Node 的 `node-runtime.js` 导出消费目录自己的 `Leafer / useCanvas` 和默认 `skia`。
+
+Node 对照命令为：
+
+```sh
+node tools/perf/check-layout.mjs --entry=node_modules/.cache/layout-perf/package-consumer/node_modules/yugioh-card --runtime=node_modules/.cache/layout-perf/package-consumer/node-runtime.js --pixels=1 --batch=100 --output=node_modules/.cache/layout-perf/package.json --compare=node_modules/.cache/layout-perf/baseline.json
+```
+
+独立消费目录必须使用自己的同一份 Leafer 和已初始化的 Canvas 后端；不能初始化仓库的引擎，再把消费目录中另一个引擎实例误当作发布包故障。
+
+### 8.3 验收结果
+
+基线是当前分支优化前的 `3cc42eb`，不是上一个发行版；已经包含新日文字体、留白排版和实际字体登记修复。本轮不修改字体、语言样式或卡片布局参数。
+
+- `pnpm test`：142 项通过，包括新增的 13 项更新链、数值试排、资源收集和自定义方法兼容回归。
+- 修改文件的 ESLint、`git diff --check` 和 `pnpm build:lib` 通过。
+- Node 源码及独立安装的 `.tgz`：99 组文本、100 步连续更新、100 张 1394×2031 卡片的节点 / 布局及解码 RGBA 与基线严格相同；五种卡片的 A → B → C → A 恢复序列通过。
+- Node 另用 100 张独立大图验证，逐张布局和 RGBA 与基线严格相同。
+- Edge 源码与独立 `.tgz` 分别通过同一组 99 组文本、100 步更新、100 张卡片以及五种卡片的布局、像素和恢复对照。打包消费目录中的实现文件与最终库构建一致。
+- Edge 受控冷加载验证通过全部 32 项检查，覆盖 fallback、字体清单与字节延迟、共享请求、最终重排、图片失败 / 重试、相同配置的新周期、构造失败清理、过期回调、销毁和 PNG 导出。原浏览器验证页改为等待字体资源记录建立；当前加载器在字节返回后才创建 FontFace，旧断言等待 `document.fonts.size` 会与受控字节闸门互相等待。
+
+浏览器整卡对照中，默认画布 / JPEG 路径的原版重复运行也出现了卡图区域像素差异，文本布局保持相同。验证页统一使用 CPU 2D 导出、固定像素倍率，并把三张卡图预先解码为同一组无损 PNG 后，源码及发布包均通过严格像素比较。此设置只用于固定测试环境，没有修改库的图片绘制、导出或生产画布配置；不将存在波动的默认路径结果冒充严格通过。
+
+### 8.4 性能与工作量
+
+以下为本机 Windows、Node / Skia 的两次独立成对运行；基线和候选顺序执行。数值是两次运行的范围，单位 ms；每格依次为中位数 / P95。不是浏览器帧率或所有设备的性能承诺。
+
+| 样本 | 基线中位数 / P95 | 优化后中位数 / P95 |
+| --- | --- | --- |
+| 只改位置 | 3.64–3.66 / 5.57–6.10 | 0.0021–0.0022 / 0.0065–0.0067 |
+| 只改纯色 | 3.45–3.59 / 7.18–7.59 | 0.096–0.097 / 0.113–0.127 |
+| 相同正文改宽度 | 3.31–3.35 / 6.92–7.63 | 2.40–2.54 / 4.63–5.21 |
+| 每次更换正文 | 3.13–3.16 / 6.89–7.00 | 2.57–2.59 / 7.08–7.27 |
+| 800 个连续 W 的构造 | 8.32–8.73 / 10.43–10.73 | 8.63–8.71 / 10.04–10.30 |
+| 1600 个连续日文字符的构造 | 11.89–12.17 / 19.84–20.36 | 11.62–12.55 / 21.76–21.95 |
+
+位置和纯色更新的收益最明确，正文变化与宽度调整的中位数也下降。更换正文的 P95、超长 CJK 的 P95 没有改善，不能把本轮优化表述为所有输入和分位数均加速；超长连续文本仍主要受测量、节点创建和 GC 影响，本轮没有启用测量节点池。
+
+`count-work.mjs` 在单独的计数运行中使用数组 / 叶子代理和字素分段计数，不替换 CompressText 的辅助方法，也不把埋点耗时纳入基准：
+
+| 工作量 | 基线 | 优化后 |
+| --- | --- | --- |
+| 连续 10 次位置变化的文本 Group 重建 | 10 | 0 |
+| 连续 10 次纯色变化的文本 Group 重建 | 10 | 0 |
+| 1600 个日文字符一轮布局的 ruby 数组索引读取 | 34439 | 3239 |
+| 上项扣除两轮常规遍历后的行尾扫描 | 31239 | 39 |
+| 同一高度压缩样本的节点属性写入 | 6048 | 672 |
+| 800 个连续 W 构造时的字素分段调用 | 102 | 2 |
+
+100 张独立大图的三批串行导出及逐张写盘均完成，当前卡片最多跟踪 13 张图片，销毁后自己的图片记录均为 0。基线三批耗时约 29.58 / 29.32 / 28.87 秒，候选约 31.27 / 30.33 / 28.86 秒；前两批期间另有浏览器验证活动，这组耗时只作批量流程和内存诊断，不据此量化吞吐收益。导出占主要时间，本轮不宣称整批 PNG 导出加速。
+
+诊断 GC 后，基线三批 JS 堆约 28.1 / 28.5 / 28.7MiB，候选约 28.2 / 28.6 / 28.8MiB；未见 JS 堆随已处理张数线性增长。RSS 在释放后仍有保留和波动，基线约 555–629MiB，候选约 554–580MiB；这不能证明原生内存没有泄漏，也不作为每张强制 GC 的理由。实际应用仍应逐张保存、释放输出，并监测自己的图片集和保存端背压。
 
 ## 参考
 

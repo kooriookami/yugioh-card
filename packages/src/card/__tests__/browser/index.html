@@ -72,8 +72,8 @@ document.querySelector('#start').onclick = async event => {
       imageProbe.leafer.destroy(true);
     }
     await release('manifest');
-    await waitFor(() => document.fonts.size > 0);
-    check(state === 'pending', 'FontFace 已注册但未加载时不提前完成');
+    await waitFor(() => a._readiness.fonts.fonts.size > 0);
+    check(state === 'pending', '字体清单已返回、字体字节仍在等待时不提前完成');
     await release('fonts');
     await waitFor(() => a.drawCount === 2 && b.drawCount === 2);
     check(state === 'pending', '字体最终排版完成，仍等待卡图');
