@@ -51,6 +51,7 @@ const exceedsHeight = (actual, limit) => actual - limit > 8 * Number.EPSILON * M
 
 export class CompressText extends Group {
   #lastPlacedIndex = -1;
+  #orderedLayout = false;
   /**
    * 创建压缩文本渲染实例，并初始化默认配置、内部缓存和浏览器字体加载后的重排逻辑。
    *
@@ -162,6 +163,9 @@ export class CompressText extends Group {
         else if (!containerProperties.has(key)) needCompressText = true;
       }
     });
+    if (changed && !needCompressText && (this.constructor !== CompressText || !defaultTextMethods.every(([name, method]) => this[name] === method))) {
+      needCompressText = true;
+    }
     const canUpdateColors = !this.gradient && typeof this.color === 'string' && typeof this.rtColor === 'string';
     if (needCompressText || (changed && (!this.group || this.group.destroyed)) || (colorsChanged && !canUpdateColors)) {
       this.compressText();
@@ -820,7 +824,7 @@ export class CompressText extends Group {
     let end = this.textScale;
     let best = null;
     // 自定义布局辅助方法的实例继续使用原路径，保留扩展行为。
-    const numericTrial = defaultLayoutMethods.every(([name, method]) => this[name] === method);
+    const numericTrial = defaultTextMethods.every(([name, method]) => this[name] === method);
     let tried = false;
     for (let iteration = 0; iteration < compressBinarySearchLimit; iteration++) {
       const scale = (start + end) / 2;
@@ -1150,17 +1154,22 @@ export class CompressText extends Group {
    * 该方法会重置游标，然后按显式换行分组顺序重新排版，最后刷新 rubyLineMap。
    */
   updateTextScale() {
-    this.resetLayoutPosition();
-    // 试排中的行尾空格可能在下一轮回到行内，先恢复节点并清除旧行号。
-    this.rubyList.forEach(ruby => {
-      ruby.line = -1;
-      ruby.rubyLeaf.visible = ruby.text !== '\n';
-    });
+    const previous = this.#orderedLayout;
+    // 自定义辅助方法可能改变排版顺序，保守保留完整的行尾扫描。
+    this.#orderedLayout = defaultTextMethods.every(([name, method]) => this[name] === method);
+    try {
+      this.resetLayoutPosition();
+      // 试排中的行尾空格可能在下一轮回到行内，先恢复节点并清除旧行号。
+      this.rubyList.forEach(ruby => {
+        ruby.line = -1;
+        ruby.rubyLeaf.visible = ruby.text !== '\n';
+      });
 
-    this.newlineList.forEach((newline, newlineIndex) => {
-      this.layoutNewlineItems(newline, newlineIndex);
-    });
-    this.updateRubyLineMap();
+      this.newlineList.forEach((newline, newlineIndex) => {
+        this.layoutNewlineItems(newline, newlineIndex);
+      });
+      this.updateRubyLineMap();
+    } finally { this.#orderedLayout = previous; }
   }
 
   /**
@@ -1223,7 +1232,8 @@ export class CompressText extends Group {
    * @param {number} line 目标行号。
    */
   removeLineLastSpace(line) {
-    for (let index = this.#lastPlacedIndex; index >= 0; index--) {
+    const end = this.#orderedLayout ? Math.min(this.#lastPlacedIndex, this.rubyList.length - 1) : this.rubyList.length - 1;
+    for (let index = end; index >= 0; index--) {
       const ruby = this.rubyList[index];
       if (ruby.line !== line) {
         continue;
@@ -1425,14 +1435,10 @@ export class CompressText extends Group {
   }
 }
 
-const defaultLayoutMethods = [
-  'updateTextScale', 'layoutNewlineItems', 'layoutItemList', 'updateItemRubyScale', 'updateRubyScale',
-  'getItemWidth', 'shouldWrapItemList', 'positionItemListRuby', 'positionRuby', 'addLine',
-  'removeLineLastSpace', 'resetLayoutPosition', 'getPaddingWidth', 'getLineHeight', 'getCurrentFontSize', 'doesOverflowHeight', 'getLayoutHeight',
-].map(name => [name, CompressText.prototype[name]]);
-
 const fittingEnds = new WeakMap();
 const defaultMeasurementMethods = [
-  'createMeasuredPlainTextItem', 'createRubyLeaf', 'createPlainTextItem', 'createTextItem',
+  'findLargestFittingTextSegment', 'createMeasuredPlainTextItem', 'createRubyLeaf', 'createPlainTextItem', 'createTextItem',
   'getRubyTextStyle', 'getTextCharList', 'getTextCharLength', 'destroyRubyLeaf',
 ].map(name => [name, CompressText.prototype[name]]);
+
+const defaultTextMethods = Object.getOwnPropertyNames(CompressText.prototype).filter(name => name !== 'constructor').map(name => [name, CompressText.prototype[name]]);

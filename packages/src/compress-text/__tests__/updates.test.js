@@ -94,3 +94,19 @@ test('long native words preserve shaping, bold state and restored input across r
     }
   } finally { text.destroy(); }
 });
+
+test('custom CompressText hooks retain the full update path for container and color changes', () => {
+  class CustomText extends CompressText {
+    compressText() {
+      this.hookCalls = (this.hookCalls || 0) + 1;
+      return super.compressText();
+    }
+  }
+  const text = new CustomText({ text: '日', fontFamily: 'ygo-jp', width: 200 });
+  try {
+    const before = text.hookCalls;
+    text.set({ x: 20 });
+    text.set({ color: 'blue' });
+    assert.equal(text.hookCalls, before + 2);
+  } finally { text.destroy(); }
+});
