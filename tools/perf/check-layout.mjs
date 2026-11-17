@@ -7,6 +7,7 @@ import { performance } from 'node:perf_hooks';
 import { textCases, updateCases, batchData, classData, textSnapshot, nodeSnapshot } from './layout-cases.js';
 
 const args = Object.fromEntries(process.argv.slice(2).map(arg => arg.replace(/^--/, '').split('=')));
+const cases = args.cases ? (await import(pathToFileURL(path.resolve(args.cases)))).textCases : textCases;
 const root = path.resolve(args.root || '.');
 const entry = path.resolve(root, args.entry || 'packages');
 const runtime = args.runtime ? await import(pathToFileURL(path.resolve(args.runtime))) : null;
@@ -34,7 +35,7 @@ const pixels = async view => {
 const capture = async (text, view, withPixels) => ({ layout: textSnapshot(text), pixels: withPixels ? await pixels(view) : undefined });
 
 const skipText = args['resume-classes'] || args['batch-only'];
-for (const [index, data] of (skipText ? [] : textCases).entries()) {
+for (const [index, data] of (skipText ? [] : cases).entries()) {
   const view = new Leafer({ width: 1400, height: 650 });
   const text = new CompressText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtTop: -6, width: 1175, sideBearingRatio: 0.5, ...data });
   view.add(text);

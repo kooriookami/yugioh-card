@@ -6,7 +6,11 @@
 <h1>排版等价与批量导出验证</h1><p id="status">正在加载测试运行时…</p><pre id="summary"></pre><div id="host"></div>
 <script type="module">
 import { textCases, updateCases, batchData, classData, textSnapshot, nodeSnapshot } from './layout-cases.js';
+import { textCases as breakingCases } from './breaking-cases.js';
 const mode = new URLSearchParams(location.search).get('mode') || 'source';
+const breaking = new URLSearchParams(location.search).get('run') === 'breaking';
+const cases = breaking ? breakingCases : textCases;
+const runQuery = breaking ? '&run=breaking' : '';
 const debugImages = new URLSearchParams(location.search).has('images');
 const output = { text: [], updates: [], batch: [], classes: [] };
 const status = document.querySelector('#status');
@@ -19,7 +23,7 @@ const digest = async data => Array.from(new Uint8Array(await crypto.subtle.diges
 const pixels = async (view, label) => {
   // 固定 CPU 2D 导出与像素倍率，减少图片缩放后端对像素对照的干扰。
   const result = await view.export('png', { screenshot: true, pixelRatio: devicePixelRatio, contextSettings: { willReadFrequently: true } });
-  if (debugImages && label) await fetch(`/layout-image?mode=${mode}&label=${label}`, { method: 'POST', body: result.data });
+  if (debugImages && label) await fetch(`/layout-image?mode=${mode}&label=${label}${runQuery}`, { method: 'POST', body: result.data });
   const image = new window.Image(); image.src = result.data; await image.decode();
   const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
   const context = canvas.getContext('2d', { willReadFrequently: true }); context.drawImage(image, 0, 0);
@@ -28,19 +32,31 @@ const pixels = async (view, label) => {
   return { width: image.width, height: image.height, rgba };
 };
 try {
-  const runtime = mode.startsWith('baseline') ? '/node_modules/.cache/layout-perf/baseline-3cc42eb/runtime.js'
+  const baselineRoot = breaking ? '/node_modules/.cache/text-breaking/baseline-dd15fac' : '/node_modules/.cache/layout-perf/baseline-3cc42eb';
+  const runtime = mode.startsWith('baseline') ? `${baselineRoot}/runtime.js`
     : mode === 'package' ? '/node_modules/.cache/layout-perf/package-consumer/runtime.js' : './browser-runtime.js';
-  const api = await import(/* @vite-ignore */ runtime);
+  // 缓存目录中的 runtime 本身也受 node_modules 的 immutable HTTP 缓存影响。
+  const api = await import(/* @vite-ignore */ `${runtime}?t=${Date.now()}`);
   const { Leafer, CompressText, getBrowserFontResource } = api;
   await getBrowserFontResource('/src/assets/yugioh-card/yugioh/font').promise;
   const capture = async (text, view) => ({ layout: textSnapshot(text), pixels: await pixels(view) });
-  for (const [index, data] of textCases.entries()) {
-    progress(`文本 ${index + 1}/${textCases.length}`);
+  for (const [index, data] of cases.entries()) {
+    progress(`文本 ${index + 1}/${cases.length}`);
     const view = new Leafer({ view: host, width: 1400, height: 650 });
     const text = new CompressText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtTop: -6, width: 1175, sideBearingRatio: 0.5, ...data });
     view.add(text);
     try { output.text.push(await capture(text, view)); }
     finally { view.destroy(true); }
+  }
+  if (breaking && !mode.startsWith('baseline')) {
+    const visible = result => result.layout.items.map(item => item.ruby.text).filter(text => text !== '\n').join('');
+    if (!visible(output.text[99]).includes('__RB0__')) throw new Error('原文占位符发生碰撞');
+    if (!visible(output.text[100]).includes('\u200B')) throw new Error('原文零宽空格丢失');
+    for (const index of [109, 110]) if (visible(output.text[index]) !== '甲乙' || output.text[index].layout.currentLine !== 1) throw new Error('硬换行未正确解析');
+    for (const index of [106, 107, 108]) {
+      const first = output.text[index].layout.items[0].ruby;
+      if (first.text.includes('[') || !output.text[index].layout.items.some(item => item.rt.text || index === 108)) throw new Error('ruby 解析失败');
+    }
   }
   for (const extra of [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingRatio: 1 }, { height: 35, autoSmallSize: true, smallFontSize: 12 }]) {
     const view = new Leafer({ view: host, width: 1400, height: 650 });
@@ -76,7 +92,7 @@ try {
     } finally { card.leafer.destroy(true); }
   }
   if (unhandled.length) throw new Error(unhandled.join('\n'));
-  const response = await fetch(`/layout-report?mode=${mode}`, { method: 'POST', body: JSON.stringify(output) });
+  const response = await fetch(`/layout-report?mode=${mode}${runQuery}`, { method: 'POST', body: JSON.stringify(output) });
   const result = await response.json();
   if (!result.ok) throw new Error(result.error);
   status.className = 'pass'; status.textContent = `${mode}：全部验证通过`;
@@ -84,7 +100,7 @@ try {
 } catch (error) {
   status.className = 'fail'; status.textContent = `${mode}：${error.message}`;
   summary.textContent = error.stack;
-  await fetch(`/layout-error?mode=${mode}`, { method: 'POST', body: JSON.stringify({ error: error.stack, unhandled }) });
+  await fetch(`/layout-error?mode=${mode}${runQuery}`, { method: 'POST', body: JSON.stringify({ error: error.stack, unhandled }) });
 }
 </script>
 </html>

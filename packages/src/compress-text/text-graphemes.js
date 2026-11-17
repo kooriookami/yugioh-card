@@ -2,26 +2,20 @@ const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' });
 
 export const textGraphemes = text => Array.from(segmenter.segment(text), item => item.segment);
 
+/** UTF-16 坐标，与 String.slice 和原文范围保持一致。 */
+export const graphemeBoundaries = text => {
+  const boundaries = new Set([0]);
+  for (const item of segmenter.segment(text)) boundaries.add(item.index + item.segment.length);
+  return boundaries;
+};
+
 /** CSS 分词器可能拆开浊点等组合字符，将落在字素内部的断点合并。 */
-export const mergeGraphemeTokens = (text, tokens, separators) => {
-  const boundaries = new Set();
+export const mergeGraphemeTokens = (text, tokens) => {
+  const boundaries = graphemeBoundaries(text);
   let offset = 0;
-  for (const grapheme of textGraphemes(text)) {
-    offset += grapheme.length;
-    boundaries.add(offset);
-  }
   const result = [];
   let pending = '';
-  offset = 0;
   for (const token of tokens) {
-    // 保留分词器既有的显式 word separator 约定。
-    if (separators?.has(token.codePointAt(0)) && Array.from(token).length === 1) {
-      if (pending) result.push(pending);
-      result.push(token);
-      pending = '';
-      offset += token.length;
-      continue;
-    }
     pending += token;
     offset += token.length;
     if (boundaries.has(offset)) {

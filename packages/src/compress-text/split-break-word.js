@@ -1,100 +1,145 @@
-/**
- * 分词工具模块。
- *
- * 该模块负责把原始文本拆分成适合 CompressText 继续解析和布局的文本片段。
- * 其中：
- * 1. splitBreakWord 负责普通文本的基础分词。
- * 2. splitBreakWordWithBracket 负责在保留 ruby 标记原子性的前提下执行分词。
- *
- * 模块输出的片段顺序会保持与原始文本一致，供后续 ruby/rt 解析、换行与压缩流程复用。
- */
-import { fromCodePoint, LineBreaker, toCodePoints } from 'css-line-break';
-import { mergeGraphemeTokens } from './text-graphemes.js';
+import { LineBreaker } from 'css-line-break';
+import { graphemeBoundaries } from './text-graphemes.js';
 
-const wordSeparators = new Set([0x0020, 0x00A0, 0x1361, 0x10100, 0x10101, 0x1039, 0x1091]);
-const rubyPlaceholderPattern = /\[[^\[\]()]*\([^\[\]()]*\)]/g;
-const rubyPlaceholderTokenPattern = /__RB\d+__/g;
-const adjacentRubyPlaceholderPattern = /(?<=__RB\d+__)(?=__RB\d+__)/g;
-
-/**
- * 按 CSS line-break 规则将文本拆分成可参与后续布局的分词片段。
- *
- * 该方法会基于 css-line-break 提供的断行结果继续做一层加工：
- * 1. 将配置中的 word separator 保留为独立片段。
- * 2. 将连续的非分隔符字符合并为同一个词片段。
- *
- * 返回结果会保持原始文本顺序，供 CompressText 在解析阶段继续拆成 ruby/rt 结构。
- *
- * @param {string} text 原始文本。
- * @returns {string[]} 分词后的文本片段列表。
- */
-export const splitBreakWord = text => {
-  // https://drafts.csswg.org/css-text/#word-separator
-  const breaker = LineBreaker(text, {
-    lineBreak: 'strict',
-    wordBreak: 'normal',
-  });
-
-  const words = [];
-  let bk;
-
-  while (!(bk = breaker.next()).done) {
-    if (bk.value) {
-      const value = bk.value.slice();
-      const codePoints = toCodePoints(value);
-      let word = '';
-      codePoints.forEach(codePoint => {
-        if (!wordSeparators.has(codePoint)) {
-          word += fromCodePoint(codePoint);
-        } else {
-          if (word.length) {
-            words.push(word);
-          }
-          words.push(fromCodePoint(codePoint));
-          word = '';
-        }
-      });
-
-      if (word.length) {
-        words.push(word);
-      }
-    }
+// word-spacing 的分隔字符，不等同于允许换行的位置。
+const wordSeparators = new Set([0x0020, 0x00A0, 0x1361, 0x10100, 0x10101, 0x1039F, 0x1091F]);
+const rubySource = '\\[([^\\[\\]()\\r\\n\\f\\v\\u0085\\u2028\\u2029]+)\\(([^\\[\\]()\\r\\n\\f\\v\\u0085\\u2028\\u2029]*)\\)\\]';
+const hardBreakPattern = /\r\n|[\r\n\f\v\u0085\u2028\u2029]/g;
+export const emergencyBreakOffsets = text => {
+  // 简单 ASCII 单词的所有字素边界都可应急断行，null 避免重复建立断点表。
+  if (/^[A-Za-z0-9_]+$/.test(text)) return null;
+  const result = new Set();
+  const boundaries = graphemeBoundaries(text);
+  const breaker = LineBreaker(text, { lineBreak: 'strict', wordBreak: 'break-all' });
+  let offset = 0;
+  for (let part = breaker.next(); !part.done; part = breaker.next()) {
+    offset += part.value.slice().length;
+    if (boundaries.has(offset)) result.add(offset);
   }
-
-  return mergeGraphemeTokens(text, words, wordSeparators);
+  return result;
 };
 
-/**
- * 在保留 ruby 标记原子性的前提下，对文本执行分词。
- *
- * 该方法会先将形如 [汉(かん)] 的 ruby 标记替换为占位符，
- * 以避免分词时把 ruby 结构拆散；分词完成后，再把占位符恢复成原始 ruby 文本。
- *
- * 当文本中不存在 ruby 标记时，会直接退化为 splitBreakWord 的普通分词逻辑。
- *
- * @param {string} text 原始文本。
- * @returns {string[]} 在保留 ruby 标记前提下得到的分词片段列表。
- */
-export const splitBreakWordWithBracket = text => {
-  const matchList = Array.from(text.matchAll(rubyPlaceholderPattern));
-  if (!matchList.length) {
-    return splitBreakWord(text);
+/** 纯文本超宽时允许在字素之间回退，但仍保留标点和不可断字符的约束。 */
+export const emergencyBreaks = graphemes => {
+  const offsets = emergencyBreakOffsets(graphemes.join(''));
+  if (!offsets) return null;
+  const result = new Set();
+  let offset = 0;
+  for (let index = 0; index < graphemes.length; index++) {
+    offset += graphemes[index].length;
+    if (offsets.has(offset)) result.add(index + 1);
   }
+  return result;
+};
 
-  const rubyTokenMap = new Map();
-  const placeholderText = text.replace(rubyPlaceholderPattern, match => {
-    const placeholder = `__RB${rubyTokenMap.size}__`;
-    rubyTokenMap.set(placeholder, match);
-    return placeholder;
+/** 保留可见正文、注音与样式的关系，不在输入中插入替代字符。 */
+const readAtoms = (text, ruby, richText) => {
+  const atoms = [];
+  const pattern = ruby ? new RegExp(rubySource + (richText ? '|(<b>|</b>)' : ''), 'g') : null;
+  let sourceOffset = 0, offset = 0, bold = false;
+  const add = (body, rt = '', raw = body, atomic = false) => {
+    if (!body) return;
+    atoms.push({ text: body, rt, raw, atomic, bold, start: offset, end: offset + body.length });
+    offset += body.length;
+  };
+  if (pattern) for (const match of text.matchAll(pattern)) {
+    add(text.slice(sourceOffset, match.index));
+    if (match[3]) bold = match[3] === '<b>';
+    else add(match[1], match[2], match[0], true);
+    sourceOffset = match.index + match[0].length;
+  }
+  add(text.slice(sourceOffset));
+  return atoms;
+};
+
+const cutOffsets = (text, atoms, boundaries, fixed) => {
+  const cuts = new Set([text.length]);
+  const breaker = LineBreaker(text, { lineBreak: 'strict', wordBreak: 'normal' });
+  let offset = 0;
+  for (let part = breaker.next(); !part.done; part = breaker.next()) {
+    // LineBreaker 的 start/end 是码点索引；通过切片长度转换为 UTF-16 坐标。
+    offset += part.value.slice().length;
+    cuts.add(offset);
+    // 行尾普通空格单独测量、清理；禁止据此拆开“空格 + 收尾标点”。
+    let space = offset;
+    while (space && text[space - 1] === ' ') cuts.add(--space);
+  }
+  for (const match of text.matchAll(hardBreakPattern)) {
+    cuts.add(match.index);
+    cuts.add(match.index + match[0].length);
+  }
+  let emergency;
+  for (const atom of atoms) {
+    if (atom.atomic) continue;
+    let offset = atom.start;
+    for (const char of atom.text) {
+      if (fixed.has(char)) {
+        emergency ??= emergencyBreakOffsets(text);
+        for (const cut of [offset, offset + char.length]) if (!emergency || emergency.has(cut)) cuts.add(cut);
+      }
+      offset += char.length;
+    }
+  }
+  const rubyAtoms = atoms.filter(atom => atom.atomic);
+  let rubyIndex = 0;
+  return [...cuts].sort((a, b) => a - b).filter(cut => {
+    while (rubyIndex < rubyAtoms.length && rubyAtoms[rubyIndex].end <= cut) rubyIndex++;
+    const atom = rubyAtoms[rubyIndex];
+    return cut > 0 && boundaries.has(cut) && !(atom && atom.start < cut && cut < atom.end);
   });
+};
 
-  const splitText = placeholderText.replace(adjacentRubyPlaceholderPattern, '\u200B');
+/** 将绘制所需的独立空格、固定字符留在同一个断行单元里。 */
+const splitPlain = (atom, start, end, boundaries, fixed) => {
+  const parts = [];
+  let from = start, offset = start;
+  const add = to => {
+    if (to > from) {
+      const text = atom.text.slice(from - atom.start, to - atom.start);
+      parts.push({ text, raw: text, rt: '', bold: atom.bold, atomic: false });
+    }
+    from = to;
+  };
+  for (const char of atom.text.slice(start - atom.start, end - atom.start)) {
+    const next = offset + char.length;
+    if ((wordSeparators.has(char.codePointAt(0)) || fixed.has(char) || char === '\u200B' || char === '\u2060') && boundaries.has(offset) && boundaries.has(next)) {
+      add(offset); add(next);
+    }
+    offset = next;
+  }
+  add(end);
+  return parts;
+};
 
-  return splitBreakWord(splitText).map(word => {
-    const normalizedWord = word.replace(/\u200B/g, '');
+const segmentText = (text, ruby, richText, fixedText) => {
+  const atoms = readAtoms(text, ruby, richText);
+  const visible = atoms.map(atom => atom.text).join('');
+  const boundaries = graphemeBoundaries(visible);
+  const fixed = new Set(fixedText);
+  const cuts = cutOffsets(visible, atoms, boundaries, fixed);
+  const groups = [];
+  let start = 0, atomIndex = 0;
+  for (const end of cuts) {
+    const group = [];
+    while (atomIndex < atoms.length && atoms[atomIndex].start < end) {
+      const atom = atoms[atomIndex];
+      if (atom.atomic) group.push(atom);
+      else group.push(...splitPlain(atom, Math.max(start, atom.start), Math.min(end, atom.end), boundaries, fixed));
+      if (atom.end > end) break;
+      atomIndex++;
+    }
+    if (group.length) groups.push(group);
+    start = end;
+  }
+  return groups;
+};
 
-    return normalizedWord.replace(rubyPlaceholderTokenPattern, placeholder => {
-      return rubyTokenMap.get(placeholder) ?? placeholder;
-    });
-  });
+/** 断行单元仅以真实正文的规则划分；输出拼接后保持原文。 */
+export const splitBreakWord = text => segmentText(text, false, false, '').map(group => group.map(item => item.raw).join(''));
+
+export const splitBreakWordWithBracket = text => segmentText(text, true, false, '').map(group => group.map(item => item.raw).join(''));
+
+/** CompressText 内部入口：统一换行符，解析粗体、ruby 和合法断点。 */
+export const parseBreakText = (text, fixedText = '') => {
+  return segmentText(text.replace(hardBreakPattern, '\n').trimEnd(), true, true, fixedText);
 };

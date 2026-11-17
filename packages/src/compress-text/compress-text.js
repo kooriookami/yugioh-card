@@ -18,7 +18,7 @@
 import { Group, Text } from 'leafer-unified';
 import { isBrowser } from '../utils/index.js';
 import { fontFamilies, fontFamilyKey, subscribeFontChanges } from '../utils/font-loader.js';
-import { splitBreakWordWithBracket } from './split-break-word.js';
+import { emergencyBreakOffsets, emergencyBreaks, parseBreakText } from './split-break-word.js';
 import { getTextLayoutContext } from './layout-context.js';
 import { getGlyphMetrics, textGraphemes } from './glyph-metrics.js';
 import { createBodyRun } from './body-run.js';
@@ -32,8 +32,6 @@ const parsedTexts = new WeakMap();
 const containerProperties = new Set(['x', 'y', 'visible', 'zIndex']);
 const colorProperties = new Set(['color', 'rtColor']);
 
-const rubyTokenPattern = /(\[[^\[\]()]*\([^\[\]()]*\)])/g;
-const rubyRtPattern = /^\[([^\[\]()]+)\(([^\[\]()]*)\)]$/;
 const baseLineHeight = 1.15; // 默认正文与注音行高倍率。
 const noCompressText = '●①②③④⑤⑥⑦⑧⑨⑩'; // 不参与末行压缩的特殊字符集合。
 const compressBinarySearchPrecision = 0.01; // 高度压缩时二分搜索的停止精度。
@@ -222,43 +220,21 @@ export class CompressText extends Group {
    * @returns {Array<Array<{ruby: object, rt: object}>>} 解析后的文本项列表。
    */
   getParseList() {
-    const text = String(this.text).trimEnd();
+    const text = String(this.text);
     const cached = parsedTexts.get(this);
+    const create = (ruby, rt, bold, atomic) => {
+      const item = this.createTextItem(ruby, rt, bold);
+      if (atomic) item.ruby.atomic = true;
+      return item;
+    };
     if (cached?.text === text && cached.tokens) {
-      return cached.tokens.map(items => items.map(([ruby, rt, bold]) => this.createTextItem(ruby, rt, bold)));
+      return cached.tokens.map(items => items.map(values => create(...values)));
     }
     // 首次出现的文本不分配第二份解析树；确实重排同一文本时再建立缓存。
     const tokens = cached?.text === text ? [] : null;
-    const list = [];
-    let bold = false;
-    // 正则的捕获圆括号不要随意修改
-    text.split(new RegExp(`(<b>|</b>|\n|[${noCompressText}])`)).filter(value => value).forEach(value => {
-      if (value === '<b>') {
-        bold = true;
-        return;
-      }
-      if (value === '</b>') {
-        bold = false;
-        return;
-      }
-      const splitList = splitBreakWordWithBracket(value);
-      splitList.forEach(value => {
-        const itemList = [];
-        const itemTokens = tokens ? [] : null;
-        value.split(rubyTokenPattern).filter(value => value).forEach(value => {
-          let rubyText = value;
-          let rtText = '';
-          const rubyRtMatch = value.match(rubyRtPattern);
-          if (rubyRtMatch) {
-            rubyText = rubyRtMatch[1];
-            rtText = rubyRtMatch[2];
-          }
-          itemList.push(this.createTextItem(rubyText, rtText, bold));
-          itemTokens?.push([rubyText, rtText, bold]);
-        });
-        list.push(itemList);
-        tokens?.push(itemTokens);
-      });
+    const list = parseBreakText(text, noCompressText).map(parts => {
+      tokens?.push(parts.map(part => [part.text, part.rt, part.bold, part.atomic]));
+      return parts.map(part => create(part.text, part.rt, part.bold, part.atomic));
     });
     parsedTexts.set(this, { text, tokens });
     return list;
@@ -328,7 +304,7 @@ export class CompressText extends Group {
    * @returns {boolean} 是否允许按宽度切段。
    */
   isSplittablePlainTextItem(item) {
-    return !item.rt.text && item.ruby.text !== '\n' && Array.from(item.ruby.text).length > 1;
+    return !item.ruby.atomic && !item.rt.text && item.ruby.text !== '\n' && Array.from(item.ruby.text).length > 1;
   }
 
   /**
@@ -510,7 +486,7 @@ export class CompressText extends Group {
     const metrics = glyphResolvers.get(this);
     const bodyRun = createBodyRun(this.getRubyTextStyle(ruby), metrics);
     const rubyLeaf = bodyRun?.leaf ?? new Text(this.getRubyTextStyle(ruby));
-    const bounds = ruby.text === '\n' ? { width: 0 } : bodyRun ? { width: bodyRun.width } : rubyLeaf.getBounds('content', 'inner');
+    const bounds = ['\n', '\u200B', '\u2060'].includes(ruby.text) ? { width: 0 } : bodyRun ? { width: bodyRun.width } : rubyLeaf.getBounds('content', 'inner');
     const spacingWidth = ruby.text === ' ' ? this.wordSpacing : 0;
 
     ruby.rubyLeaf = rubyLeaf;
@@ -680,14 +656,26 @@ export class CompressText extends Group {
    */
   splitPlainTextItemIntoFittingSegments(item) {
     const textList = this.getTextCharList(item.ruby.text);
+    const allowed = emergencyBreaks(textList);
     const itemList = [];
     let start = 0;
 
     while (start < textList.length) {
-      const bestItem = this.findLargestFittingTextSegment(textList, start, item.ruby.bold);
+      let bestItem = this.findLargestFittingTextSegment(textList, start, item.ruby.bold);
+      let end = fittingEnds.get(bestItem) ?? start + this.getTextCharLength(bestItem.ruby.text);
+      if (allowed && !allowed.has(end)) {
+        const measuredEnd = end;
+        while (end > start && !allowed.has(end)) end--;
+        if (end === start) {
+          end = measuredEnd;
+          while (!allowed.has(end)) end++;
+        }
+        this.destroyRubyLeaf(bestItem.ruby);
+        bestItem = this.createMeasuredPlainTextItem(textList.slice(start, end).join(''), item.ruby.bold);
+      }
 
       itemList.push([bestItem]);
-      start = fittingEnds.get(bestItem) ?? start + this.getTextCharLength(bestItem.ruby.text);
+      start = end;
     }
 
     return itemList;
@@ -718,7 +706,16 @@ export class CompressText extends Group {
    * @returns {Array<Array<{ruby: object, rt: object}>>} 展开后的 itemList 列表。
    */
   splitOversizedItemList(itemList) {
-    return itemList.flatMap(item => this.expandItemForOverflowFallback(item));
+    const groups = [];
+    const allowed = emergencyBreakOffsets(itemList.map(item => item.ruby.text).join(''));
+    let offset = 0;
+    for (const next of itemList.flatMap(item => this.expandItemForOverflowFallback(item))) {
+      const previous = groups.at(-1);
+      if (previous && allowed && !allowed.has(offset)) previous.push(...next);
+      else groups.push(next);
+      offset += next.reduce((sum, item) => sum + item.ruby.text.length, 0);
+    }
+    return groups;
   }
 
   /**
@@ -1162,7 +1159,7 @@ export class CompressText extends Group {
       // 试排中的行尾空格可能在下一轮回到行内，先恢复节点并清除旧行号。
       this.rubyList.forEach(ruby => {
         ruby.line = -1;
-        ruby.rubyLeaf.visible = ruby.text !== '\n';
+        ruby.rubyLeaf.visible = !['\n', '\u200B', '\u2060'].includes(ruby.text);
       });
 
       this.newlineList.forEach((newline, newlineIndex) => {
