@@ -130,6 +130,8 @@ await card.ready;
 
 Updates during a pending cycle share one Promise and wait for the latest stable view. The next `setData()` after success or failure creates a new Promise, so read `ready` again after each update. It does not lock a data snapshot or track arbitrary direct changes to Leafer nodes.
 
+Fonts with the same family name share the drawing environment across resource directories; the last successfully registered version takes precedence. When the loader replaces a font used by a card, that card relayouts automatically. A pending cycle keeps its Promise; a completed cycle starts a new `ready` Promise.
+
 Required resource failures reject `ready` while preserving the preview. Catch the error and call `setData()` to retry. Failed preloaded fonts that this card does not use do not fail this card. The constructor option `readyTimeout` sets the cycle timeout in milliseconds (default `30000`; a positive finite number). Errors have a `code` such as `RESOURCE_FAILED`, `READY_TIMEOUT`, or `CARD_DESTROYED`. Resource errors also include `resourceType`, `resource`, and `cause`. Existing synchronous Node font registration errors still throw synchronously.
 
 `card.leafer.destroy()` rejects pending readiness and removes this card's listeners. Leafer uses a global resource queue, so other cards or unused preloaded resources can delay completion. `ready` does not guarantee export encoding, cross-origin canvas access, or file writing; handle errors from `export()` separately.

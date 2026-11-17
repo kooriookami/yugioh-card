@@ -9,21 +9,24 @@ let nodeFontOwner;
 
 const registerFont = (owner, family, entry) => {
   if (!registeredFonts.has(owner)) registeredFonts.set(owner, new Map());
-  registeredFonts.get(owner).set(fontFamilyKey(family), entry);
+  const fonts = registeredFonts.get(owner);
+  if (fonts.get(fontFamilyKey(family)) === entry) return;
+  fonts.set(fontFamilyKey(family), entry);
+  for (const listener of fontListeners.get(owner) ?? []) {
+    listener({ families: [family], fontfaces: entry.face ? [entry.face] : [] });
+  }
 };
 
 /** 内部排版使用加载器登记的字体身份，不以 fonts.check 推断 fallback。 */
-export const getLoadedFontEntry = family => {
-  const owner = typeof document !== 'undefined' ? document.fonts : nodeFontOwner;
+export const getLoadedFontEntry = (family, owner = typeof document !== 'undefined' ? document.fonts : nodeFontOwner) => {
   const entry = owner && registeredFonts.get(owner)?.get(fontFamilyKey(family));
   if (entry?.status !== 'loaded') return null;
   if (entry.face && !owner.has(entry.face)) return null;
   return entry;
 };
 
-/** 独立 CompressText 也要收到由二进制数据注册的字体完成信号。 */
-export const subscribeFontChanges = callback => {
-  const owner = document.fonts;
+/** 卡片与独立 CompressText 共享实际字体注册变化，按绘制环境隔离。 */
+export const subscribeFontChanges = (callback, owner = document.fonts) => {
   if (!fontListeners.has(owner)) fontListeners.set(owner, new Set());
   const listeners = fontListeners.get(owner);
   listeners.add(callback);
@@ -46,10 +49,11 @@ const validateManifest = families => {
   return [...new Set(families)];
 };
 
-const createResource = path => {
+const createResource = (path, fontOwner) => {
   const listeners = new Set();
   return {
     path,
+    fontOwner,
     status: 'loading',
     error: null,
     fonts: new Map(),
@@ -82,7 +86,6 @@ const loadBrowserFace = (resource, family, fontSet) => {
     entry.status = 'loaded';
     // 跟随实际加入 FontFaceSet 的顺序，pending/失败的替换不覆盖正在使用的字体。
     registerFont(fontSet, family, entry);
-    for (const listener of fontListeners.get(fontSet) ?? []) listener({ fontfaces: [entry.face] });
   }, cause => {
     entry.status = 'failed';
     entry.error = resourceError('font', url, cause);
@@ -93,7 +96,7 @@ const loadBrowserFace = (resource, family, fontSet) => {
 };
 
 const createBrowserResource = (path, fontSet, previous) => {
-  const resource = createResource(path);
+  const resource = createResource(path, fontSet);
   const abort = new AbortController();
   resource.promise = (async () => {
     if (previous?.status === 'loaded') {
@@ -146,12 +149,9 @@ export const getNodeFontResource = (fontPath, skia) => {
   const path = process.getBuiltinModule('node:path').resolve(fontPath);
   const cache = cacheFor(nodeCaches, skia.FontLibrary);
   nodeFontOwner = skia.FontLibrary;
-  if (cache.has(path)) {
-    const resource = cache.get(path);
-    for (const [family, entry] of resource.fonts) registerFont(nodeFontOwner, family, entry);
-    return resource;
-  }
-  const resource = createResource(path);
+  // 命中资源缓存不会再次调用 FontLibrary.use，也不能覆盖实际注册的字体身份。
+  if (cache.has(path)) return cache.get(path);
+  const resource = createResource(path, skia.FontLibrary);
   for (const family of validateManifest(JSON.parse(fs.readFileSync(`${path}/font-list.json`, 'utf8')))) {
     skia.FontLibrary.use(family, [`${path}/${family}.woff2`]);
     const entry = { status: 'loaded', error: null, promise: Promise.resolve(), fontData: new Uint8Array(fs.readFileSync(`${path}/${family}.woff2`)) };

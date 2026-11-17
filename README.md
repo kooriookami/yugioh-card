@@ -130,6 +130,8 @@ await card.ready;
 
 同一 pending 周期内的更新共用一个 Promise，等待最新画面稳定；成功或失败后的下一次 `setData()` 建立新 Promise，因此每次更新后都应重新读取 `ready`。它不锁定数据快照；任意直接修改 Leafer 节点不在此接口的跟踪范围内。
 
+不同资源目录中的同名字体共享绘制环境，以最后成功注册的版本为准。加载器替换了本卡正在使用的字体时，卡片会自动重排；已有 pending 周期复用原 Promise，已完成的周期则建立新的 `ready`。
+
 必需资源失败会拒绝 `ready`，预览仍保留；捕获错误后可调用 `setData()` 重试。未使用的预加载字体失败不会使本卡失败。构造参数 `readyTimeout` 可设置每轮等待的超时毫秒数（默认 `30000`，必须为正有限数）。错误的 `code` 包括 `RESOURCE_FAILED`、`READY_TIMEOUT` 和 `CARD_DESTROYED`；资源错误还提供 `resourceType`、`resource` 和 `cause`。Node 原有的同步字体注册错误仍会同步抛出。
 
 `card.leafer.destroy()` 会拒绝尚未完成的等待并清理本卡监听。Leafer 的资源队列是全局的，其他卡片或本卡未使用的预加载资源可能延迟完成通知。`ready` 不保证后续的导出编码、跨域画布读取或文件写入成功，仍须处理 `export()` 的错误。

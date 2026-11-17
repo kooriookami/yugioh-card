@@ -1,6 +1,6 @@
 import { LeaferEvent } from 'leafer-unified';
 import { withTextLayoutContext } from '../compress-text/layout-context.js';
-import { fontFamilyKey } from '../utils/font-loader.js';
+import { fontFamilyKey, getLoadedFontEntry, subscribeFontChanges } from '../utils/font-loader.js';
 import { defaultResourceTimeout, readyError, resourceError } from '../utils/resource-error.js';
 import { CardImages, collectFonts } from './resources.js';
 
@@ -16,6 +16,7 @@ export class CardReadiness {
   queued = false;
   cancelView = null;
   unsubscribeFonts = null;
+  unsubscribeFontChanges = null;
 
   constructor(card, getFonts, timeout = defaultResourceTimeout) {
     if (!Number.isFinite(timeout) || timeout <= 0) throw new RangeError('readyTimeout must be a positive finite number');
@@ -30,8 +31,19 @@ export class CardReadiness {
   setFonts(resource) {
     if (this.fonts === resource) return;
     this.unsubscribeFonts?.();
+    this.unsubscribeFontChanges?.();
     this.fonts = resource;
     this.unsubscribeFonts = resource?.subscribe(() => this.schedule());
+    this.unsubscribeFontChanges = resource?.fontOwner && subscribeFontChanges(({ families }) => {
+      if (this.disposed || !this.hasDrawn) return;
+      const changed = new Set(families.map(fontFamilyKey));
+      if (![...this.families].some(family => changed.has(fontFamilyKey(family)))) return;
+      // 其他资源目录也可能替换同名字体；已就绪的卡片需要新的排版与绘制周期。
+      if (!this.pending) this.begin();
+      this.revision++;
+      this.cancelView?.();
+      this.schedule();
+    }, resource.fontOwner);
   }
 
   begin() {
@@ -77,9 +89,19 @@ export class CardReadiness {
     this.schedule();
   }
 
+  currentFonts() {
+    const loaded = new Map();
+    for (const [family, entry] of this.fonts?.fonts ?? []) {
+      // 资源记录只决定必需依赖；度量必须来自当前绘制环境中实际注册的字体。
+      const current = this.fonts.fontOwner ? getLoadedFontEntry(family, this.fonts.fontOwner) : entry;
+      if (current?.status === 'loaded') loaded.set(family, current);
+    }
+    return loaded;
+  }
+
   draw() {
-    const loaded = new Map([...(this.fonts?.fonts ?? [])].filter(([, entry]) => entry.status === 'loaded'));
-    const changed = [...loaded].some(([family, entry]) => this.loadedFonts.get(family) !== entry);
+    const loaded = this.currentFonts();
+    const changed = loaded.size !== this.loadedFonts.size || [...loaded].some(([family, entry]) => this.loadedFonts.get(family) !== entry);
     if (this.hasDrawn && changed) {
       this.fontVersion++;
       // 普通 Text 也会缓存测量；CompressText 的子节点会在 set 中按字体版本重建。
@@ -138,7 +160,8 @@ export class CardReadiness {
       if (record.status !== 'loaded') imagesPending = true;
     }
     if (!required || required.some(([, entry]) => entry.status !== 'loaded')) return;
-    if (required.some(([family, entry]) => this.loadedFonts.get(family) !== entry)) {
+    const loaded = this.currentFonts();
+    if (required.some(([family]) => this.loadedFonts.get(family) !== loaded.get(family))) {
       this.cancelView?.();
       this.draw();
       this.images.sync();
@@ -194,6 +217,7 @@ export class CardReadiness {
     this.disposed = true;
     this.finish(readyError('CARD_DESTROYED', 'Card was destroyed before it became ready'));
     this.unsubscribeFonts?.();
+    this.unsubscribeFontChanges?.();
     this.images.destroy();
   }
 }
