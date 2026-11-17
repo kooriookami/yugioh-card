@@ -41,7 +41,7 @@ export const createBodyRun = (style, metrics) => {
     },
     paint(data) {
       // 默认线性渐变为垂直方向；所有子字形共享正文段的渐变坐标。
-      const height = Math.max(...segments.map(segment => segment.leaf.getBounds('content', 'inner').height));
+      const height = data.fill?.type === 'linear' ? Math.max(...segments.map(segment => segment.leaf.getBounds('content', 'inner').height)) : 0;
       for (const { leaf: text } of segments) {
         const fill = data.fill?.type === 'linear' ? {
           ...data.fill,

@@ -27,6 +27,8 @@ import { createBodyRun } from './body-run.js';
 const sideBearingRatios = new WeakMap();
 const layoutFonts = new WeakMap();
 const glyphResolvers = new WeakMap();
+const containerProperties = new Set(['x', 'y', 'visible', 'zIndex']);
+const colorProperties = new Set(['color', 'rtColor']);
 
 const rubyTokenPattern = /(\[[^\[\]()]*\([^\[\]()]*\)])/g;
 const rubyRtPattern = /^\[([^\[\]()]+)\(([^\[\]()]*)\)]$/;
@@ -46,6 +48,7 @@ const gradientShadowOffsetYRate = 0.025; // 渐变模式下阴影纵向偏移相
 const exceedsHeight = (actual, limit) => actual - limit > 8 * Number.EPSILON * Math.max(1, Math.abs(actual), Math.abs(limit));
 
 export class CompressText extends Group {
+  #lastPlacedIndex = -1;
   /**
    * 创建压缩文本渲染实例，并初始化默认配置、内部缓存和浏览器字体加载后的重排逻辑。
    *
@@ -136,6 +139,8 @@ export class CompressText extends Group {
     const version = context?.fontVersion;
     if (context) layoutFonts.set(this, context.loadedFonts);
     let needCompressText = version !== undefined && this.fontLayoutVersion !== version;
+    let changed = false;
+    let colorsChanged = false;
     if (version !== undefined) this.fontLayoutVersion = version;
     Object.keys(data).forEach(key => {
       if (key === 'sideBearingRatio') {
@@ -143,17 +148,35 @@ export class CompressText extends Group {
         if (!Object.is(sideBearingRatios.get(this) ?? 1, value)) {
           sideBearingRatios.set(this, value);
           needCompressText = true;
+          changed = true;
         }
         return;
       }
       const value = data[key] ?? this.defaultData[key];
       if (!Object.is(this[key], value)) {
         this[key] = value;
-        needCompressText = true;
+        changed = true;
+        if (colorProperties.has(key)) colorsChanged = true;
+        else if (!containerProperties.has(key)) needCompressText = true;
       }
     });
-    if (needCompressText) {
+    const canUpdateColors = !this.gradient && typeof this.color === 'string' && typeof this.rtColor === 'string';
+    if (needCompressText || (changed && (!this.group || this.group.destroyed)) || (colorsChanged && !canUpdateColors)) {
       this.compressText();
+    } else if (colorsChanged) {
+      this.updateColors();
+    }
+  }
+
+  /** 颜色不影响度量；保留正文和注音的既有描边颜色依赖。 */
+  updateColors() {
+    const paint = { fill: this.color, stroke: this.strokeWidth ? this.color : null };
+    for (const ruby of this.rubyList) {
+      if (ruby.bodyRun) ruby.bodyRun.paint(paint);
+      else ruby.rubyLeaf.set(paint);
+    }
+    for (const { rt } of this.flatItemList) {
+      rt.rtLeaf?.set({ fill: this.rtColor, stroke: this.rtStrokeWidth ? this.color : null });
     }
   }
 
@@ -1027,6 +1050,7 @@ export class CompressText extends Group {
    * 重置布局过程中的游标状态。
    */
   resetLayoutPosition() {
+    this.#lastPlacedIndex = -1;
     this.currentX = 0;
     this.currentY = 0;
     this.currentLine = 0;
@@ -1145,6 +1169,7 @@ export class CompressText extends Group {
    * @param {object} ruby ruby 布局对象。
    */
   positionRuby(ruby) {
+    this.#lastPlacedIndex++;
     const paddingLeft = ruby.paddingLeft || 0;
     const paddingRight = ruby.paddingRight || 0;
     const rubyLeaf = ruby.rubyLeaf;
@@ -1174,7 +1199,7 @@ export class CompressText extends Group {
    * @param {number} line 目标行号。
    */
   removeLineLastSpace(line) {
-    for (let index = this.rubyList.length - 1; index >= 0; index--) {
+    for (let index = this.#lastPlacedIndex; index >= 0; index--) {
       const ruby = this.rubyList[index];
       if (ruby.line !== line) {
         continue;
