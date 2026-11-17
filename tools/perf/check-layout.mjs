@@ -50,7 +50,9 @@ for (const extra of (args['resume-classes'] ? [] : [{}, { gradient: true }, { st
   } finally { view.destroy(true); }
 }
 
-const images = ['blue-eyes.jpg', 'leviathan-dragon.jpg', 'blue-eyes-old.jpg'].map(file => path.resolve('src/assets/image', file));
+const images = args['images-dir']
+  ? (await fs.readdir(args['images-dir'])).filter(file => /\.jpg$/i.test(file)).sort().map(file => path.resolve(args['images-dir'], file))
+  : ['blue-eyes.jpg', 'leviathan-dragon.jpg', 'blue-eyes-old.jpg'].map(file => path.resolve('src/assets/image', file));
 const count = Number(args.batch || 0);
 await checkpoint();
 if (count && !args['resume-classes']) {

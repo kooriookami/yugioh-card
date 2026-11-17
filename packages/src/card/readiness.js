@@ -2,7 +2,7 @@ import { LeaferEvent } from 'leafer-unified';
 import { withTextLayoutContext } from '../compress-text/layout-context.js';
 import { fontFamilyKey, getLoadedFontEntry, subscribeFontChanges } from '../utils/font-loader.js';
 import { defaultResourceTimeout, readyError, resourceError } from '../utils/resource-error.js';
-import { CardImages, collectFonts } from './resources.js';
+import { CardImages, collectResources } from './resources.js';
 
 const projectFont = /^(?:ygo-|rd-|custom[12]$)/;
 
@@ -76,7 +76,7 @@ export class CardReadiness {
     const initial = !this.hasDrawn;
     try {
       this.draw();
-      this.images.sync(retry || initial);
+      this.images.sync(retry || initial, this.imageRequirements);
     } catch (error) {
       this.finish(error);
       // 构造失败时调用方拿不到实例，必须在这里释放本卡资源。
@@ -114,7 +114,9 @@ export class CardReadiness {
     withTextLayoutContext({ fontVersion: this.fontVersion, loadedFonts: loaded }, () => this.card.draw());
     this.loadedFonts = loaded;
     this.hasDrawn = true;
-    this.families = collectFonts(this.card);
+    const resources = collectResources(this.card);
+    this.families = resources.fonts;
+    this.imageRequirements = resources.images;
   }
 
   schedule() {
@@ -164,7 +166,7 @@ export class CardReadiness {
     if (required.some(([family]) => this.loadedFonts.get(family) !== loaded.get(family))) {
       this.cancelView?.();
       this.draw();
-      this.images.sync();
+      this.images.sync(false, this.imageRequirements);
       // 重排可能产生新的依赖，下一轮重新检查。
       this.schedule();
       return;
@@ -219,5 +221,6 @@ export class CardReadiness {
     this.unsubscribeFonts?.();
     this.unsubscribeFontChanges?.();
     this.images.destroy();
+    this.imageRequirements?.clear();
   }
 }

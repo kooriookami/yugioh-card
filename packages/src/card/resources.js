@@ -13,30 +13,42 @@ export const visitVisible = (card, visit) => {
   card.leafer.children.forEach(walk);
 };
 
+const collectNodeFonts = (node, families) => {
+  if (node.tag === 'Text' && node.text !== '' && node.text != null) {
+    fontFamilies(node.fontFamily).forEach(family => families.add(family));
+  }
+};
+
+const collectNodeImages = (node, images) => {
+  for (const attr of ['fill', 'stroke']) {
+    const paints = Array.isArray(node[attr]) ? node[attr] : [node[attr]];
+    for (const paint of paints) {
+      if (paint?.type !== 'image' || !paint.url || paint.visible === false || paint.opacity === 0) continue;
+      let item = images.get(paint.url);
+      if (!item) images.set(paint.url, item = { paint, targets: [] });
+      item.targets.push({ node, attr });
+    }
+  }
+};
+
 export const collectFonts = card => {
   const families = new Set();
-  visitVisible(card, node => {
-    if (node.tag === 'Text' && node.text !== '' && node.text != null) {
-      fontFamilies(node.fontFamily).forEach(family => families.add(family));
-    }
-  });
+  visitVisible(card, node => collectNodeFonts(node, families));
   return families;
 };
 
 const collectImages = card => {
   const images = new Map();
-  visitVisible(card, node => {
-    for (const attr of ['fill', 'stroke']) {
-      const paints = Array.isArray(node[attr]) ? node[attr] : [node[attr]];
-      for (const paint of paints) {
-        if (paint?.type !== 'image' || !paint.url || paint.visible === false || paint.opacity === 0) continue;
-        let item = images.get(paint.url);
-        if (!item) images.set(paint.url, item = { paint, targets: [] });
-        item.targets.push({ node, attr });
-      }
-    }
-  });
+  visitVisible(card, node => collectNodeImages(node, images));
   return images;
+};
+
+/** 同一轮绘制后的字体和图片依赖通过一次可见节点遍历获取。 */
+export const collectResources = card => {
+  const fonts = new Set();
+  const images = new Map();
+  visitVisible(card, node => { collectNodeFonts(node, fonts); collectNodeImages(node, images); });
+  return { fonts, images };
 };
 
 /** 观察 Leafer 已有的图片加载，保留并释放自己的引用及回调。 */
@@ -48,8 +60,7 @@ export class CardImages {
     this.changed = changed;
   }
 
-  sync(retry = false) {
-    const required = collectImages(this.card);
+  sync(retry = false, required = collectImages(this.card)) {
     for (const [url, record] of this.records) {
       if (!required.has(url)) this.remove(url, record);
     }
