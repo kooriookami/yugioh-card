@@ -27,6 +27,7 @@ import { createBodyRun } from './body-run.js';
 const sideBearingRatios = new WeakMap();
 const layoutFonts = new WeakMap();
 const glyphResolvers = new WeakMap();
+const parsedTexts = new WeakMap();
 const containerProperties = new Set(['x', 'y', 'visible', 'zIndex']);
 const colorProperties = new Set(['color', 'rtColor']);
 
@@ -184,6 +185,7 @@ export class CompressText extends Group {
     if (this.onFontsLoaded) document.fonts.removeEventListener('loadingdone', this.onFontsLoaded);
     this.onFontsLoaded = null;
     this.unsubscribeFontChanges?.();
+    parsedTexts.delete(this);
     super.destroy();
   }
 
@@ -215,9 +217,13 @@ export class CompressText extends Group {
    * @returns {Array<Array<{ruby: object, rt: object}>>} 解析后的文本项列表。
    */
   getParseList() {
-    const list = [];
-    let bold = false;
     const text = String(this.text).trimEnd();
+    const cached = parsedTexts.get(this);
+    if (cached?.text === text) {
+      return cached.tokens.map(items => items.map(([ruby, rt, bold]) => this.createTextItem(ruby, rt, bold)));
+    }
+    const tokens = [];
+    let bold = false;
     // 正则的捕获圆括号不要随意修改
     text.split(new RegExp(`(<b>|</b>|\n|[${noCompressText}])`)).filter(value => value).forEach(value => {
       if (value === '<b>') {
@@ -239,13 +245,13 @@ export class CompressText extends Group {
             rubyText = rubyRtMatch[1];
             rtText = rubyRtMatch[2];
           }
-          const item = this.createTextItem(rubyText, rtText, bold);
-          itemList.push(item);
+          itemList.push([rubyText, rtText, bold]);
         });
-        list.push(itemList);
+        tokens.push(itemList);
       });
     });
-    return list;
+    parsedTexts.set(this, { text, tokens });
+    return tokens.map(items => items.map(([ruby, rt, bold]) => this.createTextItem(ruby, rt, bold)));
   }
 
   /**

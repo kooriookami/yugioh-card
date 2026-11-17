@@ -58,3 +58,25 @@ test('font context changes invalidate layout even when only container or color f
     finally { fresh.destroy(); }
   } finally { text.destroy(); }
 });
+
+test('reused parsing never retains mutable layout or caller changes', () => {
+  const data = { text: '<b>[日(にち)]</b> AV  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingRatio: 0.5 };
+  const text = new CompressText(data);
+  try {
+    const parsed = text.getParseList();
+    parsed[0][0].ruby.text = 'changed';
+    parsed[0][0].ruby.paddingLeft = 100;
+    parsed[0][0].rt.text = 'changed';
+    const again = text.getParseList();
+    assert.equal(again[0][0].ruby.text, '日');
+    assert.equal(again[0][0].ruby.paddingLeft, undefined);
+    assert.equal(again[0][0].rt.text, 'にち');
+    for (const update of [{ width: 100, height: 30, autoSmallSize: true, smallFontSize: 12 }, { width: 400, height: 0 }, { text: '別の文字' }, { text: data.text }]) {
+      Object.assign(data, update);
+      text.set(update);
+      const fresh = new CompressText(data);
+      try { assert.deepEqual(textSnapshot(text), textSnapshot(fresh)); }
+      finally { fresh.destroy(); }
+    }
+  } finally { text.destroy(); }
+});
