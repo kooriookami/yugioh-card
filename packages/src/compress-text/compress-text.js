@@ -22,6 +22,7 @@ import { splitBreakWordWithBracket } from './split-break-word.js';
 import { getTextLayoutContext } from './layout-context.js';
 import { getGlyphMetrics, textGraphemes } from './glyph-metrics.js';
 import { createBodyRun } from './body-run.js';
+import { trialLayoutHeight } from './trial-layout.js';
 
 // 只由内部样式传递，不增加卡片数据字段或对外实例属性。
 const sideBearingRatios = new WeakMap();
@@ -809,17 +810,25 @@ export class CompressText extends Group {
     let start = 0;
     let end = this.textScale;
     let best = null;
+    // 自定义布局辅助方法的实例继续使用原路径，保留扩展行为。
+    const numericTrial = defaultLayoutMethods.every(([name, method]) => this[name] === method);
+    let tried = false;
     for (let iteration = 0; iteration < compressBinarySearchLimit; iteration++) {
       const scale = (start + end) / 2;
       if (!(scale > 0) || scale === start || scale === end) break;
       this.textScale = scale;
-      this.updateTextScale();
-      const overflow = this.doesOverflowHeight(lastRuby);
+      tried = true;
+      if (!numericTrial) this.updateTextScale();
+      const overflow = numericTrial
+        ? exceedsHeight(trialLayoutHeight(this.newlineList, this.width, this.getLineHeight(), this.firstLineCompress, this.firstLineTextScale, scale, noCompressText), this.height)
+        : this.doesOverflowHeight(lastRuby);
       if (overflow) end = scale;
       else start = best = scale;
       // 保持原先成功路径的试排顺序和精度，避免正常压缩比例发生变化。
       if (!overflow && end - start <= compressBinarySearchPrecision) break;
     }
+    // findHeightScale 的直接调用仍同步暴露最后一次候选的节点和布局状态。
+    if (numericTrial && tried) this.updateTextScale();
     return best;
   }
 
@@ -1406,3 +1415,9 @@ export class CompressText extends Group {
     this.bounds.height *= this.scaleY;
   }
 }
+
+const defaultLayoutMethods = [
+  'updateTextScale', 'layoutNewlineItems', 'layoutItemList', 'updateItemRubyScale', 'updateRubyScale',
+  'getItemWidth', 'shouldWrapItemList', 'positionItemListRuby', 'positionRuby', 'addLine',
+  'removeLineLastSpace', 'resetLayoutPosition', 'getPaddingWidth', 'getLineHeight', 'getCurrentFontSize', 'doesOverflowHeight', 'getLayoutHeight',
+].map(name => [name, CompressText.prototype[name]]);
