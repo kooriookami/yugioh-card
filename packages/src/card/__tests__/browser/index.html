@@ -56,7 +56,7 @@ fontProbe.ready.catch(error => { fontProbeError = error; });
 imageProbe.ready.catch(error => { imageProbeError = error; });
 let state = 'pending';
 a.ready.then(() => { state = 'ready'; }, error => { state = error.code; });
-const initial = { name: a.nameLeaf.bounds.width, race: a.monsterTypeLeaf.textScale, packageX: a.packageLeaf.x };
+const initial = { name: a.nameLeaf.bounds.width, race: a.monsterTypeLeaf.lastSegmentScaleX, packageX: a.packageLeaf.x };
 window.readyTest = { a, b, initial, results, failures };
 await new Promise(requestAnimationFrame);
 check(state === 'pending' && a.nameLeaf.rubyList.length > 0 && initial.name > 0, '字体清单返回前有可用 fallback 文字，ready 保持 pending');

@@ -49,7 +49,6 @@ export class YugiohSeries2Card extends Card {
     password: '',
     copyright: '',
     laser: '',
-    rare: '',
     radius: true,
     scale: 1,
   };
@@ -81,7 +80,7 @@ export class YugiohSeries2Card extends Card {
     this.drawPassword();
     this.drawCopyright();
     this.drawLaser();
-    this.updateScale();
+    this.applyCardScale();
   }
 
   drawCard() {
@@ -115,7 +114,7 @@ export class YugiohSeries2Card extends Card {
       gradientColor1: this.data.gradientColor1,
       gradientColor2: this.data.gradientColor2,
       rtFontSize: name.rtFontSize,
-      rtTop: name.rtTop,
+      rtOffsetY: name.rtOffsetY,
       rtColor: this.autoNameColor,
       width: this.showAttribute ? 953 : 1104,
       height: 200,
@@ -221,8 +220,8 @@ export class YugiohSeries2Card extends Card {
       letterSpacing,
       scaleY: spellTrap.scaleY || 1,
       rtFontSize: spellTrap.rtFontSize,
-      rtTop: spellTrap.rtTop,
-      rtFontScaleX: spellTrap.rtFontScaleX || 1,
+      rtOffsetY: spellTrap.rtOffsetY,
+      rtScaleXOverride: spellTrap.rtScaleXOverride ?? null,
       y: spellTrap.top,
     });
     const leftBounds = leftText.bounds;
@@ -310,7 +309,7 @@ export class YugiohSeries2Card extends Card {
       letterSpacing: monsterType.letterSpacing || 0,
       rtFontSize: monsterType.rtFontSize,
       rtStrokeWidth: this.data.descriptionWeight,
-      rtTop: monsterType.rtTop,
+      rtOffsetY: monsterType.rtOffsetY,
       width: this.data.type === 'monster' ? 710 : 1095,
       height: 70,
       x: 149 + (monsterType.textIndent || 0),
@@ -338,15 +337,15 @@ export class YugiohSeries2Card extends Card {
       fontFamily: description.fontFamily,
       sideBearingRatio: description.sideBearingRatio ?? 1,
       fontSize: description.fontSize,
-      fontScale: this.data.descriptionZoom,
+      fontSizeScale: this.data.descriptionZoom,
       textAlign: this.data.descriptionAlign ? 'center' : 'justify',
-      firstLineCompress: this.data.firstLineCompress,
+      compressFirstSegment: this.data.firstLineCompress,
       strokeWidth: this.data.descriptionWeight,
       lineHeight: description.lineHeight,
       letterSpacing: description.letterSpacing || 0,
       rtFontSize: description.rtFontSize,
       rtStrokeWidth: this.data.descriptionWeight,
-      rtTop: description.rtTop,
+      rtOffsetY: description.rtOffsetY,
       width: this.data.type === 'monster' ? 710 : 1095,
       height: ['spell', 'trap'].includes(this.data.type) ? 240 : 170,
       x: 149,
@@ -386,7 +385,7 @@ export class YugiohSeries2Card extends Card {
       textAlign: 'justify',
       textJustifyLast: true,
       rtFontSize: 22,
-      rtTop: -10,
+      rtOffsetY: -10,
       width: 288,
       x: 950,
       y: 1688,
@@ -408,7 +407,7 @@ export class YugiohSeries2Card extends Card {
       textAlign: 'justify',
       textJustifyLast: true,
       rtFontSize: 22,
-      rtTop: -10,
+      rtOffsetY: -10,
       width: 288,
       x: 950,
       y: 1795,

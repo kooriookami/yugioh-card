@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { performance } from 'node:perf_hooks';
-import { textCases, updateCases, batchData, classData, textSnapshot, nodeSnapshot } from './layout-cases.js';
+import { textCases, updateCases, batchData, classData, textOptionsFor, textSnapshot, nodeSnapshot } from './layout-cases.js';
 
 const args = Object.fromEntries(process.argv.slice(2).map(arg => arg.replace(/^--/, '').split('=')));
 const cases = args.cases ? (await import(pathToFileURL(path.resolve(args.cases)))).textCases : textCases;
@@ -15,6 +15,7 @@ const { Leafer, useCanvas } = runtime || await import('leafer-unified');
 const skia = runtime?.skia || (await import('skia-canvas')).default;
 const moduleAt = file => import(pathToFileURL(path.join(entry, file)));
 const { CompressText } = await moduleAt('src/compress-text/compress-text.js');
+const createText = options => new CompressText(textOptionsFor(CompressText, options));
 const cards = await moduleAt('index.js');
 const { getNodeFontResource } = await moduleAt('src/utils/font-loader.js');
 const assets = path.resolve('src/assets/yugioh-card');
@@ -37,18 +38,18 @@ const capture = async (text, view, withPixels) => ({ layout: textSnapshot(text),
 const skipText = args['resume-classes'] || args['batch-only'];
 for (const [index, data] of (skipText ? [] : cases).entries()) {
   const view = new Leafer({ width: 1400, height: 650 });
-  const text = new CompressText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtTop: -6, width: 1175, sideBearingRatio: 0.5, ...data });
+  const text = createText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtOffsetY: -6, width: 1175, sideBearingRatio: 0.5, ...data });
   view.add(text);
   try { output.text.push(await capture(text, view, args.pixels === '1')); }
   finally { view.destroy(true); }
 }
 for (const extra of (skipText ? [] : [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingRatio: 1 }, { height: 35, autoSmallSize: true, smallFontSize: 12 }])) {
   const view = new Leafer({ width: 1400, height: 650 });
-  const text = new CompressText({ text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingRatio: 0.5, ...extra });
+  const text = createText({ text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingRatio: 0.5, ...extra });
   view.add(text);
   try {
     const steps = [await capture(text, view, args.pixels === '1')];
-    for (const update of updateCases) { text.set(update); steps.push(await capture(text, view, args.pixels === '1')); }
+    for (const update of updateCases) { text.set(textOptionsFor(CompressText, update)); steps.push(await capture(text, view, args.pixels === '1')); }
     output.updates.push(steps);
   } finally { view.destroy(true); }
 }

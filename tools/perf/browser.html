@@ -5,12 +5,17 @@
 <style>body{font:16px system-ui;margin:24px;color:#234}#status{font-size:20px}.pass{color:#167044}.fail{color:#a22}#host{width:1400px;height:650px}pre{white-space:pre-wrap}</style>
 <h1>排版等价与批量导出验证</h1><p id="status">正在加载测试运行时…</p><pre id="summary"></pre><div id="host"></div>
 <script type="module">
-import { textCases, updateCases, batchData, classData, textSnapshot, nodeSnapshot } from './layout-cases.js';
+import { textCases, updateCases, batchData, classData, textOptionsFor, textSnapshot, nodeSnapshot } from './layout-cases.js';
 import { textCases as breakingCases } from './breaking-cases.js';
 const mode = new URLSearchParams(location.search).get('mode') || 'source';
-const breaking = new URLSearchParams(location.search).get('run') === 'breaking';
-const cases = breaking ? breakingCases : textCases;
-const runQuery = breaking ? '&run=breaking' : '';
+const run = new URLSearchParams(location.search).get('run');
+const baselineRoots = {
+  breaking: '/node_modules/.cache/text-breaking/baseline-dd15fac',
+  refactor: '/node_modules/.cache/text-refactor/baseline-d7f362f',
+};
+const checksBreakingCases = run === 'breaking' || run === 'refactor';
+const cases = checksBreakingCases ? breakingCases : textCases;
+const runQuery = checksBreakingCases ? `&run=${run}` : '';
 const debugImages = new URLSearchParams(location.search).has('images');
 const output = { text: [], updates: [], batch: [], classes: [] };
 const status = document.querySelector('#status');
@@ -32,23 +37,25 @@ const pixels = async (view, label) => {
   return { width: image.width, height: image.height, rgba };
 };
 try {
-  const baselineRoot = breaking ? '/node_modules/.cache/text-breaking/baseline-dd15fac' : '/node_modules/.cache/layout-perf/baseline-3cc42eb';
+  const baselineRoot = checksBreakingCases ? baselineRoots[run] : '/node_modules/.cache/layout-perf/baseline-3cc42eb';
+  const packageCache = run === 'refactor' ? 'text-refactor' : 'layout-perf';
   const runtime = mode.startsWith('baseline') ? `${baselineRoot}/runtime.js`
-    : mode === 'package' ? '/node_modules/.cache/layout-perf/package-consumer/runtime.js' : './browser-runtime.js';
+    : mode === 'package' ? `/node_modules/.cache/${packageCache}/package-consumer/runtime.js` : './browser-runtime.js';
   // 缓存目录中的 runtime 本身也受 node_modules 的 immutable HTTP 缓存影响。
   const api = await import(/* @vite-ignore */ `${runtime}?t=${Date.now()}`);
   const { Leafer, CompressText, getBrowserFontResource } = api;
+  const createText = options => new CompressText(textOptionsFor(CompressText, options));
   await getBrowserFontResource('/src/assets/yugioh-card/yugioh/font').promise;
   const capture = async (text, view) => ({ layout: textSnapshot(text), pixels: await pixels(view) });
   for (const [index, data] of cases.entries()) {
     progress(`文本 ${index + 1}/${cases.length}`);
     const view = new Leafer({ view: host, width: 1400, height: 650 });
-    const text = new CompressText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtTop: -6, width: 1175, sideBearingRatio: 0.5, ...data });
+    const text = createText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtOffsetY: -6, width: 1175, sideBearingRatio: 0.5, ...data });
     view.add(text);
     try { output.text.push(await capture(text, view)); }
     finally { view.destroy(true); }
   }
-  if (breaking && !mode.startsWith('baseline')) {
+  if (checksBreakingCases && !mode.startsWith('baseline')) {
     const visible = result => result.layout.items.map(item => item.ruby.text).filter(text => text !== '\n').join('');
     if (!visible(output.text[99]).includes('__RB0__')) throw new Error('原文占位符发生碰撞');
     if (!visible(output.text[100]).includes('\u200B')) throw new Error('原文零宽空格丢失');
@@ -60,13 +67,13 @@ try {
   }
   for (const extra of [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingRatio: 1 }, { height: 35, autoSmallSize: true, smallFontSize: 12 }]) {
     const view = new Leafer({ view: host, width: 1400, height: 650 });
-    const text = new CompressText({ text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingRatio: 0.5, ...extra });
+    const text = createText({ text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingRatio: 0.5, ...extra });
     view.add(text);
     try {
       const steps = [await capture(text, view)];
       for (const update of updateCases) {
         progress(`更新序列 ${output.updates.length + 1}/5，步骤 ${steps.length}/${updateCases.length}`);
-        text.set(update); steps.push(await capture(text, view));
+        text.set(textOptionsFor(CompressText, update)); steps.push(await capture(text, view));
       }
       output.updates.push(steps);
     } finally { view.destroy(true); }

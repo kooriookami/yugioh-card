@@ -80,7 +80,7 @@ test('normal and small height trials remain consistent with refined breaking and
     const fresh = make(t, data);
     assert.deepEqual(lines(reused), lines(fresh));
     assert.deepEqual(reused.bounds, fresh.bounds);
-    assert.equal(reused.textScale, fresh.textScale);
+    assert.equal(reused.lastSegmentScaleX, fresh.lastSegmentScaleX);
     assert.equal(reused.isSmallSize, fresh.isSmallSize);
   }
 });

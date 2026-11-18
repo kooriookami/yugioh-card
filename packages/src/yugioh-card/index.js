@@ -109,7 +109,7 @@ export class YugiohCard extends Card {
     this.drawRare();
     this.drawAttributeRare();
     this.drawTwentieth();
-    this.updateScale();
+    this.applyCardScale();
   }
 
   drawCard() {
@@ -144,7 +144,7 @@ export class YugiohCard extends Card {
       gradientColor1: this.data.gradientColor1,
       gradientColor2: this.data.gradientColor2,
       rtFontSize: name.rtFontSize,
-      rtTop: name.rtTop,
+      rtOffsetY: name.rtOffsetY,
       rtColor: this.autoNameColor,
       width: this.showAttribute ? 1033 : 1161,
       height: 200,
@@ -282,8 +282,8 @@ export class YugiohCard extends Card {
       wordSpacing,
       scaleY: spellTrap.scaleY || 1,
       rtFontSize: spellTrap.rtFontSize,
-      rtTop: spellTrap.rtTop,
-      rtFontScaleX: spellTrap.rtFontScaleX || 1,
+      rtOffsetY: spellTrap.rtOffsetY,
+      rtScaleXOverride: spellTrap.rtScaleXOverride ?? null,
       y: spellTrap.top,
     });
     const leftBounds = leftText.bounds;
@@ -389,14 +389,14 @@ export class YugiohCard extends Card {
       fontFamily: pendulumDescription.fontFamily,
       sideBearingRatio: pendulumDescription.sideBearingRatio ?? 1,
       fontSize: pendulumDescription.fontSize,
-      fontScale: this.data.descriptionZoom,
+      fontSizeScale: this.data.descriptionZoom,
       strokeWidth: this.data.descriptionWeight,
       lineHeight: pendulumDescription.lineHeight,
       letterSpacing: pendulumDescription.letterSpacing || 0,
       wordSpacing: pendulumDescription.wordSpacing || 0,
       rtFontSize: pendulumDescription.rtFontSize,
       rtStrokeWidth: this.data.descriptionWeight,
-      rtTop: pendulumDescription.rtTop,
+      rtOffsetY: pendulumDescription.rtOffsetY,
       width: 950,
       height: 230,
       x: 221,
@@ -499,7 +499,7 @@ export class YugiohCard extends Card {
       wordSpacing: monsterType.wordSpacing || 0,
       rtFontSize: monsterType.rtFontSize,
       rtStrokeWidth: this.data.descriptionWeight,
-      rtTop: monsterType.rtTop,
+      rtOffsetY: monsterType.rtOffsetY,
       width: 1175,
       height: 100,
       x: 109 + (monsterType.textIndent || 0),
@@ -543,16 +543,16 @@ export class YugiohCard extends Card {
       fontFamily,
       sideBearingRatio: description.sideBearingRatio ?? 1,
       fontSize: description.fontSize,
-      fontScale: this.data.descriptionZoom,
+      fontSizeScale: this.data.descriptionZoom,
       textAlign: this.data.descriptionAlign ? 'center' : 'justify',
-      firstLineCompress: this.data.firstLineCompress,
+      compressFirstSegment: this.data.firstLineCompress,
       strokeWidth: this.data.descriptionWeight,
       lineHeight: description.lineHeight,
       letterSpacing: description.letterSpacing || 0,
       wordSpacing: description.wordSpacing || 0,
       rtFontSize: description.rtFontSize,
       rtStrokeWidth: this.data.descriptionWeight,
-      rtTop: description.rtTop,
+      rtOffsetY: description.rtOffsetY,
       autoSmallSize: !!description.smallFontSize,
       smallFontSize: description.smallFontSize,
       width: 1175,

@@ -27,7 +27,6 @@ export default {
   password: '89631139',
   copyright: '',
   laser: '',
-  rare: '',
   radius: true,
   scale: 1,
 };

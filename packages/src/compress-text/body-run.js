@@ -1,5 +1,5 @@
 import { Group, Text } from 'leafer-unified';
-import { textGraphemes } from './glyph-metrics.js';
+import { textGraphemes } from './breaking/text-graphemes.js';
 
 /** 逻辑占宽独立于 Group 包围盒；未调整的连续文字保留原生塑形。 */
 export const createBodyRun = (style, metrics) => {

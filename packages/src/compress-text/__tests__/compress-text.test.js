@@ -13,10 +13,10 @@ const baseConfig = {
   lineHeight: 1.5,
   fontSize: 32,
   rtFontSize: 16,
-  rtTop: -8,
+  rtOffsetY: -8,
   y: 14,
   textAlign: 'justify',
-  firstLineCompress: false,
+  compressFirstSegment: false,
   smallFontSize: 16,
   width: 320,
 };
@@ -48,7 +48,7 @@ test('CompressText parses ruby, bold and explicit newline into caches', () => {
   assert.equal(instance.parseList[4][0].rt.text, 'ま');
   assert.equal(instance.flatItemList.length, instance.parseList.flat().length);
   assert.equal(instance.rubyList.length, instance.flatItemList.length);
-  assert.equal(instance.newlineList.length, 2);
+  assert.equal(instance.hardBreakSegments.length, 2);
   assert.ok(instance.rubyLineMap.size >= 1);
 });
 
@@ -99,8 +99,8 @@ test('CompressText preserves space nodes across trial layouts', () => {
     assert.ok(hiddenSpaces.length > 0);
     let restoredSpace = false;
     for (const scale of [0.65, 1, 0.8, 1]) {
-      instance.textScale = scale;
-      instance.updateTextScale();
+      instance.lastSegmentScaleX = scale;
+      instance.relayoutBody();
       instance.alignRuby();
       instance.rubyList.forEach((ruby, index) => {
         assert.equal(ruby.rubyLeaf, leaves[index]);
@@ -177,19 +177,19 @@ test('CompressText keeps defaultData pristine and falls back to class defaults',
   });
 });
 
-test('CompressText getFirstLineScale matches manual width calculation', () => {
+test('CompressText calculateFirstSegmentScaleX matches manual width calculation', () => {
   const instance = new CompressText({
     ...baseConfig,
     text: '[自(じ)][分(ぶん)]フィールド',
     width: 120,
-    firstLineCompress: true,
+    compressFirstSegment: true,
   });
-  const firstLineRubyList = instance.newlineList[0].flat().map(item => item.ruby);
+  const firstLineRubyList = instance.hardBreakSegments[0].flat().map(item => item.ruby);
   const totalWidth = firstLineRubyList.reduce((sum, ruby) => sum + ruby.originalWidth, 0);
   const paddingWidth = firstLineRubyList.reduce((sum, ruby) => sum + instance.getPaddingWidth(ruby), 0);
   const expected = Math.min(Math.floor((instance.width - paddingWidth) / totalWidth * 1000) / 1000, 1);
 
-  assert.equal(instance.getFirstLineScale(), expected);
+  assert.equal(instance.calculateFirstSegmentScaleX(), expected);
 });
 
 test('CompressText overflow helper reflects current layout height', () => {
@@ -215,10 +215,10 @@ test('CompressText keeps unresolvable one-line height readable and stops searchi
     width: 180,
     height: 80,
   });
-  const originalUpdateTextScale = instance.updateTextScale;
+  const originalUpdateTextScale = instance.relayoutBody;
   let updateTextScaleCount = 0;
 
-  instance.updateTextScale = (...args) => {
+  instance.relayoutBody = (...args) => {
     updateTextScaleCount++;
     return originalUpdateTextScale.apply(instance, args);
   };
@@ -226,7 +226,7 @@ test('CompressText keeps unresolvable one-line height readable and stops searchi
   instance.set({ height: 12 });
 
   const lastRuby = instance.rubyList[instance.rubyList.length - 1];
-  assert.equal(instance.textScale, 1);
+  assert.equal(instance.lastSegmentScaleX, 1);
   assert.ok(instance.rubyList.every(ruby => ruby.rubyLeaf.scaleX > 0));
   assert.equal(instance.doesOverflowHeight(lastRuby), true);
   assert.ok(updateTextScaleCount < 40);
@@ -274,16 +274,23 @@ test('CompressText stretches rt letter spacing when ruby is much wider than rt',
   assert.ok(rtItem.rt.rtLeaf.letterSpacing > 0);
 });
 
-test('CompressText respects explicit rtFontScaleX without extra compression logic', () => {
+test('CompressText applies fixed annotation scale and can return to automatic fitting', t => {
   const instance = new CompressText({
     ...baseConfig,
-    text: '[魔法(まほう)]',
+    text: '[魔(まほうほうほう)]',
     width: 160,
-    rtFontScaleX: 0.75,
+    rtScaleXOverride: 0.75,
   });
-  const rtItem = (instance.flatItemList || instance.parseList.flat())[0];
+  t.after(() => instance.destroy());
+  const scaleX = () => instance.flatItemList[0].rt.rtLeaf.scaleX;
 
-  assert.equal(rtItem.rt.rtLeaf.scaleX, 0.75);
+  assert.equal(scaleX(), 0.75);
+  instance.set({ rtScaleXOverride: 1 });
+  assert.equal(scaleX(), 1);
+  assert.equal(instance.needCompressTwice, false);
+
+  instance.set({ rtScaleXOverride: null });
+  assert.ok(scaleX() < 1);
 });
 
 test('CompressText force-wraps oversized unbreakable text without exceeding width', () => {

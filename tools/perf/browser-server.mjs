@@ -19,8 +19,10 @@ const server = await createServer({
         const url = new URL(req.url, 'http://localhost');
         if (!['/layout-report', '/layout-error', '/layout-image'].includes(url.pathname)) { next(); return; }
         const mode = url.searchParams.get('mode');
-        const breaking = url.searchParams.get('run') === 'breaking';
-        const key = breaking ? `breaking-${mode}` : mode;
+        const run = url.searchParams.get('run');
+        const breaking = run === 'breaking';
+        const refactor = run === 'refactor';
+        const key = breaking || refactor ? `${run}-${mode}` : mode;
         if (req.method === 'POST') {
           if (!/^[a-z-]+$/.test(mode || '')) { res.statusCode = 400; res.end(); return; }
           const chunks = []; for await (const part of req) chunks.push(part);
@@ -37,7 +39,8 @@ const server = await createServer({
             await fs.writeFile(`${directory}/browser-${key}.json`, JSON.stringify(output));
             try {
               if (mode !== 'baseline') {
-                const target = breaking ? mode === 'package' ? 'breaking-source' : 'breaking-baseline' : 'baseline';
+                let target = 'baseline';
+                if (breaking || refactor) target = `${run}-${mode === 'package' ? 'source' : 'baseline'}`;
                 const baseline = JSON.parse(await fs.readFile(`${directory}/browser-${target}.json`, 'utf8'));
                 if (!breaking || mode === 'package') assert.deepEqual(output, baseline);
                 else {

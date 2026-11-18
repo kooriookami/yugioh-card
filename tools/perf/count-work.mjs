@@ -32,7 +32,8 @@ for (const key of ['x', 'color']) {
     if (typeof key === 'string' && /^\d+$/.test(key)) reads++;
     return Reflect.get(target, key, receiver);
   } });
-  try { text.updateTextScale(); result.layoutRubyIndexReads = reads; }
+  const relayoutBody = text.relayoutBody ?? text.updateTextScale;
+  try { relayoutBody.call(text); result.layoutRubyIndexReads = reads; }
   finally { text.destroy(); }
 }
 {
@@ -42,7 +43,8 @@ for (const key of ['x', 'color']) {
     get: (target, key) => Reflect.get(target, key, target),
     set(target, key, value) { writes++; return Reflect.set(target, key, value, target); },
   });
-  try { text.height = 270; text.findHeightScale(); result.heightTrialNodeWrites = writes; }
+  const findScaleXForHeight = text.findScaleXForHeight ?? text.findHeightScale;
+  try { text.height = 270; findScaleXForHeight.call(text); result.heightTrialNodeWrites = writes; }
   finally { text.destroy(); }
 }
 {

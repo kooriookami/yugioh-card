@@ -1,6 +1,5 @@
 import { fontFamilies, fontFamilyKey, getLoadedFontEntry } from '../utils/font-loader.js';
 import { getFontInfo } from '../utils/font-info.js';
-export { textGraphemes } from './text-graphemes.js';
 
 const scripts = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]$/u;
 const letter = /^\p{Letter}$/u;

@@ -7,7 +7,7 @@ export default inheritProp({
     top: 98,
     fontSize: 108,
     rtFontSize: 20,
-    rtTop: -2,
+    rtOffsetY: -2,
   },
   spellTrap: {
     top: 253,
@@ -17,15 +17,15 @@ export default inheritProp({
       marginTop: 10,
     },
     rtFontSize: 20,
-    rtTop: -8,
-    rtFontScaleX: 1.2,
+    rtOffsetY: -8,
+    rtScaleXOverride: 1.2,
   },
   pendulumDescription: {
     top: 1288,
     fontSize: 36,
     lineHeight: 1.17,
     rtFontSize: 12,
-    rtTop: -5,
+    rtOffsetY: -5,
   },
   monsterType: {
     top: 1528,
@@ -34,12 +34,12 @@ export default inheritProp({
     textIndent: -0.2 * 46,
     minHeight: 16,
     rtFontSize: 14,
-    rtTop: -6,
+    rtOffsetY: -6,
   },
   description: {
     fontSize: 38,
     lineHeight: 1.17,
     rtFontSize: 13,
-    rtTop: -6,
+    rtOffsetY: -6,
   },
 });

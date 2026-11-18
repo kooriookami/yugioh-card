@@ -80,7 +80,7 @@ try {
   const samples = [];
   for (const [host, ratio] of [['original', 1], ['trimmed', 0.5]]) {
     const view = new Leafer({ view: document.querySelector(`#${host}`), width: 620, height: 220 }); views.push(view);
-    const text = new CompressText({ text: document.querySelector('#input').value, fontFamily: 'ygo-jp', fontSize: 32, rtFontSize: 13, rtTop: -8, width: 596, height: 190, x: 12, y: 22, textAlign: 'left', sideBearingRatio: ratio });
+    const text = new CompressText({ text: document.querySelector('#input').value, fontFamily: 'ygo-jp', fontSize: 32, rtFontSize: 13, rtOffsetY: -8, width: 596, height: 190, x: 12, y: 22, textAlign: 'left', sideBearingRatio: ratio });
     view.add(text); samples.push(text);
   }
   document.querySelector('#update').onclick = () => samples.forEach(text => text.set({ text: document.querySelector('#input').value }));

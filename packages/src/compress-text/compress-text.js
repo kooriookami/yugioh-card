@@ -9,7 +9,7 @@
  * 2. 按显式换行符分组构建布局输入。
  * 3. 创建正文与注音叶子并测量尺寸。
  * 4. 对超宽连续纯文本执行布局阶段的回退切段。
- * 5. 根据宽高限制执行首行压缩、末行压缩和自动缩小。
+ * 5. 根据宽高限制横向压缩首段或末段，必要时切换到小字。
  * 6. 完成正文对齐、注音定位、渐变效果与最终边界统计。
  *
  * 其中，超长连续文本的处理属于布局阶段的回退逻辑，不会改变默认分词模块的基础语义。
@@ -18,11 +18,13 @@
 import { Group, Text } from 'leafer-unified';
 import { isBrowser } from '../utils/index.js';
 import { fontFamilies, fontFamilyKey, subscribeFontChanges } from '../utils/font-loader.js';
-import { emergencyBreakOffsets, emergencyBreaks, parseBreakText } from './split-break-word.js';
+import { emergencyBreakOffsets, emergencyBreaks, parseBreakText } from './breaking/split-break-word.js';
+import { textGraphemes } from './breaking/text-graphemes.js';
 import { getTextLayoutContext } from './layout-context.js';
-import { getGlyphMetrics, textGraphemes } from './glyph-metrics.js';
+import { getGlyphMetrics } from './glyph-metrics.js';
 import { createBodyRun } from './body-run.js';
-import { trialLayoutHeight } from './trial-layout.js';
+import { getBodyScaleX, lastSegmentUnscaledSymbols } from './layout/body-scale.js';
+import { trialLayoutHeight } from './layout/trial-layout.js';
 
 // 只由内部样式传递，不增加卡片数据字段或对外实例属性。
 const sideBearingRatios = new WeakMap();
@@ -32,19 +34,18 @@ const parsedTexts = new WeakMap();
 const containerProperties = new Set(['x', 'y', 'visible', 'zIndex']);
 const colorProperties = new Set(['color', 'rtColor']);
 
-const baseLineHeight = 1.15; // 默认正文与注音行高倍率。
-const noCompressText = '●①②③④⑤⑥⑦⑧⑨⑩'; // 不参与末行压缩的特殊字符集合。
-const compressBinarySearchPrecision = 0.01; // 高度压缩时二分搜索的停止精度。
-const compressBinarySearchLimit = 32; // 每个字号档位的搜索预算，避免无解时持续到浮点下溢。
-const autoSmallSizeScaleThreshold = 0.7; // autoSmallSize 触发切换到小字模式的缩放阈值。
-const rtStretchRate = 0.9; // 注音可通过字距拉伸覆盖正文宽度时采用的目标占比。
-const rtCompressRate = 0.6; // 注音过宽时允许压缩到的最小横向比例。
+const defaultLineHeightRatio = 1.15; // 默认正文与注音行高倍率。
+const scaleXSearchPrecision = 0.01; // 高度压缩时二分搜索的停止精度。
+const scaleXSearchLimit = 32; // 每个字号档位的搜索预算，避免无解时持续到浮点下溢。
+const smallFontFallbackScaleXThreshold = 0.7; // autoSmallSize 触发切换到小字模式的缩放阈值。
+const rtStretchTargetWidthRatio = 0.9; // 注音可通过字距拉伸覆盖正文宽度时采用的目标占比。
+const minAutoRtScaleX = 0.6; // 注音过宽时允许压缩到的最小横向比例。
 const rubyPaddingMax = 5; // 因注音过宽而扩展正文占位时，单侧 padding 的最大值。
 const gradientStops = [0, 0.4, 0.55, 0.6, 0.75]; // 渐变填充的关键色标位置。
 const gradientStrokeColor = 'rgba(0, 0, 0, 0.6)'; // 渐变模式下正文描边与阴影共用的颜色。
-const gradientStrokeWidthRate = 0.025; // 渐变模式下描边宽度相对字号的倍率。
-const gradientShadowBlurRate = 0.015; // 渐变模式下阴影模糊相对字号的倍率。
-const gradientShadowOffsetYRate = 0.025; // 渐变模式下阴影纵向偏移相对字号的倍率。
+const gradientStrokeWidthRatio = 0.025; // 渐变模式下描边宽度相对字号的倍率。
+const gradientShadowBlurRatio = 0.015; // 渐变模式下阴影模糊相对字号的倍率。
+const gradientShadowOffsetYRatio = 0.025; // 渐变模式下阴影纵向偏移相对字号的倍率。
 const exceedsHeight = (actual, limit) => actual - limit > 8 * Number.EPSILON * Math.max(1, Math.abs(actual), Math.abs(limit));
 
 export class CompressText extends Group {
@@ -59,14 +60,14 @@ export class CompressText extends Group {
     super();
     this.parseList = []; // 解析后的文本列表
     this.flatItemList = []; // 平铺后的文本项列表
-    this.newlineList = []; // 根据换行符分割的文本列表
+    this.hardBreakSegments = []; // 输入中的显式换行段
     this.rubyList = []; // 平铺后的ruby列表
     this.rubyLineMap = new Map(); // 按行分组的ruby列表
     this.currentX = 0; // 当前行的x坐标
     this.currentY = 0; // 当前行的y坐标
-    this.currentLine = 0; // 当前行数
-    this.textScale = 1; // 文本缩放比例
-    this.firstLineTextScale = 1; // 首行文本缩放比例
+    this.currentLine = 0; // 当前视觉行的索引
+    this.lastSegmentScaleX = 1;
+    this.firstSegmentScaleX = 1;
     this.isSmallSize = false; // 是否是小文字
     this.group = null; // Leafer文本组
     this.needCompressTwice = false; // 是否需要二次压缩
@@ -77,10 +78,10 @@ export class CompressText extends Group {
       fontFamily: 'ygo-sc',
       fontSize: 24,
       fontWeight: 'normal',
-      lineHeight: baseLineHeight,
+      lineHeight: defaultLineHeightRatio,
       letterSpacing: 0,
       wordSpacing: 0,
-      firstLineCompress: false,
+      compressFirstSegment: false,
       textAlign: 'justify',
       textJustifyLast: false,
       color: 'black',
@@ -91,13 +92,13 @@ export class CompressText extends Group {
       rtFontFamily: 'ygo-tip',
       rtFontSize: 13,
       rtFontWeight: 'bold',
-      rtLineHeight: baseLineHeight,
+      rtLineHeight: defaultLineHeightRatio,
       rtLetterSpacing: 0,
-      rtTop: -9,
+      rtOffsetY: -9,
       rtColor: 'black',
       rtStrokeWidth: 0,
-      rtFontScaleX: 1,
-      fontScale: 1,
+      rtScaleXOverride: null, // null 使用自动适配，数值直接指定横向倍率。
+      fontSizeScale: 1,
       autoSmallSize: false,
       smallFontSize: 18,
       width: 0,
@@ -211,7 +212,7 @@ export class CompressText extends Group {
    * 该过程会处理：
    * 1. bold 标签切换。
    * 2. 显式换行符。
-   * 3. noCompressText 中的特殊字符。
+   * 3. lastSegmentUnscaledSymbols 中的特殊字符。
    * 4. ruby 标记与 rt 文本拆分。
    *
    * 返回结果中的每一项都是一个 itemList，itemList 由 ruby/rt 成对结构组成，
@@ -232,7 +233,7 @@ export class CompressText extends Group {
     }
     // 首次出现的文本不分配第二份解析树；确实重排同一文本时再建立缓存。
     const tokens = cached?.text === text ? [] : null;
-    const list = parseBreakText(text, noCompressText).map(parts => {
+    const list = parseBreakText(text, lastSegmentUnscaledSymbols).map(parts => {
       tokens?.push(parts.map(part => [part.text, part.rt, part.bold, part.atomic]));
       return parts.map(part => create(part.text, part.rt, part.bold, part.atomic));
     });
@@ -243,23 +244,22 @@ export class CompressText extends Group {
   /**
    * 基于解析结果按显式换行符分组，生成内部的换行段列表。
    *
-   * 这里的分组只处理用户输入中的 \n，不负责基于宽度的自动换行。
-   * 宽度驱动的换行会在布局阶段由 updateTextScale 处理。
+   * 解析已将显式换行符归一为 \n。relayoutBody 再按可用宽度划分视觉行。
    *
    * @returns {Array<Array<Array<{ruby: object, rt: object}>>>} 按显式换行分组后的列表。
    */
-  getNewlineList() {
-    const list = [[]];
-    let currentIndex = 0;
+  groupByHardBreaks() {
+    const segments = [[]];
+    let segmentIndex = 0;
     this.parseList.forEach(itemList => {
       const hasBreak = itemList.some(item => item.ruby.text === '\n');
-      list[currentIndex].push(itemList);
+      segments[segmentIndex].push(itemList);
       if (hasBreak) {
-        currentIndex++;
-        list[currentIndex] = [];
+        segmentIndex++;
+        segments[segmentIndex] = [];
       }
     });
-    return list;
+    return segments;
   }
 
   /**
@@ -275,7 +275,7 @@ export class CompressText extends Group {
 
   /** 正文行框使用局部逻辑高度；Group 缩放仅在最终边界输出时应用。 */
   getLineHeight() {
-    return this.getCurrentFontSize() * this.lineHeight * this.fontScale;
+    return this.getCurrentFontSize() * this.lineHeight * this.fontSizeScale;
   }
 
   getLayoutHeight() {
@@ -310,12 +310,12 @@ export class CompressText extends Group {
   /**
    * 重置压缩阶段的临时状态。
    *
-   * 每次完整重排前都会调用，确保 textScale、首行压缩比例、小字状态以及二次压缩标记
+   * 每次完整重排前都会调用，确保首末段横向倍率、小字状态以及二次压缩标记
    * 从干净状态开始重新计算。
    */
   resetCompressionState() {
-    this.textScale = 1;
-    this.firstLineTextScale = 1;
+    this.lastSegmentScaleX = 1;
+    this.firstSegmentScaleX = 1;
     this.isSmallSize = false;
     this.needCompressTwice = false;
   }
@@ -323,12 +323,12 @@ export class CompressText extends Group {
   /**
    * 重建解析缓存。
    *
-   * 该方法会依次刷新 parseList、newlineList 和依赖它们的平铺缓存，
+   * 该方法会依次刷新 parseList、hardBreakSegments 和依赖它们的平铺缓存，
    * 是每次重新排版前的数据准备入口。
    */
   rebuildParseCache() {
     this.parseList = this.getParseList();
-    this.newlineList = this.getNewlineList();
+    this.hardBreakSegments = this.groupByHardBreaks();
     this.updateLayoutCache();
   }
 
@@ -441,9 +441,9 @@ export class CompressText extends Group {
     return {
       text: ruby.text,
       fontFamily: this.fontFamily,
-      fontSize: this.fontSize * this.fontScale,
+      fontSize: this.fontSize * this.fontSizeScale,
       fontWeight: ruby.bold ? 'bold' : this.fontWeight,
-      lineHeight: this.fontSize * this.lineHeight * this.fontScale,
+      lineHeight: this.fontSize * this.lineHeight * this.fontSizeScale,
       fill: this.color,
       stroke: this.strokeWidth ? this.color : null,
       strokeWidth: this.strokeWidth,
@@ -462,9 +462,9 @@ export class CompressText extends Group {
     return {
       text: rt.text,
       fontFamily: this.rtFontFamily,
-      fontSize: this.rtFontSize * this.fontScale,
+      fontSize: this.rtFontSize * this.fontSizeScale,
       fontWeight: this.rtFontWeight,
-      lineHeight: this.rtFontSize * this.rtLineHeight * this.fontScale,
+      lineHeight: this.rtFontSize * this.rtLineHeight * this.fontSizeScale,
       fill: this.rtColor,
       stroke: this.rtStrokeWidth ? this.color : null,
       strokeWidth: this.rtStrokeWidth,
@@ -526,7 +526,7 @@ export class CompressText extends Group {
    * 否则正文与注音的相对位置会失真。
    */
   relayoutAfterRtCompression() {
-    this.updateTextScale();
+    this.relayoutBody();
     this.compressRuby();
     this.alignRuby();
     this.flatItemList.forEach(item => {
@@ -602,7 +602,7 @@ export class CompressText extends Group {
     this.rubyList.forEach(ruby => {
       this.group.add(ruby.rubyLeaf);
     });
-    this.updateTextScale();
+    this.relayoutBody();
   }
 
   // 超宽回退处理
@@ -618,7 +618,7 @@ export class CompressText extends Group {
    * @param {boolean} bold 是否粗体。
    * @returns {{ruby: object, rt: {text: string}}} 当前起点下最大可容纳的文本片段。
    */
-  findLargestFittingTextSegment(textList, start, bold) {
+  findLargestFittingTextFragment(textList, start, bold) {
     let low = start;
     let high = textList.length;
     let bestItem = null;
@@ -654,14 +654,14 @@ export class CompressText extends Group {
    * @param {{ruby: object, rt: object}} item 需要切分的纯文本项。
    * @returns {Array<Array<{ruby: object, rt: object}>>} 切分后的片段列表。
    */
-  splitPlainTextItemIntoFittingSegments(item) {
+  splitPlainTextItemIntoFittingFragments(item) {
     const textList = this.getTextCharList(item.ruby.text);
     const allowed = emergencyBreaks(textList);
     const itemList = [];
     let start = 0;
 
     while (start < textList.length) {
-      let bestItem = this.findLargestFittingTextSegment(textList, start, item.ruby.bold);
+      let bestItem = this.findLargestFittingTextFragment(textList, start, item.ruby.bold);
       let end = fittingEnds.get(bestItem) ?? start + this.getTextCharLength(bestItem.ruby.text);
       if (allowed && !allowed.has(end)) {
         const measuredEnd = end;
@@ -693,7 +693,7 @@ export class CompressText extends Group {
   expandItemForOverflowFallback(item) {
     if (this.isSplittablePlainTextItem(item)) {
       this.destroyRubyLeaf(item.ruby);
-      return this.splitPlainTextItemIntoFittingSegments(item);
+      return this.splitPlainTextItemIntoFittingFragments(item);
     }
 
     return [[item]];
@@ -741,7 +741,7 @@ export class CompressText extends Group {
   /**
    * 对整份换行段列表应用超宽回退逻辑。
    *
-   * 该方法会重建 newlineList、parseList 以及依赖它们的平铺缓存，
+   * 该方法会重建 hardBreakSegments、parseList 以及依赖它们的平铺缓存，
    * 确保后续布局直接基于已经切段后的结构运行。
    */
   applyOverflowFallback() {
@@ -749,37 +749,36 @@ export class CompressText extends Group {
       return;
     }
 
-    const nextNewlineList = this.newlineList.map(newline => {
-      return newline.flatMap(itemList => this.applyOverflowFallbackToItemList(itemList));
+    const nextSegments = this.hardBreakSegments.map(segment => {
+      return segment.flatMap(itemList => this.applyOverflowFallbackToItemList(itemList));
     });
 
-    this.newlineList = nextNewlineList;
-    this.parseList = nextNewlineList.flat();
+    this.hardBreakSegments = nextSegments;
+    this.parseList = nextSegments.flat();
     this.updateLayoutCache();
   }
 
   /**
-   * 计算首行压缩时的最大可用缩放比例。
+   * 计算第一个显式换行段排进一行所需的横向倍率。
    *
-   * 该方法只考虑显式换行分组中的第一段，返回值会截断到三位小数并且不超过 1。
-   *
-   * @returns {number} 首行可用的压缩比例。
+   * @returns {number} 向下取到三位小数且最多为 1 的倍率。
    */
-  getFirstLineScale() {
-    const firstNewlineRubyList = this.newlineList[0].map(itemList => itemList.map(item => item.ruby)).flat();
-    let firstNewlineTotalWidth = 0;
-    let maxWidth = this.width;
+  calculateFirstSegmentScaleX() {
+    let firstSegmentWidth = 0;
+    let availableWidth = this.width;
 
-    firstNewlineRubyList.forEach(ruby => {
-      firstNewlineTotalWidth += ruby.originalWidth;
-      maxWidth -= this.getPaddingWidth(ruby);
-    });
+    for (const itemList of this.hardBreakSegments[0]) {
+      for (const { ruby } of itemList) {
+        firstSegmentWidth += ruby.originalWidth;
+        availableWidth -= this.getPaddingWidth(ruby);
+      }
+    }
 
-    if (!firstNewlineTotalWidth) {
+    if (!firstSegmentWidth) {
       return 1;
     }
 
-    return Math.min(Math.floor(maxWidth / firstNewlineTotalWidth * 1000) / 1000, 1);
+    return Math.min(Math.floor(availableWidth / firstSegmentWidth * 1000) / 1000, 1);
   }
 
   /**
@@ -812,34 +811,41 @@ export class CompressText extends Group {
     return lines * this.getLineHeight();
   }
 
-  /** 返回本档字号的可行缩放；无解返回 null，由调用方恢复最终候选。 */
-  findHeightScale() {
+  /** 搜索满足高度限制的末段横向倍率，无解返回 null。 */
+  findScaleXForHeight() {
     const lastRuby = this.rubyList[this.rubyList.length - 1];
-    if (!this.doesOverflowHeight(lastRuby)) return this.textScale;
+    if (!this.doesOverflowHeight(lastRuby)) return this.lastSegmentScaleX;
     if (exceedsHeight(this.getMinimumLayoutHeight(), this.height)) return null;
-    let start = 0;
-    let end = this.textScale;
-    let best = null;
+    let lowerScaleX = 0;
+    let upperScaleX = this.lastSegmentScaleX;
+    let bestScaleX = null;
     // 自定义布局辅助方法的实例继续使用原路径，保留扩展行为。
     const numericTrial = defaultTextMethods.every(([name, method]) => this[name] === method);
     let tried = false;
-    for (let iteration = 0; iteration < compressBinarySearchLimit; iteration++) {
-      const scale = (start + end) / 2;
-      if (!(scale > 0) || scale === start || scale === end) break;
-      this.textScale = scale;
+    for (let iteration = 0; iteration < scaleXSearchLimit; iteration++) {
+      const candidateScaleX = (lowerScaleX + upperScaleX) / 2;
+      if (!(candidateScaleX > 0) || candidateScaleX === lowerScaleX || candidateScaleX === upperScaleX) break;
+      this.lastSegmentScaleX = candidateScaleX;
       tried = true;
-      if (!numericTrial) this.updateTextScale();
+      if (!numericTrial) this.relayoutBody();
       const overflow = numericTrial
-        ? exceedsHeight(trialLayoutHeight(this.newlineList, this.width, this.getLineHeight(), this.firstLineCompress, this.firstLineTextScale, scale, noCompressText), this.height)
+        ? exceedsHeight(trialLayoutHeight(
+          this.hardBreakSegments, this.width, this.getLineHeight(),
+          this.compressFirstSegment, this.firstSegmentScaleX, candidateScaleX,
+        ), this.height)
         : this.doesOverflowHeight(lastRuby);
-      if (overflow) end = scale;
-      else start = best = scale;
+      if (overflow) {
+        upperScaleX = candidateScaleX;
+      } else {
+        lowerScaleX = candidateScaleX;
+        bestScaleX = candidateScaleX;
+      }
       // 保持原先成功路径的试排顺序和精度，避免正常压缩比例发生变化。
-      if (!overflow && end - start <= compressBinarySearchPrecision) break;
+      if (!overflow && upperScaleX - lowerScaleX <= scaleXSearchPrecision) break;
     }
-    // findHeightScale 的直接调用仍同步暴露最后一次候选的节点和布局状态。
-    if (numericTrial && tried) this.updateTextScale();
-    return best;
+    // 同步最后一次候选的节点，调用方随后应用选中的最佳倍率。
+    if (numericTrial && tried) this.relayoutBody();
+    return bestScaleX;
   }
 
   // 压缩与对齐
@@ -847,40 +853,37 @@ export class CompressText extends Group {
   /**
    * 根据当前宽高限制计算正文压缩比例。
    *
-   * 包含两类压缩：
-   * 1. 首行压缩到一行。
-   * 2. 在高度不足时对最后一行执行二分缩放。
+   * 首段压缩尝试把第一个显式段收进一行。高度不足时，二分搜索最后一段的横向倍率。
    *
    * 当开启 autoSmallSize 且缩放过小时，会切换到 smallFontSize 再重新计算。
    */
   compressRuby() {
-    // 首行压缩
-    if (this.firstLineCompress && this.width) {
-      this.firstLineTextScale = this.getFirstLineScale();
-      this.updateTextScale();
+    if (this.compressFirstSegment && this.width) {
+      this.firstSegmentScaleX = this.calculateFirstSegmentScaleX();
+      this.relayoutBody();
     }
-    const normal = this.findHeightScale();
-    let selected = normal ?? 1;
-    const canUseSmall = this.autoSmallSize && this.fontScale <= 1 && !this.isSmallSize && this.smallFontSize > 0 && this.smallFontSize < this.fontSize;
-    if (canUseSmall && (normal === null || normal < autoSmallSizeScaleThreshold)) {
+    const normalScaleX = this.findScaleXForHeight();
+    let selectedScaleX = normalScaleX ?? 1;
+    const canUseSmall = this.autoSmallSize && this.fontSizeScale <= 1 && !this.isSmallSize && this.smallFontSize > 0 && this.smallFontSize < this.fontSize;
+    if (canUseSmall && (normalScaleX === null || normalScaleX < smallFontFallbackScaleXThreshold)) {
       this.isSmallSize = true;
       this.updateFontSize();
-      if (normal === null && this.firstLineCompress && this.width) {
-        this.firstLineTextScale = this.getFirstLineScale();
-        this.updateTextScale();
+      if (normalScaleX === null && this.compressFirstSegment && this.width) {
+        this.firstSegmentScaleX = this.calculateFirstSegmentScaleX();
+        this.relayoutBody();
       }
-      const small = this.findHeightScale();
-      if (small !== null || normal === null) {
-        selected = small ?? 1;
+      const smallScaleX = this.findScaleXForHeight();
+      if (smallScaleX !== null || normalScaleX === null) {
+        selectedScaleX = smallScaleX ?? 1;
       } else {
         this.isSmallSize = false;
         this.updateFontSize();
-        selected = normal;
+        selectedScaleX = normalScaleX;
       }
     }
-    if (this.textScale !== selected) {
-      this.textScale = selected;
-      this.updateTextScale();
+    if (this.lastSegmentScaleX !== selectedScaleX) {
+      this.lastSegmentScaleX = selectedScaleX;
+      this.relayoutBody();
     }
   }
 
@@ -892,7 +895,7 @@ export class CompressText extends Group {
    * @returns {number} 需要对齐的行数。
    */
   getAlignLineCount() {
-    return this.textScale < 1 || ['center', 'right'].includes(this.textAlign) || this.textJustifyLast ? this.currentLine + 1 : this.currentLine;
+    return this.lastSegmentScaleX < 1 || ['center', 'right'].includes(this.textAlign) || this.textJustifyLast ? this.currentLine + 1 : this.currentLine;
   }
 
   /**
@@ -1018,12 +1021,12 @@ export class CompressText extends Group {
    * 更新单个 ruby 的横向缩放比例和当前宽度。
    *
    * @param {object} ruby ruby 布局对象。
-   * @param {number} scale 横向缩放比例。
+   * @param {number} scaleX 横向缩放倍率。
    */
-  updateRubyScale(ruby, scale) {
+  applyBodyScaleX(ruby, scaleX) {
     const rubyLeaf = ruby.rubyLeaf;
-    rubyLeaf.scaleX = scale;
-    ruby.width = ruby.originalWidth * scale;
+    rubyLeaf.scaleX = scaleX;
+    ruby.width = ruby.originalWidth * scaleX;
   }
 
   /**
@@ -1048,26 +1051,20 @@ export class CompressText extends Group {
   // 布局流程
 
   /**
-   * 更新一个 itemList 中所有 ruby 的缩放状态。
-   *
-   * 该方法会根据是否首行压缩、是否最后一段以及 noCompressText 规则决定使用哪种缩放比例。
+   * 按所属的显式段为一个 itemList 的正文应用横向倍率。
    *
    * @param {Array<{ruby: object, rt: object}>} itemList 文本项列表。
-   * @param {number} newlineIndex 当前显式换行分组索引。
-   * @param {boolean} lastNewline 当前是否最后一个显式换行分组。
+   * @param {number} segmentIndex 当前显式换行分组索引。
+   * @param {boolean} isLastSegment 当前是否最后一个显式换行分组。
    */
-  updateItemRubyScale(itemList, newlineIndex, lastNewline) {
+  applyBodyScaleXToItems(itemList, segmentIndex, isLastSegment) {
     itemList.forEach(item => {
       const ruby = item.ruby;
-      if (this.firstLineCompress && newlineIndex === 0) {
-        // 首行压缩到一行
-        this.updateRubyScale(ruby, this.firstLineTextScale);
-      } else if (!noCompressText.includes(ruby.text) && lastNewline) {
-        // 只压缩最后一行
-        this.updateRubyScale(ruby, this.textScale);
-      } else {
-        this.updateRubyScale(ruby, 1);
-      }
+      const scaleX = getBodyScaleX(
+        ruby.text, this.compressFirstSegment && segmentIndex === 0, isLastSegment,
+        this.firstSegmentScaleX, this.lastSegmentScaleX,
+      );
+      this.applyBodyScaleX(ruby, scaleX);
     });
   }
 
@@ -1112,16 +1109,16 @@ export class CompressText extends Group {
    * 包括缩放、换行判断以及最终定位。
    *
    * @param {Array<{ruby: object, rt: object}>} itemList 当前文本项列表。
-   * @param {number} newlineIndex 当前显式换行分组索引。
-   * @param {boolean} lastNewline 当前是否最后一个显式换行分组。
+   * @param {number} segmentIndex 当前显式换行分组索引。
+   * @param {boolean} isLastSegment 当前是否最后一个显式换行分组。
    */
-  layoutItemList(itemList, newlineIndex, lastNewline) {
+  layoutItemList(itemList, segmentIndex, isLastSegment) {
     if (itemList.some(item => item.ruby.text === '\n')) {
       this.positionItemListRuby(itemList);
       this.addLine();
       return;
     }
-    this.updateItemRubyScale(itemList, newlineIndex, lastNewline);
+    this.applyBodyScaleXToItems(itemList, segmentIndex, isLastSegment);
     const itemWidth = this.getItemWidth(itemList);
 
     if (this.shouldWrapItemList(itemList, itemWidth)) {
@@ -1134,14 +1131,14 @@ export class CompressText extends Group {
   /**
    * 布局一个显式换行分组中的所有 itemList。
    *
-   * @param {Array<Array<{ruby: object, rt: object}>>} newline 当前分组。
-   * @param {number} newlineIndex 当前分组索引。
+   * @param {Array<Array<{ruby: object, rt: object}>>} segment 当前分组。
+   * @param {number} segmentIndex 当前分组索引。
    */
-  layoutNewlineItems(newline, newlineIndex) {
-    const lastNewline = newlineIndex === this.newlineList.length - 1;
+  layoutSegment(segment, segmentIndex) {
+    const isLastSegment = segmentIndex === this.hardBreakSegments.length - 1;
 
-    newline.forEach(itemList => {
-      this.layoutItemList(itemList, newlineIndex, lastNewline);
+    segment.forEach(itemList => {
+      this.layoutItemList(itemList, segmentIndex, isLastSegment);
     });
   }
 
@@ -1150,7 +1147,7 @@ export class CompressText extends Group {
    *
    * 该方法会重置游标，然后按显式换行分组顺序重新排版，最后刷新 rubyLineMap。
    */
-  updateTextScale() {
+  relayoutBody() {
     const previous = this.#orderedLayout;
     // 自定义辅助方法可能改变排版顺序，保守保留完整的行尾扫描。
     this.#orderedLayout = defaultTextMethods.every(([name, method]) => this[name] === method);
@@ -1162,8 +1159,8 @@ export class CompressText extends Group {
         ruby.rubyLeaf.visible = !['\n', '\u200B', '\u2060'].includes(ruby.text);
       });
 
-      this.newlineList.forEach((newline, newlineIndex) => {
-        this.layoutNewlineItems(newline, newlineIndex);
+      this.hardBreakSegments.forEach((segment, segmentIndex) => {
+        this.layoutSegment(segment, segmentIndex);
       });
       this.updateRubyLineMap();
     } finally { this.#orderedLayout = previous; }
@@ -1172,25 +1169,25 @@ export class CompressText extends Group {
   /**
    * 在切换到小字模式后更新所有 ruby 的尺寸信息。
    *
-    * 更新后会立即重新布局，以确保新的字号、宽度和高度信息全部生效。
+   * 更新后会立即重新布局，以确保新的字号、宽度和高度信息全部生效。
    */
   updateFontSize() {
-    this.textScale = 1;
+    this.lastSegmentScaleX = 1;
     const fontSize = this.getCurrentFontSize();
-    const sizePercent = fontSize / this.fontSize;
+    const fontSizeRatio = fontSize / this.fontSize;
     this.rubyList.forEach(ruby => {
       const rubyLeaf = ruby.rubyLeaf;
       if (ruby.bodyRun) {
-        ruby.width = ruby.originalWidth = ruby.bodyRun.resize(fontSize * this.fontScale, this.getLineHeight());
+        ruby.width = ruby.originalWidth = ruby.bodyRun.resize(fontSize * this.fontSizeScale, this.getLineHeight());
       } else {
-        rubyLeaf.fontSize = fontSize * this.fontScale;
+        rubyLeaf.fontSize = fontSize * this.fontSizeScale;
         rubyLeaf.lineHeight = this.getLineHeight();
         // 从本次排版的原字号测量计算，避免恢复候选时累计缩放。
-        ruby.width = ruby.originalWidth = ruby.normalWidth * sizePercent;
+        ruby.width = ruby.originalWidth = ruby.normalWidth * fontSizeRatio;
       }
       ruby.height = ruby.originalHeight = ruby.text === '\n' ? 0 : this.getLineHeight();
     });
-    this.updateTextScale();
+    this.relayoutBody();
   }
 
   /**
@@ -1286,7 +1283,7 @@ export class CompressText extends Group {
 
     rtLeaf.around = { type: 'percent', x: 0.5, y: 0 };
     rtLeaf.x = rubyLeaf.x + rubyWidth / 2 - paddingLeft;
-    rtLeaf.y = rubyLeaf.y + this.rtTop * this.fontScale;
+    rtLeaf.y = rubyLeaf.y + this.rtOffsetY * this.fontSizeScale;
   }
 
   /**
@@ -1295,7 +1292,7 @@ export class CompressText extends Group {
    * @param {{rtLeaf: Text}} context 注音布局上下文。
    */
   applyRtScaleXOverride(context) {
-    context.rtLeaf.scaleX = this.rtFontScaleX;
+    context.rtLeaf.scaleX = this.rtScaleXOverride;
   }
 
   /**
@@ -1304,9 +1301,9 @@ export class CompressText extends Group {
    * @param {{ruby: object, rt: object, rtLeaf: Text, rubyWidth: number}} context 注音布局上下文。
    */
   stretchRtLetterSpacing(context) {
-    const { ruby, rt, rtLeaf, rubyWidth } = context;
+    const { rt, rtLeaf, rubyWidth } = context;
     const maxLetterSpacing = this.fontSize - this.rtFontSize / 2;
-    const newLetterSpacing = (rubyWidth * rtStretchRate - rt.width) / (rt.text.length - 1);
+    const newLetterSpacing = (rubyWidth * rtStretchTargetWidthRatio - rt.width) / (rt.text.length - 1);
 
     rtLeaf.letterSpacing = Math.min(newLetterSpacing, maxLetterSpacing);
     rtLeaf.x += rtLeaf.letterSpacing / 2;
@@ -1320,9 +1317,9 @@ export class CompressText extends Group {
   compressRtToRubyWidth(context) {
     const { ruby, rt, rtLeaf, rubyWidth } = context;
 
-    if (rubyWidth / rt.width < rtCompressRate) {
-      const widen = rtCompressRate * rt.width - rubyWidth;
-      rtLeaf.scaleX = rtCompressRate;
+    if (rubyWidth / rt.width < minAutoRtScaleX) {
+      const widen = minAutoRtScaleX * rt.width - rubyWidth;
+      rtLeaf.scaleX = minAutoRtScaleX;
       ruby.paddingLeft = Math.min(widen / 2, rubyPaddingMax);
       ruby.paddingRight = Math.min(widen / 2, rubyPaddingMax);
       this.needCompressTwice = true;
@@ -1339,9 +1336,9 @@ export class CompressText extends Group {
   applyRtWidthStrategy(context) {
     const { ruby, rt } = context;
 
-    if (this.rtFontScaleX !== 1) {
+    if (this.rtScaleXOverride !== null) {
       this.applyRtScaleXOverride(context);
-    } else if (rt.width / context.rubyWidth < rtStretchRate && ruby.text.length > 1) {
+    } else if (rt.width / context.rubyWidth < rtStretchTargetWidthRatio && ruby.text.length > 1) {
       this.stretchRtLetterSpacing(context);
     } else if (rt.width > context.rubyWidth) {
       this.compressRtToRubyWidth(context);
@@ -1394,12 +1391,12 @@ export class CompressText extends Group {
             ],
           },
           stroke: gradientStrokeColor,
-          strokeWidth: fontSize * gradientStrokeWidthRate * this.fontScale,
+          strokeWidth: fontSize * gradientStrokeWidthRatio * this.fontSizeScale,
           strokeAlign: 'outside',
           shadow: {
-            blur: fontSize * gradientShadowBlurRate * this.fontScale,
+            blur: fontSize * gradientShadowBlurRatio * this.fontSizeScale,
             x: 0,
-            y: fontSize * gradientShadowOffsetYRate * this.fontScale,
+            y: fontSize * gradientShadowOffsetYRatio * this.fontSizeScale,
             color: gradientStrokeColor,
           },
         };
@@ -1434,7 +1431,7 @@ export class CompressText extends Group {
 
 const fittingEnds = new WeakMap();
 const defaultMeasurementMethods = [
-  'findLargestFittingTextSegment', 'createMeasuredPlainTextItem', 'createRubyLeaf', 'createPlainTextItem', 'createTextItem',
+  'findLargestFittingTextFragment', 'createMeasuredPlainTextItem', 'createRubyLeaf', 'createPlainTextItem', 'createTextItem',
   'getRubyTextStyle', 'getTextCharList', 'getTextCharLength', 'destroyRubyLeaf',
 ].map(name => [name, CompressText.prototype[name]]);
 

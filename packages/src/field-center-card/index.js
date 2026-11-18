@@ -31,7 +31,7 @@ export class FieldCenterCard extends Card {
     this.drawCard();
     this.drawImage();
     this.drawMask();
-    this.updateScale();
+    this.applyCardScale();
   }
 
   drawCard() {

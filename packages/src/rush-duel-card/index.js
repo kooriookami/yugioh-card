@@ -79,7 +79,7 @@ export class RushDuelCard extends Card {
     this.drawLegend();
     this.drawLaser();
     this.drawRare();
-    this.updateScale();
+    this.applyCardScale();
   }
 
   drawCard() {
@@ -108,7 +108,7 @@ export class RushDuelCard extends Card {
       letterSpacing: name.letterSpacing || 0,
       color: this.data.color || 'black',
       rtFontSize: name.rtFontSize,
-      rtTop: name.rtTop,
+      rtOffsetY: name.rtOffsetY,
       width: this.showAttribute ? 1025 : 1248,
       height: 200,
       x: 71,
@@ -204,7 +204,7 @@ export class RushDuelCard extends Card {
       fontWeight: spellTrap.fontWeight,
       letterSpacing,
       rtFontSize: spellTrap.rtFontSize,
-      rtTop: spellTrap.rtTop,
+      rtOffsetY: spellTrap.rtOffsetY,
       x: 99,
       y: spellTrap.top,
     });
@@ -308,7 +308,7 @@ export class RushDuelCard extends Card {
       letterSpacing: monsterType.letterSpacing || 0,
       rtFontSize: monsterType.rtFontSize,
       rtStrokeWidth: this.data.descriptionWeight,
-      rtTop: monsterType.rtTop,
+      rtOffsetY: monsterType.rtOffsetY,
       width: 1000,
       height: 80,
       x: 99 + (monsterType.textIndent || 0),
@@ -330,15 +330,15 @@ export class RushDuelCard extends Card {
       text: this.data.description,
       fontFamily: description.fontFamily,
       fontSize: description.fontSize,
-      fontScale: this.data.descriptionZoom,
+      fontSizeScale: this.data.descriptionZoom,
       textAlign: this.data.descriptionAlign ? 'center' : 'justify',
-      firstLineCompress: this.data.firstLineCompress,
+      compressFirstSegment: this.data.firstLineCompress,
       strokeWidth: this.data.descriptionWeight,
       lineHeight: description.lineHeight,
       letterSpacing: description.letterSpacing || 0,
       rtFontSize: description.rtFontSize,
       rtStrokeWidth: this.data.descriptionWeight,
-      rtTop: description.rtTop,
+      rtOffsetY: description.rtOffsetY,
       width: 1196,
       height: 350,
       x: 99,

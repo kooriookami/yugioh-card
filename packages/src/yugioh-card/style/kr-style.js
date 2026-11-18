@@ -9,7 +9,7 @@ export default inheritProp({
     letterSpacing: 4,
     wordSpacing: -20,
     rtFontSize: 18,
-    rtTop: 6,
+    rtOffsetY: 6,
   },
   spellTrap: {
     fontFamily: 'ygo-kr-race',

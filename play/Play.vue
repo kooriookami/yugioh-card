@@ -83,8 +83,8 @@
           </label>
 
           <label class="field">
-            <span>rtTop</span>
-            <el-input-number v-model="editableConfig.rtTop" :step="1" />
+            <span>rtOffsetY</span>
+            <el-input-number v-model="editableConfig.rtOffsetY" :step="1" />
           </label>
 
           <label class="field">
@@ -103,8 +103,8 @@
           </label>
 
           <label class="field field-switch">
-            <span>首行压缩</span>
-            <el-switch v-model="editableConfig.firstLineCompress" />
+            <span>首段压成一行</span>
+            <el-switch v-model="editableConfig.compressFirstSegment" />
           </label>
 
           <label class="field field-switch">
@@ -146,7 +146,8 @@
 <script setup>
 import { Leafer } from 'leafer-unified';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
-import { CompressText, splitBreakWordWithBracket } from '/packages/src/compress-text';
+import { CompressText } from '/packages/src/compress-text';
+import { splitBreakWordWithBracket } from '/packages/src/compress-text/breaking/split-break-word.js';
 import { loadFontBrowser } from '/packages/src/utils/font-loader.js';
 
 const rubyPlainTextPattern = /\[([^\[\]()]+)\(([^\[\]()]*)\)]/g;
@@ -166,9 +167,9 @@ const previewBaseConfig = {
   lineHeight: 1.5,
   fontSize: 32,
   rtFontSize: 16,
-  rtTop: -8,
+  rtOffsetY: -8,
   textAlign: 'justify',
-  firstLineCompress: false,
+  compressFirstSegment: false,
   smallFontSize: 16,
   autoSmallSize: false,
 };
@@ -214,12 +215,12 @@ const cases = [
   },
   {
     id: 'first-line-compress',
-    label: '首行压缩',
-    description: '验证首行强制压缩到一行时，后续行布局是否稳定。',
+    label: '首段压缩',
+    description: '验证首段压成一行时，后续段的布局是否稳定。',
     config: {
       text: '【[永(えい)][続(ぞく)][魔(ま)][法(ほう)]】[自(じ)][分(ぶん)]は１ターンに１[度(ど)]、[手(て)][札(ふだ)]を１[枚(まい)][捨(す)]てて[発(はつ)][動(どう)]できる。デッキから[魔(ま)][法(ほう)]カード１[枚(まい)]を[手(て)][札(ふだ)]に[加(くわ)]える。',
       width: 420,
-      firstLineCompress: true,
+      compressFirstSegment: true,
     },
   },
   {

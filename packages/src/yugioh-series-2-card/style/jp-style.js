@@ -7,7 +7,7 @@ export default inheritProp({
     top: 136,
     fontSize: 114,
     rtFontSize: 26,
-    rtTop: -8,
+    rtOffsetY: -8,
   },
   spellTrap: {
     top: 312,
@@ -17,8 +17,8 @@ export default inheritProp({
       marginTop: 10,
     },
     rtFontSize: 20,
-    rtTop: -11,
-    rtFontScaleX: 1.2,
+    rtOffsetY: -11,
+    rtScaleXOverride: 1.2,
   },
   monsterType: {
     top: 1685,
@@ -27,12 +27,12 @@ export default inheritProp({
     textIndent: -0.2 * 50,
     minHeight: 10,
     rtFontSize: 16,
-    rtTop: -7,
+    rtOffsetY: -7,
   },
   description: {
     fontSize: 44,
     lineHeight: 1.2,
     rtFontSize: 14,
-    rtTop: -6,
+    rtOffsetY: -6,
   },
 });

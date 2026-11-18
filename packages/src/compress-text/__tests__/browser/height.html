@@ -33,7 +33,7 @@ const check = (condition, label) => {
 const equal = (a, b) => Math.abs(a - b) < 1e-9;
 const frame = () => new Promise(requestAnimationFrame);
 class MeasuredText extends CompressText {
-  updateTextScale() { this.calls = (this.calls || 0) + 1; return super.updateTextScale(); }
+  relayoutBody() { this.calls = (this.calls || 0) + 1; return super.relayoutBody(); }
 }
 try {
   if (resourcePath === '/ready-resources') for (const gate of ['manifest', 'fonts', 'photo']) await fetch(`/ready-test/release/${gate}`, { method:'POST' });
@@ -57,8 +57,8 @@ try {
     const text = new MeasuredText({ fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:200, textAlign:'left', x:10, y:10, ...data });
     view.add(text); await frame(); await frame();
     check(equal(text.bounds.height, height) && text.isSmallSize === small, `${label}：行框高度 ${height}，小字状态正确`);
-    check(text.textScale === 1 && text.calls < 80, `${label}：文字保持可见，搜索及时结束`);
-    summary.textContent = `边界 ${text.bounds.height} / 容器 ${data.height}；横向缩放 ${text.textScale * 100}%`;
+    check(text.lastSegmentScaleX === 1 && text.calls < 80, `${label}：文字保持可见，搜索及时结束`);
+    summary.textContent = `边界 ${text.bounds.height} / 容器 ${data.height}；横向缩放 ${text.lastSegmentScaleX * 100}%`;
   }
   for (const align of ['left', 'center', 'right']) {
     const text = new MeasuredText({ text:'ABC\n\nDEF', fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:200, textAlign:align });
@@ -71,17 +71,17 @@ try {
   const normal = new MeasuredText({ ...raceOptions, height:100 }), exact = new MeasuredText({ ...raceOptions, height:57.12 });
   try {
     await frame();
-    check(equal(exact.textScale, normal.textScale) && exact.textScale > 0.8, '57.12 的浮点尾差不再把英文文字压到 50%');
+    check(equal(exact.lastSegmentScaleX, normal.lastSegmentScaleX) && exact.lastSegmentScaleX > 0.8, '57.12 的浮点尾差不再把英文文字压到 50%');
     exact.height = 57.1199;
     check(exact.doesOverflowHeight(exact.rubyList.at(-1)), '真实不足 0.0001 的高度仍会判为溢出');
   } finally { normal.destroy(); exact.destroy(); }
   const blocked = new MeasuredText({ text:'①'.repeat(40), fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:60, height:42 });
   try {
     await frame();
-    check(blocked.calls < 80 && blocked.textScale === 1 && blocked.bounds.height > blocked.height, '不可压缩的项目符号无解时有限退出并保留原宽');
+    check(blocked.calls < 80 && blocked.lastSegmentScaleX === 1 && blocked.bounds.height > blocked.height, '不可压缩的项目符号无解时有限退出并保留原宽');
   } finally { blocked.destroy(); }
-  const scaled = new MeasuredText({ text:'ABC\n\nDEF', fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:200, height:47.25, fontScale:0.75, scaleY:2 });
-  try { await frame(); check(equal(scaled.bounds.height,94.5), 'fontScale 与 Group 缩放分别且只应用一次'); }
+  const scaled = new MeasuredText({ text:'ABC\n\nDEF', fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:200, height:47.25, fontSizeScale:0.75, scaleY:2 });
+  try { await frame(); check(equal(scaled.bounds.height,94.5), 'fontSizeScale 与 Group 缩放分别且只应用一次'); }
   finally { scaled.destroy(); }
 
   const view = new Leafer({ width:300, height:360, fill:'white' }); views.push(view);

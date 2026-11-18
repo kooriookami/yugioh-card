@@ -134,7 +134,7 @@ export class Card {
     });
   }
 
-  updateScale() {
+  applyCardScale() {
     const pixelRatio = isBrowser ? devicePixelRatio : 1;
     this.leafer.pixelRatio = pixelRatio;
     this.leafer.width = this.cardWidth * this.data.scale / pixelRatio;

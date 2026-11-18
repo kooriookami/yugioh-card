@@ -2,7 +2,7 @@ const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' });
 
 export const textGraphemes = text => Array.from(segmenter.segment(text), item => item.segment);
 
-/** UTF-16 坐标，与 String.slice 和原文范围保持一致。 */
+/** 返回与 String.slice 一致的 UTF-16 字素边界。 */
 export const graphemeBoundaries = text => {
   const boundaries = new Set([0]);
   for (const item of segmenter.segment(text)) boundaries.add(item.index + item.segment.length);

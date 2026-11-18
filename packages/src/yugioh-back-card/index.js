@@ -35,7 +35,7 @@ export class YugiohBackCard extends Card {
     this.drawKonami();
     this.drawRegister();
     this.drawLogo();
-    this.updateScale();
+    this.applyCardScale();
   }
 
   drawCard() {

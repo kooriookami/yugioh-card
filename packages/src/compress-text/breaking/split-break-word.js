@@ -1,7 +1,7 @@
 import { LineBreaker } from 'css-line-break';
 import { graphemeBoundaries } from './text-graphemes.js';
 
-// word-spacing 的分隔字符，不等同于允许换行的位置。
+// 划分 word-spacing 的测量项，合法断点由断行规则另行确定。
 const wordSeparators = new Set([0x0020, 0x00A0, 0x1361, 0x10100, 0x10101, 0x1039F, 0x1091F]);
 const rubySource = '\\[([^\\[\\]()\\r\\n\\f\\v\\u0085\\u2028\\u2029]+)\\(([^\\[\\]()\\r\\n\\f\\v\\u0085\\u2028\\u2029]*)\\)\\]';
 const hardBreakPattern = /\r\n|[\r\n\f\v\u0085\u2028\u2029]/g;

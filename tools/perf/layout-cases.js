@@ -21,7 +21,7 @@ export const textCases = [
   ...[0, 0.5, 1].map(sideBearingRatio => ({ text: '[日あー(X)] ０１２ AV。', sideBearingRatio, gradient: true })),
   ...[8, 15, 30, 42, 64.8].map(height => ({ text: 'ABC DEF GHI\nJKL MNO', fontFamily: 'ygo-en', fontSize: 20, lineHeight: 1.05, width: 100, height, autoSmallSize: true, smallFontSize: 10 })),
   { text: '[Beast-Warrior / Pendulum / Tuner / Effect]', fontFamily: 'ygo-en-race', fontSize: 56, letterSpacing: 1, lineHeight: 1.02, width: 1175, height: 57.12 },
-  { text: japaneseText, firstLineCompress: true, width: 250, height: 80, autoSmallSize: true, smallFontSize: 18 },
+  { text: japaneseText, compressFirstSegment: true, width: 250, height: 80, autoSmallSize: true, smallFontSize: 18 },
   { text: '简体中文标点，测试。繁體中文標點，測試。', fontFamily: 'ygo-sc' },
   { text: '繁體中文標點，測試。', fontFamily: 'ygo-tc' },
   { text: '한글 카드 효과 설명', fontFamily: 'ygo-kr' },
@@ -39,10 +39,10 @@ for (let index = 0; index < 64; index++) {
     fontFamily: index % 3 === 1 ? 'ygo-en' : 'ygo-jp',
     width: 80 + random() * 550,
     height: [0, 15, 50, 100, 160][index % 5],
-    firstLineCompress: index % 4 === 0,
+    compressFirstSegment: index % 4 === 0,
     autoSmallSize: index % 2 === 0,
     smallFontSize: index % 3 === 0 ? 18 : 10,
-    fontScale: [0.75, 1, 1.25][index % 3],
+    fontSizeScale: [0.75, 1, 1.25][index % 3],
     letterSpacing: index % 3,
     wordSpacing: index % 4,
     textAlign: ['left', 'center', 'right', 'justify'][index % 4],
@@ -103,6 +103,16 @@ export const classData = (name, defaults, index, images) => {
   return { ...input, scale: 0.15 };
 };
 
+/** 仅在对照工具中适配冻结版本的配置名称。 */
+export const textOptionsFor = (CompressText, options) => {
+  if ('relayoutBody' in CompressText.prototype) return options;
+  const { compressFirstSegment, fontSizeScale, rtOffsetY, ...legacy } = options;
+  if ('compressFirstSegment' in options) legacy.firstLineCompress = compressFirstSegment;
+  if ('fontSizeScale' in options) legacy.fontScale = fontSizeScale;
+  if ('rtOffsetY' in options) legacy.rtTop = rtOffsetY;
+  return legacy;
+};
+
 const properties = ['tag', 'text', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'fill', 'stroke', 'strokeWidth', 'strokeAlign', 'shadow', 'around', 'x', 'y', 'scaleX', 'scaleY', 'visible', 'opacity', 'zIndex'];
 export const nodeSnapshot = node => ({
   ...Object.fromEntries(properties.map(key => [key, node[key]])),
@@ -111,7 +121,10 @@ export const nodeSnapshot = node => ({
 
 export const textSnapshot = text => JSON.parse(JSON.stringify({
   bounds: text.bounds, currentX: text.currentX, currentY: text.currentY, currentLine: text.currentLine,
-  textScale: text.textScale, firstLineTextScale: text.firstLineTextScale, isSmallSize: text.isSmallSize,
+  // 沿用既有快照键，使改名本身不影响改动前后的对照。
+  textScale: text.lastSegmentScaleX ?? text.textScale,
+  firstLineTextScale: text.firstSegmentScaleX ?? text.firstLineTextScale,
+  isSmallSize: text.isSmallSize,
   items: text.flatItemList.map(({ ruby, rt }) => ({
     ruby: Object.fromEntries(['text', 'bold', 'originalWidth', 'normalWidth', 'width', 'height', 'originalHeight', 'paddingLeft', 'paddingRight', 'line'].map(key => [key, ruby[key]])),
     rt: Object.fromEntries(['text', 'originalWidth', 'originalHeight', 'width', 'height'].map(key => [key, rt[key]])),
