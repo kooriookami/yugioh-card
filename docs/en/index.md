@@ -3,7 +3,7 @@ layout: home
 hero:
   name: Yugioh Card
   text: Yu-Gi-Oh! card rendering
-  tagline: Render five card layouts, preview edits in the browser, and export batches with Node.js.
+  tagline: Render five card layouts with LeaferJS. Preview in the browser and export batches in Node.js.
   image:
     src: /card-previews/yugioh.webp
     alt: Blue-Eyes White Dragon rendered by Yugioh Card

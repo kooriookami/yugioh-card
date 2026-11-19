@@ -26,9 +26,12 @@ Import the classes below from `yugioh-card`. Each class takes `CardOptions<TData
 
 `await card.ready` waits for the current card's required fonts, images, final layout, and a draw. Read it again after each call to `setData()`. The promise rejects on required asset errors or a timeout. After handling an error, you can start another update to retry.
 
-## Export and cleanup {#export-and-destroy}
+## Export and cleanup with Leafer {#export-and-destroy}
 
-Call `card.leafer.export()`. See the [browser guide](../guide/browser.md) for downloads. In Node.js, `{ screenshot: true, blob: true }` returns a PNG Buffer. Handle export and file-write failures separately. Call `card.leafer.destroy(true)` when unmounting a page component or finishing a script.
+`card.leafer` is the Leafer instance that renders the card. It provides both `export()` and `destroy()`.
+
+- Call `card.leafer.export()` to export the card. In Node.js, pass `'png'` and `{ screenshot: true, blob: true }` to receive a PNG `Buffer` in `data` on success. See LeaferJS for all file types and options. [Browser download example](../guide/browser.md) · [Leafer export API](https://www.leaferjs.com/ui/en/reference/UI/export.html)
+- Call `card.leafer.destroy(true)` when unmounting a component or finishing a script. Pass `true` to destroy the instance synchronously. [Leafer destroy API](https://www.leaferjs.com/ui/en/reference/UI/destroy.html#destroy-engine)
 
 ## Terminology {#terminology}
 

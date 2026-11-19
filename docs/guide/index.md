@@ -1,6 +1,6 @@
 # 安装
 
-Yugioh Card 使用 Canvas 渲染游戏王、超速决斗、游戏王卡背、场地中心卡和游戏王第 2 期卡片。npm 包提供 ESM 入口和 TypeScript 类型。
+Yugioh Card 基于 LeaferJS，使用 Canvas 渲染游戏王、超速决斗、游戏王卡背、场地中心卡和游戏王第 2 期卡片。npm 包提供 ESM 入口和 TypeScript 类型。
 
 ## 浏览器
 

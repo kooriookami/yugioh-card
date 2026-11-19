@@ -3,7 +3,7 @@ layout: home
 hero:
   name: Yugioh Card
   text: 遊戯王カード描画ライブラリ
-  tagline: 5 種類のカードをブラウザでプレビューし、Node.js でまとめて書き出せます。
+  tagline: LeaferJS で 5 種類のカードを描画し、ブラウザでのプレビューと Node.js での一括書き出しに対応します。
   image:
     src: /card-previews/yugioh.webp
     alt: Yugioh Card で描画した青眼の白龍

@@ -26,9 +26,12 @@
 
 `await card.ready` は、現在のカードに必要なフォントと画像、最終レイアウト、描画の完了を待ちます。`setData()` のたびに取得し直してください。必須リソースのエラーまたはタイムアウトで Promise が拒否されます。エラー処理後は、データを再度更新してリトライできます。
 
-## 書き出しと破棄 {#export-and-destroy}
+## Leafer での書き出しと破棄 {#export-and-destroy}
 
-`card.leafer.export()` で書き出します。ブラウザでのダウンロードは[ブラウザ向けガイド](../guide/browser.md)を参照してください。Node.js では `{ screenshot: true, blob: true }` を指定すると PNG の Buffer を受け取れます。書き出しやファイル保存のエラーは別途処理してください。コンポーネントのアンマウント時、またはスクリプトの終了時に `card.leafer.destroy(true)` を呼び出します。
+`card.leafer` はカードを描画する Leafer インスタンスです。`export()` と `destroy()` はこのインスタンスから呼び出します。
+
+- カードの書き出しには `card.leafer.export()` を使います。Node.js では `'png'` と `{ screenshot: true, blob: true }` を指定すると、成功時に `data` に PNG の `Buffer` が入ります。ファイル形式とオプションの詳細は LeaferJS の公式ドキュメントを参照してください。 [ブラウザでのダウンロード例](../guide/browser.md) · [Leafer の export API（英語）](https://www.leaferjs.com/ui/en/reference/UI/export.html)
+- コンポーネントのアンマウント時やスクリプトの終了時に `card.leafer.destroy(true)` を呼び出します。`true` を指定すると同期的に破棄します。 [Leafer の destroy API（英語）](https://www.leaferjs.com/ui/en/reference/UI/destroy.html#destroy-engine)
 
 ## 用語の参照先 {#terminology}
 

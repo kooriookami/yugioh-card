@@ -16,7 +16,7 @@
   </a>
 </p>
 
-<p align="center">A tool for rendering Yu-Gi-Oh! cards using Canvas</p>
+<p align="center">Render Yu-Gi-Oh! cards on Canvas with LeaferJS</p>
 
 <p align="center">
   <img src="src/assets/image/banner.jpg">

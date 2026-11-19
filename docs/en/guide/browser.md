@@ -16,3 +16,5 @@ Prepare `public/card-assets` as described in [Static assets](./resources.md). Ke
 To add artwork, put an image in the public directory and pass its URL as `data.artwork`. Call `card.setData({ name: 'Another Dragon' })` to update the name. After updates, read `card.ready` again and wait for rendering to finish before exporting.
 
 `renderScale` controls the rendered dimensions. To enlarge or shrink the preview on screen, scale its outer container. Call `card.leafer.destroy(true)` when unmounting the component. See the [API reference](../reference/) for card types and fields.
+
+See [Export and cleanup with Leafer](../reference/#export-and-destroy) for the available options.

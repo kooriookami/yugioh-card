@@ -1,6 +1,6 @@
 # Installation
 
-Yugioh Card renders Yu-Gi-Oh!, Rush Duel, Yu-Gi-Oh! card backs, Field Center Cards, and Yu-Gi-Oh! Series 2 layouts on Canvas. The npm package provides an ESM entry point and TypeScript declarations.
+Yugioh Card renders Yu-Gi-Oh!, Rush Duel, Yu-Gi-Oh! card backs, Field Center Cards, and Yu-Gi-Oh! Series 2 layouts on Canvas with LeaferJS. The npm package provides an ESM entry point and TypeScript declarations.
 
 ## Browser
 
