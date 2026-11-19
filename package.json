@@ -30,7 +30,7 @@
     "canvas"
   ],
   "author": "kooriookami",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@leafer-ui/interface": "^2.3.4",
     "@leafer/node": "^2.3.4",
