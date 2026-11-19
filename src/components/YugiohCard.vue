@@ -3,16 +3,8 @@
     <div class="playground-toolbar">
       <label>
         {{ labels.cardType }}
-        <select :value="selectedExample.type" @change="changeType($event.target.value)">
+        <select :value="selectedExample.type" @change="changeCard($event.target.value)">
           <option v-for="(name, type) in labels.cardTypes" :key="type" :value="type">{{ name }}</option>
-        </select>
-      </label>
-      <label>
-        {{ labels.example }}
-        <select :value="selectedExample.id" @change="changeCard($event.target.value)">
-          <option v-for="item in visibleExamples" :key="item.id" :value="item.id">
-            {{ labels.examples[item.id] }}
-          </option>
         </select>
       </label>
       <a v-if="referenceBase" :href="`${referenceBase}${selectedExample.type}.html`">{{ labels.reference }} ↗</a>
@@ -72,7 +64,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef } from 'vue';
 import * as CardConstructors from 'yugioh-card';
 import JsonEditorVue from 'json-editor-vue';
-import { cardExamples, cardTypes, findExample } from '../assets/demo/examples.js';
+import { cardTypes, findExample } from '../assets/demo/examples.js';
 import { cardPlaygroundLabels } from './card-playground-labels.js';
 
 const props = defineProps({
@@ -84,7 +76,6 @@ const props = defineProps({
 
 const labels = computed(() => cardPlaygroundLabels[props.locale]);
 const selectedExample = shallowRef(findExample(props.initialExample));
-const visibleExamples = computed(() => cardExamples.filter(item => item.type === selectedExample.value.type));
 const jsonData = ref('');
 const jsonError = ref('');
 const exportError = ref('');
@@ -153,10 +144,6 @@ const changeCard = id => {
   } catch (error) {
     cardError.value = error.message;
   }
-};
-
-const changeType = type => {
-  changeCard(cardExamples.find(item => item.type === type)?.id);
 };
 
 const updateJson = value => {

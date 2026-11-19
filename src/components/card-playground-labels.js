@@ -1,7 +1,6 @@
 export const cardPlaygroundLabels = {
   'zh-CN': {
     cardType: '卡片类型',
-    example: '示例',
     reference: '查看参数',
     preview: '卡片预览',
     fit: '适应窗口',
@@ -24,14 +23,12 @@ export const cardPlaygroundLabels = {
       'field-center': '场地中心卡', 'yugioh-series-2': '游戏王第 2 期',
     },
     examples: {
-      yugioh: '通常怪兽', pendulum: '灵摆怪兽', link: '连接怪兽', 'rush-duel': '简中 LEGEND', maximum: '日文 MAXIMUM',
-      'yugioh-back': 'OCG 卡背', 'tcg-back': 'TCG 卡背', 'field-center': '正面',
-      'field-center-back': '背面', 'yugioh-series-2': '青眼白龙',
+      yugioh: '通常怪兽', 'rush-duel': '简中 LEGEND', 'yugioh-back': 'OCG 卡背',
+      'field-center': '正面', 'yugioh-series-2': '青眼白龙',
     },
   },
   en: {
     cardType: 'Card type',
-    example: 'Example',
     reference: 'Card parameters',
     preview: 'Card preview',
     fit: 'Fit to window',
@@ -54,15 +51,12 @@ export const cardPlaygroundLabels = {
       'field-center': 'Field Center Card', 'yugioh-series-2': 'Yu-Gi-Oh! Series 2',
     },
     examples: {
-      yugioh: 'Normal Monster', pendulum: 'Pendulum Monster', link: 'Link Monster',
-      'rush-duel': 'Simplified Chinese LEGEND', maximum: 'Japanese MAXIMUM', 'yugioh-back': 'OCG card back',
-      'tcg-back': 'TCG card back', 'field-center': 'Front', 'field-center-back': 'Back',
-      'yugioh-series-2': 'Blue-Eyes White Dragon',
+      yugioh: 'Normal Monster', 'rush-duel': 'Simplified Chinese LEGEND', 'yugioh-back': 'OCG card back',
+      'field-center': 'Front', 'yugioh-series-2': 'Blue-Eyes White Dragon',
     },
   },
   ja: {
     cardType: 'カードの種類',
-    example: 'サンプル',
     reference: 'パラメーターを見る',
     preview: 'カードプレビュー',
     fit: 'ウィンドウに合わせる',
@@ -85,10 +79,8 @@ export const cardPlaygroundLabels = {
       'field-center': 'フィールドセンターカード', 'yugioh-series-2': '遊戯王 第2期',
     },
     examples: {
-      yugioh: '通常モンスター', pendulum: 'ペンデュラムモンスター', link: 'リンクモンスター',
-      'rush-duel': '簡体字版 LEGEND', maximum: '日本語版マキシマム', 'yugioh-back': 'OCG の裏面',
-      'tcg-back': 'TCG の裏面', 'field-center': '表面', 'field-center-back': '裏面',
-      'yugioh-series-2': '青眼の白龍',
+      yugioh: '通常モンスター', 'rush-duel': '簡体字版 LEGEND', 'yugioh-back': 'OCG の裏面',
+      'field-center': '表面', 'yugioh-series-2': '青眼の白龍',
     },
   },
 };
