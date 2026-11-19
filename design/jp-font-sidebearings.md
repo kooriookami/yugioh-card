@@ -15,11 +15,7 @@
 
 ## 2. 字体基线
 
-采用当前恢复版，输入文件为：
-
-```text
-D:\Desktop\游戏王字体\ygo-jp-restored-1024\ygo-jp-restored-1024.woff2
-```
+交付基线为仓库中已恢复占宽的 [ygo-jp.woff2](../src/assets/yugioh-card/yugioh/font/ygo-jp.woff2)。
 
 | 项目 | 已确认结果 |
 | --- | --- |
@@ -149,11 +145,11 @@ A' = A + (L' - L) + (R' - R)
 - 内部切分以字素簇为边界。多码点组合、变体选择符等没有对应规则时，整个字素簇走原生路径，不拆开逐码点裁边，也不改写输入文本。
 - 有注音的 item 仍是原来的布局原子；内部字形定位不改变外层换行和 ruby 配对关系。
 
-适配器明确提供自然占宽、调整后占宽、墨迹偏移、样式更新和销毁操作。不要把 `rubyLeaf` 从 Text 换成 Group 后继续直接写 `fontSize`、`fill` 等属性；这些更新必须传递给内部 Text。
+适配器明确提供自然占宽、调整后占宽、墨迹偏移、样式更新和销毁操作。不要把 `rubyNode` 从 Text 换成 Group 后继续直接写 `fontSize`、`fill` 等属性；这些更新必须传递给内部 Text。
 
 ### 5.2 宽度和绘制位置使用同一记录
 
-`createRubyLeaf()` 产生的 `originalWidth` / `normalWidth` 改为调整后的自然占宽。超长切段、首行压缩、高度二分、行尾空格清理、对齐和 `bounds.width` 都使用它。
+`createRubyNode()` 产生的 `originalWidth` / `normalWidth` 改为调整后的自然占宽。超长切段、首行压缩、高度二分、行尾空格清理、对齐和 `bounds.width` 都使用它。
 
 不得只改绘制 x、仍以 1024 全角宽度换行；也不得仅缩小逻辑宽度、仍让字形停在原来的左留白位置。
 
@@ -221,13 +217,13 @@ Rush Duel 使用另一套日文字体，本次不自动启用；中文、英文�
 | 位置 | 实现 |
 | --- | --- |
 | `src/assets/yugioh-card/yugioh/font/ygo-jp.woff2` | 直接替换字体文件，保持文件名、注册名与清单条目不变 |
-| `packages/src/utils/font-info.js`（新增） | 从实际加载字体按需解析单位、字符覆盖及字形信息，无预生成文件 |
-| `packages/src/compress-text/glyph-metrics.js`（新增） | 按字符类别处理、动态字形度量、共享缓存与留白计算 |
-| `packages/src/compress-text/body-run.js`（新增） | Text / Group 适配、内部定位、样式传递与销毁 |
-| `packages/src/compress-text/text-graphemes.js`（新增） | 按字素簇切段，修复分词器拆开组合浊点的边界 |
-| [compress-text.js](../packages/src/compress-text/compress-text.js) | 接入段适配器，统一宽度、压缩、字号、注音、渐变和边界 |
-| [font-loader.js](../packages/src/utils/font-loader.js)、[layout-context.js](../packages/src/compress-text/layout-context.js)、[readiness.js](../packages/src/card/readiness.js) | 复用字体身份与完成状态，失效后统一重排 |
-| 日文样式、相关 `draw*()`、[inheritProp](../packages/src/utils/index.js) | 只传递内部 `sideBearingRatio`，限定字体和卡片范围 |
+| [font-info.ts](../packages/src/utils/font-info.ts) | 从实际加载字体按需解析单位、字符覆盖及字形信息，无预生成文件 |
+| [glyph-metrics.ts](../packages/src/compress-text/glyph-metrics.ts) | 按字符类别处理、动态字形度量、共享缓存与留白计算 |
+| [body-run.ts](../packages/src/compress-text/body-run.ts) | Text / Group 适配、内部定位、样式传递与销毁 |
+| [text-graphemes.ts](../packages/src/compress-text/breaking/text-graphemes.ts) | 按字素簇切段，修复分词器拆开组合浊点的边界 |
+| [compress-text.ts](../packages/src/compress-text/compress-text.ts) | 接入段适配器，统一宽度、压缩、字号、注音、渐变和边界 |
+| [font-loader.ts](../packages/src/utils/font-loader.ts)、[layout-context.ts](../packages/src/compress-text/layout-context.ts)、[readiness.ts](../packages/src/card/readiness.ts) | 复用字体身份与完成状态，失效后统一重排 |
+| 日文样式、相关 `draw*()`、[inheritProp](../packages/src/utils/index.ts) | 只传递内部 `sideBearingRatio`，限定字体和卡片范围 |
 | `tools/fonts/check-jp-font.py`（新增） | 仅检查交付字体的 CFF / hmtx 及数字占宽，不生成运行时数据；常规运行与构建不依赖 Python |
 | 文字测试、卡片测试、Playground | 补充公式、边界、真实渲染和浏览器对照 |
 
