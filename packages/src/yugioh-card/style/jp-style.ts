@@ -31,6 +31,7 @@ export default inheritProp<YugiohStyle>({
   monsterTypeLine: {
     top: 1528,
     fontSize: 46,
+    sideBearingRatio: 1,
     lineHeight: 1.17,
     textIndent: -0.2 * 46,
     minHeight: 16,
