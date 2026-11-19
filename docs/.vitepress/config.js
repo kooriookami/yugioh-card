@@ -52,7 +52,7 @@ const buildLocale = (prefix, lang, label, labels) => {
 export default defineConfig({
   title: 'Yugioh Card',
   base,
-  head: [['link', { rel: 'icon', type: 'image/x-icon', href: `${base}favicon.ico` }]],
+  head: [['link', { rel: 'icon', type: 'image/svg+xml', sizes: 'any', href: `${base}favicon.svg` }]],
   themeConfig: {
     socialLinks: [{ icon: 'github', link: repository, ariaLabel: 'Yugioh Card on GitHub' }],
     search: {
