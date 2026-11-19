@@ -204,6 +204,6 @@ Hpx = max(1, round(H × S))
 
 23 个对比样例由 14 个 `CompressText` 场景（原 Playground 样例及补充场景）、五种日文卡片、四个英文卡片场景组成。四个英文场景中有两个正常进入小字模式。布局数据除了隐形换行控制节点的位置、高度和可见性外保持一致，数值比较容差为 `1e-9`；同一 Skia 后端的最终 PNG 像素完全一致。这个样本集用于证明常见正常路径的兼容性，不代表所有输入都不会变化：显式换行边界、错误对齐、浮点临界值和高度无解本身就是本次要修复的行为。
 
-浏览器验证页可通过 `pnpm dev --host 127.0.0.1` 启动后访问 `/packages/src/compress-text/__tests__/browser/height.html`。页面等待真实项目字体，再核对换行边界、小字、无解退出、英文临界高度、缩放和 1/2 倍 PNG；页面上的橙框表示调用方给定的高度，文字允许在无解时越过橙框。
+浏览器验证页可通过 `pnpm exec vite --host 127.0.0.1` 启动后访问 `/packages/src/compress-text/__tests__/browser/height.html`。页面等待真实项目字体，再核对换行边界、小字、无解退出、英文临界高度、缩放和 1/2 倍 PNG；页面上的橙框表示调用方给定的高度，文字允许在无解时越过橙框。
 
 发布包验证沿用 [ready 文档的独立消费项目方法](card-ready.md#12-本次实现的决策与落点)：安装 `.tgz` 后，将测试的源码导入改成包内的 `yugioh-card/src/compress-text/compress-text` 和 `yugioh-card/src/utils/font-loader`，资源 URL 指向测试服务器提供的项目资源。Node 使用真实 Skia，浏览器先构建再用外部 Edge 访问；构建输入检查确认没有导入原 checkout 的 `packages/` 或 `dist/`。不需要旧版本别名包作为项目依赖。

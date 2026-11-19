@@ -1,0 +1,31 @@
+:root {
+  --vp-c-brand-1: #79532b;
+  --vp-c-brand-2: #684321;
+  --vp-c-brand-3: #79532b;
+  --vp-c-brand-soft: rgb(163 118 62 / 14%);
+  --vp-home-hero-image-background-image: radial-gradient(ellipse, #ebd7b5, transparent 70%);
+  --vp-home-hero-image-filter: blur(26px);
+  --card-preview-background: #eeeae1;
+  --card-preview-grid: rgb(112 92 64 / 10%);
+}
+
+.dark {
+  --vp-c-brand-1: #e6b981;
+  --vp-c-brand-2: #f0cd9f;
+  --vp-c-brand-3: #ab7848;
+  --vp-c-brand-soft: rgb(230 185 129 / 14%);
+  --vp-home-hero-image-background-image: radial-gradient(ellipse, #685033, transparent 70%);
+  --card-preview-background: #24231f;
+  --card-preview-grid: rgb(212 198 171 / 9%);
+}
+
+.VPHero .image-src {
+  width: auto;
+  max-height: 290px;
+  border-radius: 7px;
+  box-shadow: 0 18px 46px rgb(30 20 10 / 23%);
+}
+
+.vp-doc table :not(pre) > code {
+  white-space: nowrap;
+}

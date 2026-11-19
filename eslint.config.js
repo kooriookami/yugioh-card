@@ -79,7 +79,8 @@ export default defineConfig([
     ignores: [
       'node_modules',
       'dist',
-      'docs',
+      'docs/.vitepress/cache/**',
+      'docs/.vitepress/dist/**',
       'public',
     ],
   },

@@ -42,18 +42,8 @@ const buildLib = {
   },
 };
 
-const buildWebsite = {
-  outDir: 'docs',
-};
-
-const buildConfigMap = {
-  lib: buildLib,
-  website: buildWebsite,
-};
-
 export default defineConfig(({ mode }) => {
-  const buildTarget = mode === 'lib' ? 'lib' : 'website';
-  const isLib = buildTarget === 'lib';
+  const isLib = mode === 'lib';
 
   return {
     base: './',
@@ -92,6 +82,6 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(import.meta.dirname, 'src'),
       },
     },
-    build: buildConfigMap[buildTarget],
+    build: isLib ? buildLib : undefined,
   };
 });

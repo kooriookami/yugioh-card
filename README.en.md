@@ -35,6 +35,6 @@ Currently there are 5 types of cards: 🚀🚀🚀🚀🚀
 - [LeaferJS](https://www.leaferjs.com/) for the powerful graphics rendering capabilities
 - [白羽幸鳥](https://tieba.baidu.com/home/main?id=tb.1.d6c63ffd.3YV5T6Q9Z7uIeVVhPlo8hg%3Ft%3D1654573649) for providing high-resolution card templates
 
-## 🚩 Online Demo
+## 🚩 Documentation and Demo
 
-[Online Demo](https://kooriookami.github.io/yugioh-card/)
+[Documentation](https://kooriookami.github.io/yugioh-card/en/) · [Playground](https://kooriookami.github.io/yugioh-card/en/playground/)

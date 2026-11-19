@@ -35,6 +35,6 @@
 - [LeaferJS](https://www.leaferjs.com/) 提供的强大图形渲染功能
 - [白羽幸鳥](https://tieba.baidu.com/home/main?id=tb.1.d6c63ffd.3YV5T6Q9Z7uIeVVhPlo8hg%3Ft%3D1654573649) 提供的高清卡模
 
-## 🚩 在线演示
+## 🚩 文档与在线演示
 
-[在线演示](https://kooriookami.github.io/yugioh-card/)
+[项目文档](https://kooriookami.github.io/yugioh-card/) · [在线演示](https://kooriookami.github.io/yugioh-card/playground/)

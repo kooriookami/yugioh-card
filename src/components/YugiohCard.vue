@@ -1,107 +1,106 @@
 <template>
-  <div class="yugioh-card-container">
-    <div class="yugioh-card">
-      <div ref="preview" class="preview">
-        <div class="preview-content">
-          <div ref="card" class="card" :style="{ zoom: previewScale }" />
-        </div>
-      </div>
-      <el-button
-        class="fit-height-button"
-        circle
-        :icon="fitHeight ? ZoomIn : ZoomOut"
-        :title="fitHeight ? '原始大小' : '适应高度'"
-        :aria-label="fitHeight ? '原始大小' : '适应高度'"
-        :aria-pressed="fitHeight"
-        @click="fitHeight = !fitHeight"
-      />
+  <div class="playground">
+    <div class="playground-toolbar">
+      <label>
+        {{ labels.cardType }}
+        <select :value="selectedExample.type" @change="changeType($event.target.value)">
+          <option v-for="(name, type) in labels.cardTypes" :key="type" :value="type">{{ name }}</option>
+        </select>
+      </label>
+      <label>
+        {{ labels.example }}
+        <select :value="selectedExample.id" @change="changeCard($event.target.value)">
+          <option v-for="item in visibleExamples" :key="item.id" :value="item.id">
+            {{ labels.examples[item.id] }}
+          </option>
+        </select>
+      </label>
+      <a v-if="referenceBase" :href="`${referenceBase}${selectedExample.type}.html`">{{ labels.reference }} ↗</a>
     </div>
-    <div class="form">
-      <div class="form-header">
-        <div class="form-title">
-          <span>游戏王卡片 - Yugioh Card</span>
-          <Icon
-            class="github-icon"
-            icon="ri:github-fill"
-            width="24"
-            height="24"
-            @click="toGithub"
-          />
-        </div>
-        <div class="form-description">
-          <span>一个使用 Canvas 渲染游戏王卡片的工具</span>
-        </div>
-        <div
-          v-if="cardPending || cardError"
-          class="card-status"
-          :class="{ 'is-error': cardError }"
-          role="status"
-          aria-live="polite"
-        >
-          <el-icon v-if="cardPending" class="is-loading" aria-hidden="true"><Loading /></el-icon>
-          <span>{{ cardPending ? '卡片加载中…' : `卡片加载失败：${cardError}` }}</span>
-        </div>
-      </div>
 
-      <div class="form-main">
-        <el-form :model="form" label-width="auto">
-          <el-form-item label="卡片">
-            <el-select
-              v-model="form.card"
-              placeholder="请选择卡片"
-              @change="changeCard"
-            >
-              <el-option label="游戏王" value="yugioh" />
-              <el-option label="超速决斗" value="rush-duel" />
-              <el-option label="游戏王卡背" value="yugioh-back" />
-              <el-option label="场地中心卡" value="field-center" />
-              <el-option label="游戏王 2 期" value="yugioh-series-2" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="数据">
-            <json-editor-vue
-              :key="form.card"
-              v-model="jsonData"
-              style="width: 100%"
-              mode="text"
-              v-bind="jsonOption"
-            />
-          </el-form-item>
-        </el-form>
-
-        <div class="button-group">
-          <el-button type="primary" :loading="exporting" @click="exportImage">
-            {{ exporting ? (cardPending ? '正在准备卡片…' : '正在导出…') : '导出图片' }}
-          </el-button>
+    <div class="playground-body">
+      <section class="playground-panel" :aria-label="labels.preview">
+        <div ref="preview" class="preview-surface">
+          <div class="preview-content">
+            <div ref="card" class="preview-card" :style="{ zoom: previewScale }" />
+          </div>
         </div>
-      </div>
+        <div class="preview-toolbar">
+          <div class="preview-options">
+            <button type="button" :aria-pressed="fitHeight" @click="fitHeight = true">{{ labels.fit }}</button>
+            <button type="button" :aria-pressed="!fitHeight" @click="fitHeight = false">{{ labels.actual }}</button>
+          </div>
+          <span class="render-status" :class="{ 'is-error': cardError }" role="status">
+            {{ cardError ? `${labels.renderError} · ${cardError}` : cardPending ? labels.loading : labels.idle }}
+          </span>
+        </div>
+      </section>
+
+      <section class="playground-panel data-panel" :aria-label="labels.json">
+        <h2>{{ labels.json }}</h2>
+        <JsonEditorVue
+          :key="editorRevision"
+          :model-value="jsonData"
+          mode="text"
+          :debounce="0"
+          :main-menu-bar="false"
+          :status-bar="false"
+          class="playground-editor"
+          @update:model-value="updateJson"
+        />
+        <p v-if="jsonError" class="editor-status is-error" role="status">{{ jsonError }}</p>
+        <p v-if="exportError" class="editor-status is-error" role="alert">{{ exportError }}</p>
+        <p v-if="copyStatus" class="editor-status" role="status">{{ copyStatus }}</p>
+        <div class="editor-toolbar">
+          <button type="button" @click="copyJson">{{ labels.copy }}</button>
+          <button type="button" @click="changeCard(selectedExample.id)">{{ labels.reset }}</button>
+          <button
+            type="button"
+            class="export-button"
+            :disabled="!cardInstance || !!jsonError || exporting"
+            @click="exportImage"
+          >
+            {{ exporting ? labels.exporting : labels.export }}
+          </button>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup>
-import { Icon } from '@iconify/vue';
-import { Loading, ZoomIn, ZoomOut } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
-import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue';
-import { FieldCenterCard, RushDuelCard, YugiohBackCard, YugiohCard, YugiohSeries2Card } from 'yugioh-card';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef } from 'vue';
+import * as CardConstructors from 'yugioh-card';
 import JsonEditorVue from 'json-editor-vue';
-import { resourcePath } from '@/assets/resource-path.js';
-import fieldCenterDemo from '@/assets/demo/field-center-demo';
-import rushDuelDemo from '@/assets/demo/rush-duel-demo';
-import yugiohBackDemo from '@/assets/demo/yugioh-back-demo';
-import yugiohDemo from '@/assets/demo/yugioh-demo';
-import yugiohSeries2Demo from '@/assets/demo/yugioh-series-2-demo';
+import { cardExamples, cardTypes, findExample } from '../assets/demo/examples.js';
+import { cardPlaygroundLabels } from './card-playground-labels.js';
+
+const props = defineProps({
+  locale: { type: String, default: 'zh-CN' },
+  resourcePath: { type: String, required: true },
+  initialExample: { type: String, default: '' },
+  referenceBase: { type: String, default: '' },
+});
+
+const labels = computed(() => cardPlaygroundLabels[props.locale]);
+const selectedExample = shallowRef(findExample(props.initialExample));
+const visibleExamples = computed(() => cardExamples.filter(item => item.type === selectedExample.value.type));
+const jsonData = ref('');
+const jsonError = ref('');
+const exportError = ref('');
+const copyStatus = ref('');
+const editorRevision = ref(0);
 
 const card = ref(null);
 const preview = ref(null);
-const fitHeight = ref(false);
+const fitHeight = ref(true);
 const previewSize = reactive({ width: 0, height: 0 });
 const cardSize = reactive({ width: 0, height: 0 });
 const previewScale = computed(() => {
   if (!fitHeight.value || !cardSize.width || !cardSize.height) return 1;
-  return Math.max(0.01, Math.min(1, (previewSize.height - 40) / cardSize.height, (previewSize.width - 40) / cardSize.width));
+  return Math.max(0.01, Math.min(1, (previewSize.height - 48) / cardSize.height, (previewSize.width - 48) / cardSize.width));
 });
+
 let resizeObserver;
 const cardInstance = shallowRef(null);
 const cardPending = ref(false);
@@ -109,37 +108,6 @@ const cardError = ref('');
 const exporting = ref(false);
 let observedReady;
 let exportRequest;
-const form = reactive({
-  card: 'yugioh',
-  data: {},
-});
-const jsonData = ref('');
-const jsonOption = reactive({
-  mainMenuBar: false,
-  statusBar: false,
-});
-
-onMounted(() => {
-  resizeObserver = new ResizeObserver(entries => {
-    for (const entry of entries) {
-      const size = entry.target === preview.value ? previewSize : cardSize;
-      size.width = entry.contentRect.width;
-      size.height = entry.contentRect.height;
-    }
-  });
-  resizeObserver.observe(preview.value);
-  resizeObserver.observe(card.value);
-  changeCard();
-});
-
-onBeforeUnmount(() => {
-  resizeObserver?.disconnect();
-  cancelExport();
-  cardInstance.value?.leafer.destroy();
-  cardInstance.value = null;
-  cardPending.value = false;
-  cardError.value = '';
-});
 
 const trackReady = async () => {
   const current = cardInstance.value;
@@ -164,174 +132,328 @@ const cancelExport = () => {
   exporting.value = false;
 };
 
-const changeCard = () => {
+const changeCard = id => {
   cancelExport();
-  // 先同步移除旧画布，避免 Leafer 将新画布设为绝对定位，导致预览容器尺寸归零。
   cardInstance.value?.leafer.destroy(true);
-  let Card;
-  switch (form.card) {
-    case 'yugioh':
-      form.data = yugiohDemo;
-      Card = YugiohCard;
-      break;
-    case 'rush-duel':
-      form.data = rushDuelDemo;
-      Card = RushDuelCard;
-      break;
-    case 'yugioh-back':
-      form.data = yugiohBackDemo;
-      Card = YugiohBackCard;
-      break;
-    case 'field-center':
-      form.data = fieldCenterDemo;
-      Card = FieldCenterCard;
-      break;
-    case 'yugioh-series-2':
-      form.data = yugiohSeries2Demo;
-      Card = YugiohSeries2Card;
-      break;
-    default:
-      form.data = yugiohDemo;
-      Card = YugiohCard;
+  cardInstance.value = null;
+  selectedExample.value = findExample(id);
+  jsonData.value = JSON.stringify(selectedExample.value.data, null, 2);
+  jsonError.value = '';
+  exportError.value = '';
+  copyStatus.value = '';
+  cardPending.value = false;
+  cardError.value = '';
+  editorRevision.value++;
+
+  try {
+    const { type, data } = selectedExample.value;
+    const Card = CardConstructors[cardTypes[type]];
+    cardInstance.value = new Card({ view: card.value, resourcePath: props.resourcePath, data });
+    void trackReady();
+  } catch (error) {
+    cardError.value = error.message;
   }
-  cardInstance.value = new Card({
-    view: card.value,
-    data: form.data,
-    resourcePath,
-  });
-  jsonData.value = form.data;
-  trackReady();
+};
+
+const changeType = type => {
+  changeCard(cardExamples.find(item => item.type === type)?.id);
+};
+
+const updateJson = value => {
+  if (value === jsonData.value) return;
+  jsonData.value = value;
+  jsonError.value = '';
+  exportError.value = '';
+  copyStatus.value = '';
+  let data;
+  try {
+    data = JSON.parse(value);
+  } catch (error) {
+    jsonError.value = `${labels.value.syntaxError} · ${error.message}`;
+    return;
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    jsonError.value = labels.value.objectError;
+    return;
+  }
+  try {
+    cardInstance.value?.setData(data);
+    void trackReady();
+  } catch (error) {
+    cardError.value = error.message;
+  }
+};
+
+const copyJson = async () => {
+  try {
+    await navigator.clipboard.writeText(jsonData.value);
+    copyStatus.value = labels.value.copied;
+  } catch {
+    copyStatus.value = labels.value.copyError;
+  }
 };
 
 const exportImage = async () => {
   const current = cardInstance.value;
-  if (!current || exporting.value) return;
+  if (!current || exporting.value || jsonError.value) return;
   const request = exportRequest = {};
   exporting.value = true;
+  exportError.value = '';
   try {
     await current.ready;
-    if (current !== cardInstance.value || current.leafer.destroyed) return;
-    await current.leafer.export('卡片.png', {
+    if (current !== cardInstance.value || current.leafer.destroyed || jsonError.value) return;
+    await current.leafer.export(`${selectedExample.value.id}.png`, {
       screenshot: true,
       pixelRatio: devicePixelRatio,
     });
   } catch (error) {
     if (current !== cardInstance.value || current.leafer.destroyed) return;
-    ElMessage.error(`导出失败：${error.message}`);
+    exportError.value = `${labels.value.exportError} · ${error.message}`;
   } finally {
     if (request === exportRequest) cancelExport();
   }
 };
 
-watch(() => jsonData.value, () => {
-  try {
-    form.data = JSON.parse(jsonData.value);
-    cardInstance.value.setData(form.data);
-  } catch (e) {
-
-  } finally {
-    trackReady();
-  }
+onMounted(() => {
+  resizeObserver = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      const size = entry.target === preview.value ? previewSize : cardSize;
+      size.width = entry.contentRect.width;
+      size.height = entry.contentRect.height;
+    }
+  });
+  resizeObserver.observe(preview.value);
+  resizeObserver.observe(card.value);
+  changeCard(selectedExample.value.id);
 });
 
-const toGithub = () => {
-  open('https://github.com/kooriookami/yugioh-card');
-};
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+  cancelExport();
+  cardInstance.value?.leafer.destroy();
+  cardInstance.value = null;
+  cardPending.value = false;
+  cardError.value = '';
+});
 </script>
 
-<style lang="scss" scoped>
-.yugioh-card-container {
-  height: 100vh;
+<style scoped>
+.playground {
+  --workbench-border: var(--vp-c-divider, #d8d5cd);
+  --workbench-text: var(--vp-c-text-1, #312c25);
+  --workbench-muted: var(--vp-c-text-2, #62594f);
+  --workbench-surface: var(--vp-c-bg, #fff);
+  --workbench-accent: var(--vp-c-brand-1, #79532b);
+  color: var(--workbench-text);
+}
+
+.playground-toolbar,
+.preview-toolbar,
+.editor-toolbar,
+.preview-options {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.playground-toolbar {
+  align-items: end;
+  gap: 12px 18px;
+  margin: 16px 0;
+}
+
+.playground-toolbar label {
+  display: grid;
+  gap: 5px;
+  flex: 1 1 160px;
+  max-width: 240px;
+  color: var(--workbench-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.playground-toolbar a {
+  margin: 0 0 8px auto;
+  color: var(--workbench-accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.playground select,
+.playground button {
+  min-height: 38px;
+  padding: 6px 12px;
+  border: 1px solid var(--workbench-border);
+  border-radius: 7px;
+  background: var(--workbench-surface);
+  color: var(--workbench-text);
+  font-size: 14px;
+}
+
+.playground button {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.playground button:hover,
+.playground select:hover {
+  border-color: var(--workbench-accent);
+}
+
+.playground button:focus-visible,
+.playground select:focus-visible,
+.playground a:focus-visible {
+  outline: 2px solid var(--workbench-accent);
+  outline-offset: 2px;
+}
+
+.playground button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.playground-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.playground-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
   overflow: hidden;
+  border: 1px solid var(--workbench-border);
+  border-radius: 12px;
+  background: var(--workbench-surface);
+}
 
-  .yugioh-card {
-    height: 100%;
-    min-width: 0;
-    flex-grow: 1;
-    position: relative;
+.preview-surface {
+  height: clamp(25rem, 65vh, 46rem);
+  overflow: auto;
+  background-color: var(--card-preview-background, #eeeae1);
+  background-image:
+    linear-gradient(var(--card-preview-grid, #ded7ca) 1px, transparent 1px),
+    linear-gradient(90deg, var(--card-preview-grid, #ded7ca) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
 
-    .preview {
-      height: 100%;
-      overflow: auto;
-    }
+.preview-content {
+  display: grid;
+  width: max-content;
+  min-width: 100%;
+  min-height: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  place-items: center;
+}
 
-    .preview-content {
-      width: max-content;
-      min-width: 100%;
-      padding: 20px;
-    }
+.preview-card :deep(canvas) {
+  display: block;
+  filter: drop-shadow(0 13px 24px rgb(35 23 9 / 20%));
+}
 
-    .card {
-      display: inline-block;
-      vertical-align: top;
-    }
+.preview-toolbar,
+.editor-toolbar {
+  padding: 10px 14px;
+}
 
-    .fit-height-button {
-      position: absolute;
-      right: 20px;
-      bottom: 20px;
-    }
+.preview-options {
+  gap: 4px;
+}
+
+.preview-options button[aria-pressed='true'] {
+  border-color: var(--workbench-accent);
+  background: var(--vp-c-brand-soft, #efe6d7);
+  color: var(--workbench-accent);
+}
+
+.render-status,
+.editor-status {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.render-status {
+  color: var(--workbench-muted);
+}
+
+.is-error {
+  color: var(--vp-c-danger-1, #b63424);
+}
+
+.data-panel h2 {
+  margin: 0;
+  padding: 13px 14px;
+  color: var(--workbench-text);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.playground-editor {
+  --jse-main-border: 0;
+  --jse-background-color: var(--workbench-surface);
+  --jse-text-color: var(--workbench-text);
+  --jse-font-size-mono: 13px;
+  --jse-font-family-mono: var(--vp-font-family-mono, ui-monospace, monospace);
+  --jse-panel-background: var(--vp-c-bg-soft, #f7f5ef);
+  flex: 1 1 auto;
+  height: clamp(20rem, 57vh, 41rem);
+  min-height: 250px;
+  overflow: hidden;
+  border-block: 1px solid var(--workbench-border);
+}
+
+:global(.dark .playground-editor) {
+  --jse-theme: dark;
+  --jse-delimiter-color: var(--workbench-muted);
+  --jse-active-line-background-color: rgb(255 255 255 / 6%);
+  --jse-menu-color: var(--workbench-text);
+  --jse-key-color: #e4ba8b;
+  --jse-value-color-string: #a8d2ad;
+  --jse-value-color-number: #eacaa0;
+  --jse-value-color-boolean: #b4c2ef;
+  --jse-value-color-null: #d5addd;
+  --jse-selection-background-color: #403528;
+}
+
+.editor-status {
+  margin: 8px 14px 0;
+}
+
+.editor-toolbar {
+  margin-top: auto;
+}
+
+.playground .export-button {
+  margin-inline-start: auto;
+  border-color: var(--vp-c-brand-2, #684321);
+  background: var(--vp-c-brand-2, #684321);
+  color: #fff;
+}
+
+:global(.dark .playground .export-button) {
+  color: #221910;
+}
+
+@media (max-width: 800px) {
+  .playground-body {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .form {
-    height: 100%;
-    overflow: auto;
-    width: 600px;
-    flex-shrink: 0;
-    border-left: 1px solid var(--border-color);
+  .preview-surface {
+    height: clamp(19rem, 62vh, 35rem);
+  }
 
-    .form-header {
-      padding: 30px 20px;
-      font-size: 18px;
-      font-weight: bold;
-      border-bottom: 1px solid var(--border-color);
+  .playground-toolbar label {
+    max-width: none;
+  }
+}
 
-      .form-title {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-
-        .github-icon {
-          margin-left: 5px;
-          cursor: pointer;
-        }
-      }
-
-      .form-description {
-        margin-top: 20px;
-        font-size: 12px;
-        font-weight: normal;
-        color: var(--info-color);
-      }
-
-      .card-status {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin-top: 16px;
-        font-size: 13px;
-        font-weight: normal;
-        overflow-wrap: anywhere;
-        color: var(--el-color-primary);
-
-        &.is-error {
-          color: var(--el-color-danger);
-        }
-      }
-    }
-
-    .form-main {
-      padding: 20px;
-
-      .button-group {
-        margin-top: 20px;
-
-        .el-button {
-          width: 100%;
-        }
-      }
-    }
+@media (max-width: 420px) {
+  .playground-toolbar label {
+    flex-basis: 100%;
   }
 }
 </style>

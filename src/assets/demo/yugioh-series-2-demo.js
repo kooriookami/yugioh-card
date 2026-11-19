@@ -1,5 +1,3 @@
-import blueEyesOld from '@/assets/image/blue-eyes-old.jpg';
-
 export default {
   language: 'jp',
   fontPreset: '',
@@ -12,7 +10,7 @@ export default {
   cardLayout: 'monster',
   attribute: 'light',
   spellTrapIcon: '',
-  artwork: blueEyesOld,
+  artwork: new URL('../image/blue-eyes-old.jpg', import.meta.url).href,
   monsterFrame: 'normal',
   level: 8,
   monsterTypeLine: 'ドラゴン[族(ぞく)]',

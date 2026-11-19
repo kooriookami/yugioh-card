@@ -1,7 +1,5 @@
-import FieldCenter from '@/assets/image/field-center.jpg';
-
 export default {
-  artwork: FieldCenter,
+  artwork: new URL('../image/field-center.jpg', import.meta.url).href,
   roundCorners: true,
   renderBackSide: false,
   renderScale: 1,

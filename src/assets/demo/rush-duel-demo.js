@@ -1,5 +1,3 @@
-import blueEyes from '@/assets/image/blue-eyes.jpg';
-
 export default {
   language: 'sc',
   name: '青眼白龙',
@@ -7,7 +5,7 @@ export default {
   cardLayout: 'monster',
   attribute: 'light',
   spellTrapIcon: '',
-  artwork: blueEyes,
+  artwork: new URL('../image/blue-eyes.jpg', import.meta.url).href,
   monsterFrame: 'normal',
   level: 8,
   monsterTypeLine: '龙族/通常',
