@@ -7,6 +7,7 @@ const base = '/yugioh-card/';
 const buildLocale = (prefix, lang, label, labels) => {
   const url = route => `${prefix}/${route}`;
   const guide = [
+    { text: labels.introduction, link: url('guide/introduction') },
     { text: labels.install, link: url('guide/') },
     { text: labels.resources, link: url('guide/resources') },
     { text: labels.browser, link: url('guide/browser') },
@@ -29,7 +30,7 @@ const buildLocale = (prefix, lang, label, labels) => {
     description: labels.description,
     themeConfig: {
       nav: [
-        { text: labels.guide, link: url('guide/'), activeMatch: url('(?:guide|migration)/') },
+        { text: labels.guide, link: url('guide/introduction'), activeMatch: url('(?:guide|migration)/') },
         { text: labels.reference, link: url('reference/'), activeMatch: url('reference/') },
         { text: 'Playground', link: url('playground/'), activeMatch: url('playground/') },
       ],
@@ -86,7 +87,8 @@ export default defineConfig({
   locales: {
     root: buildLocale('', 'zh-CN', '简体中文', {
       description: '用于浏览器和 Node.js 的游戏王卡片渲染库',
-      guide: '使用指南', install: '安装', resources: '静态资源', browser: '浏览器', node: 'Node.js',
+      guide: '使用指南', introduction: '项目介绍', install: '安装', resources: '静态资源',
+      browser: '浏览器', node: 'Node.js',
       reference: 'API 参考', common: '公共 API', yugioh: '游戏王', rush: '超速决斗', back: '游戏王卡背',
       field: '场地中心卡', series2: '游戏王第 2 期', migration: '从 1.x 升级',
       edit: '在 GitHub 上编辑此页', outline: '本页目录', previous: '上一页', next: '下一页',
@@ -94,7 +96,8 @@ export default defineConfig({
     }),
     en: buildLocale('/en', 'en', 'English', {
       description: 'Render Yu-Gi-Oh! cards in the browser and Node.js',
-      guide: 'Guide', install: 'Installation', resources: 'Assets', browser: 'Browser', node: 'Node.js',
+      guide: 'Guide', introduction: 'Introduction', install: 'Installation', resources: 'Assets',
+      browser: 'Browser', node: 'Node.js',
       reference: 'API Reference', common: 'Shared API', yugioh: 'Yu-Gi-Oh!', rush: 'Rush Duel', back: 'Yu-Gi-Oh! Card Back',
       field: 'Field Center Card', series2: 'Yu-Gi-Oh! Series 2', migration: 'Upgrade from 1.x',
       edit: 'Edit this page on GitHub', outline: 'On this page', previous: 'Previous', next: 'Next',
@@ -102,7 +105,8 @@ export default defineConfig({
     }),
     ja: buildLocale('/ja', 'ja', '日本語', {
       description: 'ブラウザと Node.js で遊戯王カードを描画するライブラリ',
-      guide: 'ガイド', install: 'インストール', resources: '静的リソース', browser: 'ブラウザ', node: 'Node.js',
+      guide: 'ガイド', introduction: 'はじめに', install: 'インストール', resources: '静的リソース',
+      browser: 'ブラウザ', node: 'Node.js',
       reference: 'API リファレンス', common: '共通 API', yugioh: '遊戯王', rush: 'ラッシュデュエル', back: '遊戯王カードの裏面',
       field: 'フィールドセンターカード', series2: '遊戯王 第2期', migration: '1.x からの移行',
       edit: 'GitHub でこのページを編集', outline: 'このページの目次', previous: '前へ', next: '次へ',
