@@ -18,7 +18,7 @@ global.__server__ = http.createServer(async (req, res) => {
       data: {
         ...yugiohDemo,
         // Vite 的图片 import 返回浏览器 URL，Node 渲染需要本地文件路径。
-        image: imagePath,
+        artwork: imagePath,
       },
       resourcePath,
       skia: skia,

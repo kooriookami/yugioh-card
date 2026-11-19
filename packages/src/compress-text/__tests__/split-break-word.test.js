@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseBreakText, splitBreakWord, splitBreakWordWithBracket } from '../breaking/split-break-word.js';
-import { graphemeBoundaries, mergeGraphemeTokens } from '../breaking/text-graphemes.js';
+import { parseBreakText, splitBreakWord, splitBreakWordWithBracket } from '../breaking/split-break-word.ts';
+import { graphemeBoundaries, mergeGraphemeTokens } from '../breaking/text-graphemes.ts';
 
 const separatorCharList = [
   ' ',

@@ -169,6 +169,9 @@ importers:
       '@element-plus/icons-vue':
         specifier: ^2.3.2
         version: 2.3.2(vue@3.5.45(typescript@7.0.2))
+      '@leafer-ui/interface':
+        specifier: ^2.3.4
+        version: 2.3.4
       '@leafer/node':
         specifier: ^2.3.4
         version: 2.3.4(@leafer-ui/interface@2.3.4)(@leafer/interface@2.3.4)
@@ -218,6 +221,9 @@ importers:
       '@iconify/vue':
         specifier: ^5.0.5
         version: 5.0.5(vue@3.5.45(typescript@7.0.2))
+      '@types/node':
+        specifier: 25.5.0
+        version: 25.5.0
       '@typescript/typescript6':
         specifier: ^6.0.2
         version: 6.0.2
@@ -258,6 +264,9 @@ importers:
   packages:
 
     dependencies:
+      '@leafer-ui/interface':
+        specifier: ^2.3.4
+        version: 2.3.4
       '@leafer/node':
         specifier: ^2.3.4
         version: 2.3.4(@leafer-ui/interface@2.3.4)(@leafer/interface@2.3.4)
@@ -4133,7 +4142,6 @@ snapshots:
   '@types/node@25.5.0':
     dependencies:
       undici-types: 7.18.2
-    optional: true
 
   '@types/trusted-types@2.0.7': {}
 
@@ -5894,8 +5902,7 @@ snapshots:
       has-symbols: 1.1.0
       which-boxed-primitive: 1.1.1
 
-  undici-types@7.18.2:
-    optional: true
+  undici-types@7.18.2: {}
 
   unicode-properties@2.0.2:
     dependencies:

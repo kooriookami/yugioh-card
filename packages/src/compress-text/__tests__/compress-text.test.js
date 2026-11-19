@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
-import { loadFontNode } from '../../utils/index.js';
-import { CompressText } from '../compress-text.js';
+import { loadFontNode } from '../../utils/index.ts';
+import { CompressText } from '../compress-text.ts';
 
 useCanvas('skia', skia);
 loadFontNode(path.resolve('./src/assets/yugioh-card/yugioh/font'), skia);
@@ -16,7 +16,7 @@ const baseConfig = {
   rtOffsetY: -8,
   y: 14,
   textAlign: 'justify',
-  compressFirstSegment: false,
+  compressSegments: [],
   smallFontSize: 16,
   width: 320,
 };
@@ -90,9 +90,9 @@ test('CompressText preserves space nodes across trial layouts', () => {
     fontFamily: 'ygo-en', fontSize: 20, lineHeight: 1.05, width: 120,
   });
   try {
-    const leaves = instance.rubyList.map(ruby => ruby.rubyLeaf);
+    const nodes = instance.rubyList.map(ruby => ruby.rubyNode);
     const snapshot = () => instance.rubyList.map(ruby => ({
-      text: ruby.text, line: ruby.line, x: ruby.rubyLeaf.x, y: ruby.rubyLeaf.y, visible: ruby.rubyLeaf.visible,
+      text: ruby.text, line: ruby.line, x: ruby.rubyNode.x, y: ruby.rubyNode.y, visible: ruby.rubyNode.visible,
     }));
     const before = snapshot();
     const hiddenSpaces = instance.rubyList.filter(ruby => ruby.text === ' ' && ruby.line < 0);
@@ -103,9 +103,9 @@ test('CompressText preserves space nodes across trial layouts', () => {
       instance.relayoutBody();
       instance.alignRuby();
       instance.rubyList.forEach((ruby, index) => {
-        assert.equal(ruby.rubyLeaf, leaves[index]);
-        assert.ok(!ruby.rubyLeaf.destroyed);
-        assert.equal(ruby.rubyLeaf.visible, ruby.line >= 0);
+        assert.equal(ruby.rubyNode, nodes[index]);
+        assert.ok(!ruby.rubyNode.destroyed);
+        assert.equal(ruby.rubyNode.visible, ruby.line >= 0);
       });
       restoredSpace ||= hiddenSpaces.some(ruby => ruby.line >= 0);
     }
@@ -177,19 +177,19 @@ test('CompressText keeps defaultData pristine and falls back to class defaults',
   });
 });
 
-test('CompressText calculateFirstSegmentScaleX matches manual width calculation', () => {
+test('CompressText calculateSegmentScaleX matches manual width calculation', () => {
   const instance = new CompressText({
     ...baseConfig,
     text: '[自(じ)][分(ぶん)]フィールド',
     width: 120,
-    compressFirstSegment: true,
+    compressSegments: [1],
   });
   const firstLineRubyList = instance.hardBreakSegments[0].flat().map(item => item.ruby);
   const totalWidth = firstLineRubyList.reduce((sum, ruby) => sum + ruby.originalWidth, 0);
   const paddingWidth = firstLineRubyList.reduce((sum, ruby) => sum + instance.getPaddingWidth(ruby), 0);
   const expected = Math.min(Math.floor((instance.width - paddingWidth) / totalWidth * 1000) / 1000, 1);
 
-  assert.equal(instance.calculateFirstSegmentScaleX(), expected);
+  assert.equal(instance.calculateSegmentScaleX(instance.hardBreakSegments[0]), expected);
 });
 
 test('CompressText overflow helper reflects current layout height', () => {
@@ -227,25 +227,25 @@ test('CompressText keeps unresolvable one-line height readable and stops searchi
 
   const lastRuby = instance.rubyList[instance.rubyList.length - 1];
   assert.equal(instance.lastSegmentScaleX, 1);
-  assert.ok(instance.rubyList.every(ruby => ruby.rubyLeaf.scaleX > 0));
+  assert.ok(instance.rubyList.every(ruby => ruby.rubyNode.scaleX > 0));
   assert.equal(instance.doesOverflowHeight(lastRuby), true);
   assert.ok(updateTextScaleCount < 40);
 });
 
-test('CompressText gradient styling is applied to ruby leaves', () => {
+test('CompressText gradient styling is applied to ruby nodes', () => {
   const instance = new CompressText({
     ...baseConfig,
     text: '[魔(ま)][法(ほう)]カード',
     width: 220,
     gradient: true,
   });
-  const rubyLeaf = instance.rubyList[0].rubyLeaf;
+  const rubyNode = instance.rubyList[0].rubyNode;
 
-  assert.equal(rubyLeaf.stroke, 'rgba(0, 0, 0, 0.6)');
-  assert.equal(rubyLeaf.strokeAlign, 'outside');
-  assert.equal(rubyLeaf.fill.type, 'linear');
-  assert.equal(rubyLeaf.fill.stops.length, 5);
-  assert.equal(rubyLeaf.shadow.color, 'rgba(0, 0, 0, 0.6)');
+  assert.equal(rubyNode.stroke, 'rgba(0, 0, 0, 0.6)');
+  assert.equal(rubyNode.strokeAlign, 'outside');
+  assert.equal(rubyNode.fill.type, 'linear');
+  assert.equal(rubyNode.fill.stops.length, 5);
+  assert.equal(rubyNode.shadow.color, 'rgba(0, 0, 0, 0.6)');
 });
 
 test('CompressText updates ruby padding when rt is much wider than ruby', () => {
@@ -260,7 +260,7 @@ test('CompressText updates ruby padding when rt is much wider than ruby', () => 
   assert.ok(ruby.paddingLeft > 0);
   assert.ok(ruby.paddingRight > 0);
   assert.equal(instance.needCompressTwice, true);
-  assert.ok(rtItem.rt.rtLeaf.scaleX <= 0.6);
+  assert.ok(rtItem.rt.rtNode.scaleX <= 0.6);
 });
 
 test('CompressText stretches rt letter spacing when ruby is much wider than rt', () => {
@@ -271,7 +271,7 @@ test('CompressText stretches rt letter spacing when ruby is much wider than rt',
   });
   const rtItem = (instance.flatItemList || instance.parseList.flat())[0];
 
-  assert.ok(rtItem.rt.rtLeaf.letterSpacing > 0);
+  assert.ok(rtItem.rt.rtNode.letterSpacing > 0);
 });
 
 test('CompressText applies fixed annotation scale and can return to automatic fitting', t => {
@@ -282,7 +282,7 @@ test('CompressText applies fixed annotation scale and can return to automatic fi
     rtScaleXOverride: 0.75,
   });
   t.after(() => instance.destroy());
-  const scaleX = () => instance.flatItemList[0].rt.rtLeaf.scaleX;
+  const scaleX = () => instance.flatItemList[0].rt.rtNode.scaleX;
 
   assert.equal(scaleX(), 0.75);
   instance.set({ rtScaleXOverride: 1 });
@@ -304,7 +304,7 @@ test('CompressText force-wraps oversized unbreakable text without exceeding widt
   const maxLineWidth = Math.max(...Array.from(instance.rubyLineMap.values()).map(lineList => {
     const lastRuby = lineList[lineList.length - 1];
     const lastPaddingRight = lastRuby.paddingRight || 0;
-    return lastRuby.rubyLeaf.x + lastRuby.width + lastPaddingRight;
+    return lastRuby.rubyNode.x + lastRuby.width + lastPaddingRight;
   }));
 
   assert.equal(rubyText, text);

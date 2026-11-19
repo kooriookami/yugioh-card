@@ -4,12 +4,12 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { Leafer, useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
-import { YugiohCard, YugiohSeries2Card } from '../../../index.js';
-import { getNodeFontResource } from '../../utils/font-loader.js';
-import { getFontInfo } from '../../utils/font-info.js';
-import { CompressText } from '../compress-text.js';
-import { getGlyphMetrics, isSpacingCharacter } from '../glyph-metrics.js';
-import { withTextLayoutContext } from '../layout-context.js';
+import { YugiohCard, YugiohSeries2Card } from '../../../index.ts';
+import { getNodeFontResource } from '../../utils/font-loader.ts';
+import { getFontInfo } from '../../utils/font-info.ts';
+import { CompressText } from '../compress-text.ts';
+import { getGlyphMetrics, isSpacingCharacter } from '../glyph-metrics.ts';
+import { withTextLayoutContext } from '../layout-context.ts';
 
 useCanvas('skia', skia);
 const resourcePath = path.resolve('src/assets/yugioh-card');
@@ -20,7 +20,7 @@ const make = (t, data = {}) => {
   t.after(() => text.destroy());
   return text;
 };
-const children = ruby => ruby.bodyRun ? ruby.rubyLeaf.children : [ruby.rubyLeaf];
+const children = ruby => ruby.bodyRun ? ruby.rubyNode.children : [ruby.rubyNode];
 
 test('loaded font metadata and donor digit widths come from the actual file', t => {
   const entry = fonts.fonts.get('ygo-jp');
@@ -43,7 +43,7 @@ test('Han, kana and explicit marks trim margins without scaling the glyph', t =>
     assert.equal(isSpacingCharacter(char), true, char);
     assert.ok(text.bounds.width > 0 && text.bounds.width <= original.bounds.width, char);
     assert.ok(text.rubyList[0].bodyRun, char);
-    assert.ok(children(text.rubyList[0]).every(leaf => leaf.scaleX === 1), char);
+    assert.ok(children(text.rubyList[0]).every(node => node.scaleX === 1), char);
   }
   for (const content of ['コーヒー', 'スーパー', 'ーー']) {
     const text = make(t, { text: content });
@@ -80,10 +80,10 @@ test('ratio 1 and invalid inputs use the native path; ratio changes replace old 
   for (const ratio of [1, undefined, null, NaN, Infinity, '0.5', 2]) {
     text.set({ sideBearingRatio: ratio });
     close(text.bounds.width, 38);
-    assert.equal(text.rubyList[0].rubyLeaf.tag, 'Text');
+    assert.equal(text.rubyList[0].rubyNode.tag, 'Text');
   }
   text.set({ sideBearingRatio: 0.5 });
-  const previous = text.rubyList[0].rubyLeaf;
+  const previous = text.rubyList[0].rubyNode;
   close(text.bounds.width, 774 * 38 / 1024);
   text.set({ sideBearingRatio: 0 });
   assert.equal(previous.destroyed, true);
@@ -144,11 +144,11 @@ test('spacing supports another family and another font unit grid without a gener
 test('mixed native runs retain shaping, letter spacing and full-width spaces', t => {
   const text = make(t, { text: '[日AV。　あ(X)]', letterSpacing: 2 });
   const ruby = text.rubyList[0];
-  const leaves = children(ruby);
-  assert.deepEqual(leaves.map(leaf => leaf.text), ['日', 'AV。　', 'あ']);
-  close(ruby.width, (774 + 861) * 38 / 1024 + 4 + leaves[1].getBounds('content', 'inner').width);
-  assert.equal(leaves[0].letterSpacing, 0);
-  assert.equal(leaves[1].letterSpacing, 2);
+  const nodes = children(ruby);
+  assert.deepEqual(nodes.map(node => node.text), ['日', 'AV。　', 'あ']);
+  close(ruby.width, (774 + 861) * 38 / 1024 + 4 + nodes[1].getBounds('content', 'inner').width);
+  assert.equal(nodes[0].letterSpacing, 0);
+  assert.equal(nodes[1].letterSpacing, 2);
   const spaces = make(t, { text: '日  日', letterSpacing: 2, wordSpacing: 3 });
   close(spaces.bounds.width, make(t, { letterSpacing: 2 }).bounds.width * 2 + make(t, { text: '  X', letterSpacing: 2, wordSpacing: 3 }).rubyList.slice(0, 2).reduce((sum, ruby) => sum + ruby.width, 0));
 });
@@ -166,7 +166,7 @@ test('wrapping uses the trimmed advance; ruby remains atomic and aligns to logic
   assert.equal(text.rubyList.length, 1);
   const item = text.flatItemList[0];
   close(item.ruby.width, 774 * 38 / 1024 * 2);
-  close(item.rt.rtLeaf.x, item.ruby.rubyLeaf.x + (item.ruby.width + text.getPaddingWidth(item.ruby)) / 2 - (item.ruby.paddingLeft || 0) + item.rt.rtLeaf.letterSpacing / 2);
+  close(item.rt.rtNode.x, item.ruby.rubyNode.x + (item.ruby.width + text.getPaddingWidth(item.ruby)) / 2 - (item.ruby.paddingLeft || 0) + item.rt.rtNode.letterSpacing / 2);
   const trimmed = make(t, { text: '日日', width: 60 });
   assert.equal(trimmed.currentLine, 0);
   assert.equal(make(t, { text: '日日', width: 60, sideBearingRatio: 1 }).currentLine, 1);
@@ -177,16 +177,16 @@ test('small font fallback and external scale update both logical and drawn posit
   const text = make(t, data);
   assert.equal(text.isSmallSize, true);
   for (const ruby of text.rubyList.filter(ruby => ruby.bodyRun)) {
-    close(ruby.width, ruby.bodyRun.width * ruby.rubyLeaf.scaleX);
-    assert.ok(children(ruby).every(leaf => leaf.fontSize === 10));
+    close(ruby.width, ruby.bodyRun.width * ruby.rubyNode.scaleX);
+    assert.ok(children(ruby).every(node => node.fontSize === 10));
   }
   const scaled = make(t, { ...data, scaleX: 1.5, scaleY: 2 });
   close(scaled.bounds.width, text.bounds.width * 1.5);
   close(scaled.bounds.height, text.bounds.height * 2);
   text.set({ height: 200, gradient: true, color: '#f00', strokeWidth: 1 });
-  const leaves = children(text.rubyList[0]);
-  assert.ok(leaves.every(leaf => leaf.fontSize === 38 && leaf.fill.type === 'linear' && leaf.stroke));
-  close(leaves[0].x + leaves[0].fill.from.x, leaves[1].x + leaves[1].fill.from.x);
+  const nodes = children(text.rubyList[0]);
+  assert.ok(nodes.every(node => node.fontSize === 38 && node.fill.type === 'linear' && node.stroke));
+  close(nodes[0].x + nodes[0].fill.from.x, nodes[1].x + nodes[1].fill.from.x);
 });
 
 test('trimmed and native single-glyph renders have identical ink pixels', async () => {
@@ -214,45 +214,45 @@ test('trimmed and native single-glyph renders have identical ink pixels', async 
 
 test('both Japanese card styles propagate the internal ratio and still become ready/export', async t => {
   for (const Card of [YugiohCard, YugiohSeries2Card]) {
-    const card = new Card({ resourcePath, skia, data: { language: 'jp', scale: 0.15, name: '[日あー(にち)]', monsterType: 'ドラゴン族／通常', description: '[日あー(にち)] ０１２３４５６７８９', type: 'spell', image: path.resolve('src/assets/image/blue-eyes.jpg') } });
+    const card = new Card({ resourcePath, skia, data: { language: 'jp', renderScale: 0.15, name: '[日あー(にち)]', monsterTypeLine: 'ドラゴン族／通常', cardText: '[日あー(にち)] ０１２３４５６７８９', cardLayout: 'spell', artwork: path.resolve('src/assets/image/blue-eyes.jpg') } });
     t.after(() => card.leafer.destroy(true));
     await card.ready;
-    assert.ok(card.nameLeaf.rubyList.some(ruby => ruby.bodyRun));
-    assert.ok(card.descriptionLeaf.rubyList.some(ruby => ruby.bodyRun));
-    assert.ok(card.spellTrapLeaf.children[2].rubyList.some(ruby => ruby.bodyRun));
+    assert.ok(card.nameNode.rubyList.some(ruby => ruby.bodyRun));
+    assert.ok(card.cardTextNode.rubyList.some(ruby => ruby.bodyRun));
+    assert.ok(card.spellTrapLabelNode.children[2].rubyList.some(ruby => ruby.bodyRun));
     assert.match((await card.leafer.export('png', { screenshot: true })).data, /^data:image\/png;base64,/);
     if (Card === YugiohCard) {
-      card.setData({ language: 'en', name: 'Normal English', description: 'Normal English' });
+      card.setData({ language: 'en', name: 'Normal English', cardText: 'Normal English' });
       await card.ready;
-      assert.ok(card.nameLeaf.rubyList.every(ruby => !ruby.bodyRun));
-      card.setData({ language: 'jp', type: 'pendulum', pendulumDescription: '日あー' });
+      assert.ok(card.nameNode.rubyList.every(ruby => !ruby.bodyRun));
+      card.setData({ language: 'jp', cardLayout: 'pendulum', pendulumEffect: '日あー' });
       await card.ready;
-      assert.ok(card.pendulumDescriptionLeaf.rubyList.some(ruby => ruby.bodyRun));
+      assert.ok(card.pendulumEffectNode.rubyList.some(ruby => ruby.bodyRun));
     } else {
-      card.setData({ type: 'monster', atk: 3000, def: 2500 });
+      card.setData({ cardLayout: 'monster', atk: 3000, def: 2500 });
       await card.ready;
-      assert.ok(card.atkDefLeaf.children.every(text => text.rubyList.some(ruby => ruby.bodyRun)));
-      assert.ok(card.atkDefLeaf.children.every(text => text.rubyList.filter(ruby => /^\d+$/.test(ruby.text)).every(ruby => !ruby.bodyRun)));
+      assert.ok(card.battleStatsNode.children.every(text => text.rubyList.some(ruby => ruby.bodyRun)));
+      assert.ok(card.battleStatsNode.children.every(text => text.rubyList.filter(ruby => /^\d+$/.test(ruby.text)).every(ruby => !ruby.bodyRun)));
     }
   }
 });
 
 test('Series 2 custom fonts preserve Japanese spacing for fixed-font attack and defense labels', async t => {
-  const card = new YugiohSeries2Card({ resourcePath, skia, data: { language: 'jp', type: 'monster', scale: 0.1, name: '日あー', description: '日あー', atk: 3000, def: 2500 } });
+  const card = new YugiohSeries2Card({ resourcePath, skia, data: { language: 'jp', cardLayout: 'monster', renderScale: 0.1, name: '日あー', cardText: '日あー', atk: 3000, def: 2500 } });
   t.after(() => card.leafer.destroy(true));
   await card.ready;
-  const labels = () => card.atkDefLeaf.children.map(text => text.rubyList.find(ruby => ruby.text === '攻' || ruby.text === '守'));
+  const labels = () => card.battleStatsNode.children.map(text => text.rubyList.find(ruby => ruby.text === '攻' || ruby.text === '守'));
   const normalWidths = labels().map(ruby => ruby.normalWidth);
   for (const font of ['custom1', 'custom2', '']) {
-    card.setData({ font });
+    card.setData({ fontPreset: font });
     await card.ready;
     labels().forEach((ruby, index) => {
       assert.ok(ruby.bodyRun, `fixed Japanese label remains trimmed with ${font || 'default'}`);
       close(ruby.normalWidth, normalWidths[index]);
     });
-    assert.equal(card.nameLeaf.fontFamily, font || 'ygo-jp');
-    assert.equal(card.nameLeaf.rubyList.some(ruby => ruby.bodyRun), !font);
-    for (const text of card.atkDefLeaf.children) {
+    assert.equal(card.nameNode.fontFamily, font || 'ygo-jp');
+    assert.equal(card.nameNode.rubyList.some(ruby => ruby.bodyRun), !font);
+    for (const text of card.battleStatsNode.children) {
       assert.equal(text.fontFamily, 'ygo-jp');
       assert.ok(text.rubyList.filter(ruby => /^\d+$/.test(ruby.text)).every(ruby => !ruby.bodyRun));
     }

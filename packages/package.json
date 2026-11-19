@@ -1,18 +1,18 @@
 {
   "name": "yugioh-card",
-  "version": "1.9.2",
+  "version": "2.0.0",
   "type": "module",
-  "main": "./index.js",
-  "module": "./index.js",
-  "types": "./index.d.ts",
+  "main": "./index.ts",
+  "module": "./index.ts",
+  "types": "./index.ts",
   "exports": {
     ".": {
-      "types": "./index.d.ts",
-      "import": "./index.js"
+      "types": "./index.ts",
+      "import": "./index.ts"
     },
     "./*": {
-      "types": "./*.d.ts",
-      "import": "./*.js"
+      "types": "./*.ts",
+      "import": "./*.ts"
     }
   },
   "repository": {
@@ -30,6 +30,7 @@
   "author": "kooriookami",
   "license": "MIT",
   "dependencies": {
+    "@leafer-ui/interface": "^2.3.4",
     "@leafer/node": "^2.3.4",
     "css-line-break": "^2.1.0",
     "fontkit": "^3.0.0",

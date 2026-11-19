@@ -60,6 +60,7 @@
           </el-form-item>
           <el-form-item label="数据">
             <json-editor-vue
+              :key="form.card"
               v-model="jsonData"
               style="width: 100%"
               mode="text"
@@ -85,6 +86,7 @@ import { ElMessage } from 'element-plus';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { FieldCenterCard, RushDuelCard, YugiohBackCard, YugiohCard, YugiohSeries2Card } from 'yugioh-card';
 import JsonEditorVue from 'json-editor-vue';
+import { resourcePath } from '@/assets/resource-path.js';
 import fieldCenterDemo from '@/assets/demo/field-center-demo';
 import rushDuelDemo from '@/assets/demo/rush-duel-demo';
 import yugiohBackDemo from '@/assets/demo/yugioh-back-demo';
@@ -101,7 +103,7 @@ const previewScale = computed(() => {
   return Math.max(0.01, Math.min(1, (previewSize.height - 40) / cardSize.height, (previewSize.width - 40) / cardSize.width));
 });
 let resizeObserver;
-const cardLeaf = shallowRef(null);
+const cardInstance = shallowRef(null);
 const cardPending = ref(false);
 const cardError = ref('');
 const exporting = ref(false);
@@ -133,21 +135,21 @@ onMounted(() => {
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
   cancelExport();
-  cardLeaf.value?.leafer.destroy();
-  cardLeaf.value = null;
+  cardInstance.value?.leafer.destroy();
+  cardInstance.value = null;
   cardPending.value = false;
   cardError.value = '';
 });
 
 const trackReady = async () => {
-  const current = cardLeaf.value;
+  const current = cardInstance.value;
   if (!current) return;
   const ready = current.ready;
   if (ready === observedReady) return;
   observedReady = ready;
   cardPending.value = true;
   cardError.value = '';
-  const isCurrent = () => current === cardLeaf.value && ready === current.ready && !current.leafer.destroyed;
+  const isCurrent = () => current === cardInstance.value && ready === current.ready && !current.leafer.destroyed;
   try {
     await ready;
   } catch (error) {
@@ -165,7 +167,7 @@ const cancelExport = () => {
 const changeCard = () => {
   cancelExport();
   // 先同步移除旧画布，避免 Leafer 将新画布设为绝对定位，导致预览容器尺寸归零。
-  cardLeaf.value?.leafer.destroy(true);
+  cardInstance.value?.leafer.destroy(true);
   let Card;
   switch (form.card) {
     case 'yugioh':
@@ -192,29 +194,29 @@ const changeCard = () => {
       form.data = yugiohDemo;
       Card = YugiohCard;
   }
-  cardLeaf.value = new Card({
+  cardInstance.value = new Card({
     view: card.value,
     data: form.data,
-    resourcePath: process.env.NODE_ENV === 'production' ? 'https://raw.githubusercontent.com/kooriookami/yugioh-card/refs/heads/master/src/assets/yugioh-card' : 'src/assets/yugioh-card',
+    resourcePath,
   });
   jsonData.value = form.data;
   trackReady();
 };
 
 const exportImage = async () => {
-  const current = cardLeaf.value;
+  const current = cardInstance.value;
   if (!current || exporting.value) return;
   const request = exportRequest = {};
   exporting.value = true;
   try {
     await current.ready;
-    if (current !== cardLeaf.value || current.leafer.destroyed) return;
+    if (current !== cardInstance.value || current.leafer.destroyed) return;
     await current.leafer.export('卡片.png', {
       screenshot: true,
       pixelRatio: devicePixelRatio,
     });
   } catch (error) {
-    if (current !== cardLeaf.value || current.leafer.destroyed) return;
+    if (current !== cardInstance.value || current.leafer.destroyed) return;
     ElMessage.error(`导出失败：${error.message}`);
   } finally {
     if (request === exportRequest) cancelExport();
@@ -224,7 +226,7 @@ const exportImage = async () => {
 watch(() => jsonData.value, () => {
   try {
     form.data = JSON.parse(jsonData.value);
-    cardLeaf.value.setData(form.data);
+    cardInstance.value.setData(form.data);
   } catch (e) {
 
   } finally {

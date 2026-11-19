@@ -1,8 +1,8 @@
 import FieldCenter from '@/assets/image/field-center.jpg';
 
 export default {
-  image: FieldCenter,
-  radius: true,
-  cardBack: false,
-  scale: 1,
+  artwork: FieldCenter,
+  roundCorners: true,
+  renderBackSide: false,
+  renderScale: 1,
 };

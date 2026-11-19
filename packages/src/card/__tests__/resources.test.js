@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Group, Text, Rect, useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
-import { collectFonts, collectResources } from '../resources.js';
+import { collectFonts, collectResources } from '../resources.ts';
 
 useCanvas('skia', skia);
 
@@ -17,7 +17,7 @@ test('combined resource discovery preserves visible fonts, image paints and all 
   hidden.add(new Rect({ fill: { type: 'image', url: 'resource-test:hidden' } }));
   root.addMany(text, first, second, hidden, status, new Text({ text: 'transparent', fontFamily: 'ignored', opacity: 0 }));
   try {
-    const card = { leafer: root, imageStatusLeaf: status };
+    const card = { leafer: root, artworkStatusNode: status };
     const result = collectResources(card);
     assert.deepEqual(result.fonts, collectFonts(card));
     assert.deepEqual([...result.fonts], ['MiXeD', 'serif']);

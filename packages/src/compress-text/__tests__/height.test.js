@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import skia from 'skia-canvas';
 import { useCanvas } from 'leafer-unified';
-import { CompressText } from '../compress-text.js';
-import { getNodeFontResource } from '../../utils/font-loader.js';
+import { CompressText } from '../compress-text.ts';
+import { getNodeFontResource } from '../../utils/font-loader.ts';
 
 useCanvas('skia', skia);
 getNodeFontResource(path.resolve('src/assets/yugioh-card/yugioh/font'), skia);
@@ -27,7 +27,7 @@ for (const [content, lines] of [['ABC\nDEF', 2], ['ABC\nDEF\nGHI', 3], ['ABC\n\n
     closeTo(text.bounds.height, lines * 21);
     assert.equal(text.lastSegmentScaleX, 1);
     assert.equal(Boolean(text.doesOverflowHeight(text.rubyList.at(-1))), false);
-    for (const ruby of text.rubyList.filter(ruby => ruby.text !== '\n' && ruby.line >= 0)) closeTo(ruby.rubyLeaf.y, ruby.line * 21);
+    for (const ruby of text.rubyList.filter(ruby => ruby.text !== '\n' && ruby.line >= 0)) closeTo(ruby.rubyNode.y, ruby.line * 21);
   });
 }
 
@@ -36,7 +36,7 @@ test('hard breaks do not contribute width or displace centered and right-aligned
     const text = makeText(t, { text: 'ABC\n\nDEF', width: 200, textAlign });
     for (const ruby of text.rubyList.filter(ruby => ruby.text !== '\n')) {
       const expected = textAlign === 'center' ? (200 - ruby.width) / 2 : textAlign === 'right' ? 200 - ruby.width : 0;
-      closeTo(ruby.rubyLeaf.x, expected);
+      closeTo(ruby.rubyNode.x, expected);
     }
     assert.ok(text.bounds.width > 0 && text.bounds.width <= 200);
     closeTo(text.bounds.height, 63);
@@ -75,15 +75,29 @@ for (const content of ['ABC', 'ABC\nDEF']) {
 }
 
 test('an impossible height refits the first paragraph at the fallback font size', t => {
-  const options = { text: 'ABC DEF GHI JKL MNO PQR STU VWX', compressFirstSegment: true, autoSmallSize: true, smallFontSize: 10 };
+  const options = { text: 'ABC DEF GHI JKL MNO PQR STU VWX', compressSegments: [1], autoSmallSize: true, smallFontSize: 10 };
   const normal = makeText(t, options);
   const small = makeText(t, { ...options, height: 15 });
   assert.equal(small.isSmallSize, true);
   assert.equal(small.currentLine, 0);
   assert.equal(small.lastSegmentScaleX, 1);
-  assert.ok(small.firstSegmentScaleX > normal.firstSegmentScaleX);
+  assert.ok(small.segmentScaleX.get(0) > normal.segmentScaleX.get(0));
   assert.ok(small.bounds.width <= small.width);
   closeTo(small.bounds.height, 10.5);
+});
+
+test('a narrow normal fit refits selected paragraphs at the fallback font size', t => {
+  const options = {
+    text: 'Intro\nABC DEF GHI JKL MNO\nThe last line wraps here because it is very long.',
+    fontSize: 32, smallFontSize: 22, rtFontSize: 12, lineHeight: 1.15, width: 140, height: 110.401, compressSegments: [2],
+  };
+  const normal = makeText(t, { ...options, autoSmallSize: false });
+  assert.ok(normal.lastSegmentScaleX > 0 && normal.lastSegmentScaleX < 0.7);
+  const small = makeText(t, { ...options, autoSmallSize: true });
+  assert.equal(small.isSmallSize, true);
+  assert.ok(small.segmentScaleX.get(1) > normal.segmentScaleX.get(1));
+  closeTo(small.segmentScaleX.get(1), small.calculateSegmentScaleX(small.hardBreakSegments[1]));
+  assert.ok(small.bounds.width <= small.width && small.bounds.height <= small.height);
 });
 
 test('manual enlargement keeps the existing restriction on automatic small-font fallback', t => {
@@ -101,7 +115,7 @@ for (const options of [{ autoSmallSize: false }, { autoSmallSize: true, smallFon
     assert.equal(text.lastSegmentScaleX, 1);
     assert.equal(text.isSmallSize, options.autoSmallSize && options.smallFontSize === 10);
     assert.equal(Boolean(text.doesOverflowHeight(text.rubyList.at(-1))), true);
-    assert.ok(text.rubyList.filter(ruby => ruby.text !== '\n').every(ruby => ruby.rubyLeaf.visible && ruby.rubyLeaf.scaleX > 0));
+    assert.ok(text.rubyList.filter(ruby => ruby.text !== '\n').every(ruby => ruby.rubyNode.visible && ruby.rubyNode.scaleX > 0));
     assert.ok(text.bounds.height > text.height);
   });
 }
@@ -120,7 +134,7 @@ test('protected symbols that cannot shrink still have a strict search budget', t
   assert.ok(text.layoutCalls <= 35);
   assert.equal(text.lastSegmentScaleX, 1);
   assert.ok(text.bounds.height > text.height);
-  assert.ok(text.rubyList.every(ruby => ruby.rubyLeaf.scaleX === 1));
+  assert.ok(text.rubyList.every(ruby => ruby.rubyNode.scaleX === 1));
 });
 
 test('line height uses fontSizeScale locally and applies group scaling once', t => {
@@ -138,7 +152,7 @@ test('line height uses fontSizeScale locally and applies group scaling once', t 
 test('switching between normal, fallback and unresolvable states matches a fresh layout', t => {
   const initial = { text: 'ABC\nDEF', autoSmallSize: true, smallFontSize: 10 };
   const reused = makeText(t, { ...initial, height: 42 });
-  const snapshot = text => ({ small: text.isSmallSize, scale: text.lastSegmentScaleX, bounds: { ...text.bounds }, rows: text.rubyList.filter(ruby => ruby.text !== '\n').map(ruby => [ruby.rubyLeaf.x, ruby.rubyLeaf.y, ruby.width, ruby.height, ruby.rubyLeaf.fontSize]) });
+  const snapshot = text => ({ small: text.isSmallSize, scale: text.lastSegmentScaleX, bounds: { ...text.bounds }, rows: text.rubyList.filter(ruby => ruby.text !== '\n').map(ruby => [ruby.rubyNode.x, ruby.rubyNode.y, ruby.width, ruby.height, ruby.rubyNode.fontSize]) });
   for (const height of [30, 8, 42, 30, 42]) {
     reused.set({ height });
     const fresh = makeText(t, { ...initial, height });
@@ -147,10 +161,48 @@ test('switching between normal, fallback and unresolvable states matches a fresh
 });
 
 test('ruby expansion, first-line compression and protected symbols retain a bounded fallback', t => {
-  const text = makeText(t, { text: '[魔(まほうほうほう)]\n①[永続(えい)]カード'.repeat(3), width: 120, height: 50, compressFirstSegment: true, autoSmallSize: true, smallFontSize: 10 });
+  const text = makeText(t, { text: '[魔(まほうほうほう)]\n①[永続(えい)]カード'.repeat(3), width: 120, height: 50, compressSegments: [1], autoSmallSize: true, smallFontSize: 10 });
   assert.ok(text.layoutCalls < 150);
   assert.ok(text.lastSegmentScaleX > 0 && Number.isFinite(text.lastSegmentScaleX));
-  assert.ok(text.firstSegmentScaleX > 0);
-  assert.ok(text.rubyList.filter(ruby => ruby.text === '①').every(ruby => ruby.rubyLeaf.scaleX === 1));
-  assert.ok(text.flatItemList.filter(item => item.rt.text).every(item => Number.isFinite(item.rt.rtLeaf.x) && Number.isFinite(item.rt.rtLeaf.y)));
+  assert.ok(text.segmentScaleX.get(0) > 0);
+  assert.ok(text.rubyList.filter(ruby => ruby.text === '①').every(ruby => ruby.rubyNode.scaleX === 1));
+  assert.ok(text.flatItemList.filter(item => item.rt.text).every(item => Number.isFinite(item.rt.rtNode.x) && Number.isFinite(item.rt.rtNode.y)));
+});
+
+test('selected hard-break segments fit separately and are refreshed on replacement and reset', t => {
+  const paragraph = 'ABC DEF GHI JKL MNO';
+  const text = makeText(t, { text: [paragraph, paragraph, '[ABC(xyz)] DEF GHI JKL MNO'].join('\n') });
+  const lineCounts = () => text.hardBreakSegments.map(segment => {
+    const rows = segment.flat().filter(({ ruby }) => ruby.text !== '\n' && ruby.text !== ' ');
+    return new Set(rows.map(({ ruby }) => ruby.line)).size;
+  });
+  const naturalLines = lineCounts();
+  assert.ok(naturalLines.every(count => count > 1));
+  const selection = [2, 2, 3, 99];
+  text.set({ compressSegments: selection });
+  assert.deepEqual(lineCounts(), [naturalLines[0], 1, 1]);
+  const group = text.group;
+  text.set({ compressSegments: [99, 3, 2] });
+  assert.equal(text.group, group, 'reordering equivalent selections does not relayout');
+
+  selection.splice(0, 3, 1);
+  text.set({ compressSegments: selection });
+  assert.deepEqual(lineCounts(), [1, naturalLines[1], naturalLines[2]]);
+  text.set({ compressSegments: [] });
+  assert.deepEqual(lineCounts(), naturalLines);
+
+  text.set({ text: [paragraph, '', paragraph, paragraph].join('\n'), compressSegments: [2, 3] });
+  assert.deepEqual(lineCounts(), [naturalLines[0], 0, 1, naturalLines[0]]);
+});
+
+test('impossible selected-segment scaling keeps positive glyph widths and normal wrapping', t => {
+  const text = makeText(t, { text: 'ABC\nABC DEF GHI JKL MNO', compressSegments: [2] });
+  assert.ok(text.segmentScaleX.get(1) > 0);
+  const secondSegment = text.hardBreakSegments[1].flat().map(({ ruby }) => ruby);
+  secondSegment[0].paddingLeft = text.width + 1;
+  text.compressRuby();
+  assert.equal(text.segmentScaleX.has(1), false);
+  const visible = secondSegment.filter(ruby => ruby.text.trim());
+  assert.ok(visible.every(ruby => ruby.rubyNode.scaleX === 1 && ruby.rubyNode.visible !== false));
+  assert.ok(new Set(visible.map(ruby => ruby.line)).size > 1);
 });

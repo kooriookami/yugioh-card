@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs';
-import { getBrowserFontResource, getLoadedFontEntry, getNodeFontResource, subscribeFontChanges } from '../font-loader.js';
-import { getFontInfo } from '../font-info.js';
+import { getBrowserCardFonts, getBrowserFontResource, getLoadedFontEntry, getNodeFontResource, subscribeFontChanges } from '../font-loader.ts';
+import { getFontInfo } from '../font-info.ts';
 
 const deferred = () => {
   let resolve, reject;
@@ -45,6 +45,38 @@ const browser = (t, manifest, fontForUrl = () => 'ygo-sc') => {
   });
   return { faces, fonts, fontRequests, get requests() { return requests; } };
 };
+
+test('cards share on-demand font requests and leave unused families idle until explicitly preloaded', async t => {
+  const env = browser(t, async () => ({ ok: true, json: async () => ['ygo-jp', 'ygo-tip'] }));
+  t.after(() => env.faces.forEach(face => face.loading.resolve()));
+  const resource = getBrowserCardFonts('./fonts');
+  const sibling = getBrowserCardFonts('http://localhost/app/fonts/');
+  await resource.promise;
+  assert.equal(resource, sibling);
+  assert.equal(env.requests, 1);
+  assert.deepEqual(env.fontRequests, []);
+
+  const first = resource.requestFont('ygo-jp', false);
+  assert.equal(sibling.requestFont('ygo-jp', true), first);
+  await flush();
+  assert.deepEqual(env.fontRequests, ['http://localhost/app/fonts/ygo-jp.woff2']);
+  env.faces[0].loading.reject(new Error('Font request failed'));
+  await assert.rejects(first.promise, { resourceType: 'font' });
+  assert.equal(sibling.requestFont('ygo-jp', false), first);
+  const retried = sibling.requestFont('ygo-jp', true);
+  assert.notEqual(retried, first);
+  assert.equal(resource.fonts.get('ygo-tip').status, 'idle');
+
+  const preloaded = getBrowserFontResource('./fonts', true);
+  assert.equal(preloaded, resource);
+  assert.equal(preloaded.fonts.get('ygo-jp'), retried);
+  await flush();
+  assert.deepEqual(env.fontRequests.map(url => url.split('/').at(-1)), ['ygo-jp.woff2', 'ygo-jp.woff2', 'ygo-tip.woff2']);
+  env.faces.slice(1).forEach(face => face.loading.resolve());
+  await preloaded.promise;
+  assert.equal(retried.status, 'loaded');
+  assert.equal(preloaded.fonts.get('ygo-tip').status, 'loaded');
+});
 
 test('concurrent browser font requests share the actual pending manifest and font promises', async t => {
   const manifest = deferred();

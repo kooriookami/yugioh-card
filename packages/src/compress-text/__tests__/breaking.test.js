@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
-import { getNodeFontResource } from '../../utils/font-loader.js';
-import { CompressText } from '../compress-text.js';
+import { getNodeFontResource } from '../../utils/font-loader.ts';
+import { CompressText } from '../compress-text.ts';
 
 useCanvas('skia', skia);
 getNodeFontResource(path.resolve('src/assets/yugioh-card/yugioh/font'), skia);
@@ -13,7 +13,7 @@ const make = (t, data) => {
   t.after(() => text.destroy());
   return text;
 };
-const lines = text => [...text.rubyLineMap.values()].map(row => row.filter(ruby => ruby.rubyLeaf.visible).map(ruby => ruby.text).join(''));
+const lines = text => [...text.rubyLineMap.values()].map(row => row.filter(ruby => ruby.rubyNode.visible).map(ruby => ruby.text).join(''));
 
 test('adding a short annotation does not introduce Latin/CJK word binding', t => {
   assert.deepEqual(lines(make(t, { text: '前前A[日(x)]B' })), ['前前A日', 'B']);
@@ -64,7 +64,7 @@ test('literal placeholders and zero width controls keep their content and intend
   const control = controlled.rubyList.find(ruby => ruby.text === '\u200B');
   assert.ok(control);
   assert.equal(control.width, 0);
-  assert.equal(control.rubyLeaf.visible, false);
+  assert.equal(control.rubyNode.visible, false);
   assert.equal(controlled.rubyList.map(ruby => ruby.text).join(''), '甲\u200B乙日');
   const plain = make(t, { text: '甲\u200B乙', width: 40 });
   assert.equal(plain.bounds.width, 40);

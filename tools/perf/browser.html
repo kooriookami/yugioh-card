@@ -45,6 +45,7 @@ try {
   const api = await import(/* @vite-ignore */ `${runtime}?t=${Date.now()}`);
   const { Leafer, CompressText, getBrowserFontResource } = api;
   const createText = options => new CompressText(textOptionsFor(CompressText, options));
+  const scaleKey = 'calculateSegmentScaleX' in CompressText.prototype ? 'renderScale' : 'scale';
   await getBrowserFontResource('/src/assets/yugioh-card/yugioh/font').promise;
   const capture = async (text, view) => ({ layout: textSnapshot(text), pixels: await pixels(view) });
   for (const [index, data] of cases.entries()) {
@@ -79,7 +80,7 @@ try {
     } finally { view.destroy(true); }
   }
   const images = [0, 1, 2].map(index => `/node_modules/.cache/layout-perf/browser-images/${index}.png`);
-  const card = new api.YugiohCard({ view: host, resourcePath: '/src/assets/yugioh-card', data: { scale: 1 } });
+  const card = new api.YugiohCard({ view: host, resourcePath: '/src/assets/yugioh-card', data: { [scaleKey]: 1 } });
   const defaults = structuredClone(card.data);
   try {
     for (let index = 0; index < 100; index++) {
@@ -90,7 +91,7 @@ try {
   } finally { card.leafer.destroy(true); }
   for (const name of ['YugiohCard', 'YugiohSeries2Card', 'RushDuelCard', 'FieldCenterCard', 'YugiohBackCard']) {
     progress(`卡片类 ${name}`);
-    const card = new api[name]({ view: host, resourcePath: '/src/assets/yugioh-card', data: { scale: 0.15 } });
+    const card = new api[name]({ view: host, resourcePath: '/src/assets/yugioh-card', data: { [scaleKey]: 0.15 } });
     const defaults = structuredClone(card.data), samples = [], layouts = [];
     try {
       for (let index = 0; index < 4; index++) { card.setData(classData(name, defaults, index, images)); await card.ready; samples.push(await pixels(card.leafer, `${name}-${index}`)); layouts.push(JSON.parse(JSON.stringify(nodeSnapshot(card.leafer)))); }

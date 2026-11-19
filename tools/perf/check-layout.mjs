@@ -5,6 +5,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { textCases, updateCases, batchData, classData, textOptionsFor, textSnapshot, nodeSnapshot } from './layout-cases.js';
+import { moduleLoader } from './runtime-entry.js';
 
 const args = Object.fromEntries(process.argv.slice(2).map(arg => arg.replace(/^--/, '').split('=')));
 const cases = args.cases ? (await import(pathToFileURL(path.resolve(args.cases)))).textCases : textCases;
@@ -13,11 +14,12 @@ const entry = path.resolve(root, args.entry || 'packages');
 const runtime = args.runtime ? await import(pathToFileURL(path.resolve(args.runtime))) : null;
 const { Leafer, useCanvas } = runtime || await import('leafer-unified');
 const skia = runtime?.skia || (await import('skia-canvas')).default;
-const moduleAt = file => import(pathToFileURL(path.join(entry, file)));
-const { CompressText } = await moduleAt('src/compress-text/compress-text.js');
+const moduleAt = moduleLoader(entry);
+const { CompressText } = await moduleAt('src/compress-text/compress-text');
 const createText = options => new CompressText(textOptionsFor(CompressText, options));
-const cards = await moduleAt('index.js');
-const { getNodeFontResource } = await moduleAt('src/utils/font-loader.js');
+const scaleKey = 'calculateSegmentScaleX' in CompressText.prototype ? 'renderScale' : 'scale';
+const cards = await moduleAt('index');
+const { getNodeFontResource } = await moduleAt('src/utils/font-loader');
 const assets = path.resolve('src/assets/yugioh-card');
 useCanvas('skia', skia);
 getNodeFontResource(`${assets}/yugioh/font`, skia);
@@ -60,7 +62,7 @@ const images = args['images-dir']
 const count = Number(args.batch || 0);
 await checkpoint();
 if (count && !args['resume-classes']) {
-  const card = new cards.YugiohCard({ resourcePath: assets, skia, data: { scale: 1 } });
+  const card = new cards.YugiohCard({ resourcePath: assets, skia, data: { [scaleKey]: 1 } });
   const defaults = structuredClone(card.data);
   const timings = { update: [], ready: [], export: [] };
   await card.ready;
@@ -83,7 +85,7 @@ if (count && !args['resume-classes']) {
 output.classes = [];
 for (const name of ['YugiohCard', 'YugiohSeries2Card', 'RushDuelCard', 'FieldCenterCard', 'YugiohBackCard']) {
   const Card = cards[name];
-  const card = new Card({ resourcePath: assets, skia, data: { scale: 0.15 } });
+  const card = new Card({ resourcePath: assets, skia, data: { [scaleKey]: 0.15 } });
   const defaults = structuredClone(card.data);
   const samples = [];
   try {

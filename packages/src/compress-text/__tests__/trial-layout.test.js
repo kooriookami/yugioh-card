@@ -5,9 +5,9 @@ import { useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
 import { textSnapshot } from '../../../../tools/perf/layout-cases.js';
 import { textCases } from '../../../../tools/perf/breaking-cases.js';
-import { getNodeFontResource } from '../../utils/font-loader.js';
-import { CompressText } from '../compress-text.js';
-import { trialLayoutHeight } from '../layout/trial-layout.js';
+import { getNodeFontResource } from '../../utils/font-loader.ts';
+import { CompressText } from '../compress-text.ts';
+import { trialLayoutHeight } from '../layout/trial-layout.ts';
 
 useCanvas('skia', skia);
 getNodeFontResource(path.resolve('src/assets/yugioh-card/yugioh/font'), skia);
@@ -18,7 +18,7 @@ test('numeric trial height exactly matches committed layout without changing sce
     try {
       for (const scaleX of [1, 0.75, 0.333333333333, 0.01, Number.EPSILON]) {
         const before = textSnapshot(text);
-        const height = trialLayoutHeight(text.hardBreakSegments, text.width, text.getLineHeight(), text.compressFirstSegment, text.firstSegmentScaleX, scaleX);
+        const height = trialLayoutHeight(text.hardBreakSegments, text.width, text.getLineHeight(), text.segmentScaleX, scaleX);
         assert.deepEqual(textSnapshot(text), before, 'trial cannot modify the scene or layout');
         text.lastSegmentScaleX = scaleX;
         text.relayoutBody();

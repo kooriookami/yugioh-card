@@ -17,8 +17,8 @@ pre { white-space:pre-wrap; line-height:1.65; padding:18px; border-radius:12px; 
 <pre id="report">初始化中</pre>
 <script type="module">
 import { Leafer, Rect } from 'leafer-unified';
-import { CompressText } from '/packages/src/compress-text/compress-text.js';
-import { getBrowserFontResource } from '/packages/src/utils/font-loader.js';
+import { CompressText } from '/packages/src/compress-text/compress-text.ts';
+import { getBrowserFontResource } from '/packages/src/utils/font-loader.ts';
 
 const resourcePath = '/src/assets/yugioh-card';
 const results = [], failures = [], views = [];
@@ -64,7 +64,7 @@ try {
     const text = new MeasuredText({ text:'ABC\n\nDEF', fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:200, textAlign:align });
     try {
       await frame();
-      check(text.rubyList.filter(ruby => ruby.text !== '\n').every(ruby => equal(ruby.rubyLeaf.x, align === 'center' ? (200-ruby.width)/2 : align === 'right' ? 200-ruby.width : 0)), `显式换行的 ${align} 对齐使用正文宽度`);
+      check(text.rubyList.filter(ruby => ruby.text !== '\n').every(ruby => equal(ruby.rubyNode.x, align === 'center' ? (200-ruby.width)/2 : align === 'right' ? 200-ruby.width : 0)), `显式换行的 ${align} 对齐使用正文宽度`);
     } finally { text.destroy(); }
   }
   const raceOptions = { text:'[Beast-Warrior / Pendulum / Tuner / Effect]', fontFamily:'ygo-en-race', fontSize:56, lineHeight:1.02, letterSpacing:1, width:1175 };

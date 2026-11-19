@@ -1,14 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
-import { pathToFileURL } from 'node:url';
 import { useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
 import { batchData } from './layout-cases.js';
+import { moduleLoader } from './runtime-entry.js';
 
 const args = Object.fromEntries(process.argv.slice(2).map(arg => arg.replace(/^--/, '').split('=')));
 const entry = path.resolve(args.root || '.', args.entry || 'packages');
-const { YugiohCard } = await import(pathToFileURL(path.join(entry, 'index.js')));
+const { YugiohCard } = await moduleLoader(entry)('index');
 const assets = path.resolve('src/assets/yugioh-card');
 const images = args['images-dir']
   ? (await fs.readdir(args['images-dir'])).filter(file => /\.jpg$/i.test(file)).sort().map(file => path.resolve(args['images-dir'], file))
@@ -25,7 +25,7 @@ const stats = times => {
 const output = { count, rounds: [], includesSaving: Boolean(saveDirectory), gcBetweenRounds: Boolean(global.gc) };
 for (let round = 0; round < rounds; round++) {
   const before = process.memoryUsage();
-  const card = new YugiohCard({ resourcePath: assets, skia, data: { scale: 1 } });
+  const card = new YugiohCard({ resourcePath: assets, skia });
   await card.ready;
   const defaults = structuredClone(card.data);
   const timings = { prepare: [], update: [], ready: [], export: [], save: [], complete: [] };
@@ -40,9 +40,9 @@ for (let round = 0; round < rounds; round++) {
       const prepared = performance.now(); card.setData(data);
       const updated = performance.now(); await card.ready;
       const settled = performance.now();
-      const png = await card.leafer.export('png', { screenshot: true });
+      const { data: buffer } = await card.leafer.export('png', { screenshot: true, blob: true });
+      if (!Buffer.isBuffer(buffer)) throw new Error(`PNG export did not return a buffer for card ${index + 1}`);
       const exported = performance.now();
-      const buffer = Buffer.from(png.data.slice(png.data.indexOf(',') + 1), 'base64');
       bytes += buffer.length;
       if (saveDirectory) await fs.writeFile(path.join(saveDirectory, `${String(index).padStart(3, '0')}.png`), buffer);
       const saved = performance.now();

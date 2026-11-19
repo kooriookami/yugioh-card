@@ -36,9 +36,9 @@ try {
   const { Leafer, CompressText, YugiohCard, YugiohSeries2Card, getBrowserFontResource, getFontInfo } = await import(entry);
   const resourcePath = '/src/assets/yugioh-card';
   const data = {
-    language: 'jp', scale: 0.2, name: '[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)]',
-    monsterType: 'ドラゴン族／通常', description: '[高(たか)]い[攻撃力(こうげきりょく)]を[誇(ほこ)]るドラゴン。\nコーヒーとスーパー、０１２３４５６７８９。',
-    image: '/src/assets/image/blue-eyes.jpg',
+    language: 'jp', renderScale: 0.2, name: '[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)]',
+    monsterTypeLine: 'ドラゴン族／通常', cardText: '[高(たか)]い[攻撃力(こうげきりょく)]を[誇(ほこ)]るドラゴン。\nコーヒーとスーパー、０１２３４５６７８９。',
+    artwork: '/src/assets/image/blue-eyes.jpg',
   };
   for (const [Card, id] of [[YugiohCard, 'ocg'], [YugiohSeries2Card, 'series2']]) {
     cards.push(new Card({ resourcePath, view: document.querySelector(`#${id}`), data }));
@@ -74,7 +74,7 @@ try {
   const cluster = make('葛\u{E0100}か\u3099A\u0301', 0.5, { width: 1 });
   check(cluster.rubyList.every(ruby => !ruby.bodyRun) && cluster.rubyList.map(ruby => ruby.text).join('') === '葛\u{E0100}か\u3099A\u0301', '字素簇与 IVS 保留完整');
   const small = make('[日あー(X)]\n[日あー(X)]', 0.5, { height: 30, autoSmallSize: true, smallFontSize: 10, lineHeight: 1.1, letterSpacing: 2 });
-  check(small.isSmallSize && small.rubyList.filter(ruby => ruby.bodyRun).every(ruby => equal(ruby.width, ruby.bodyRun.width * ruby.rubyLeaf.scaleX)), '小字回退同时更新逻辑宽度和内部绘制位置');
+  check(small.isSmallSize && small.rubyList.filter(ruby => ruby.bodyRun).every(ruby => equal(ruby.width, ruby.bodyRun.width * ruby.rubyNode.scaleX)), '小字回退同时更新逻辑宽度和内部绘制位置');
   const other = make('日', 0.5, { fontFamily: 'ygo-sc' });
   check(getFontInfo(resource.fonts.get('ygo-sc')).unitsPerEm === 1000 && other.rubyList[0].bodyRun && other.bounds.width < make('日', 1, { fontFamily: 'ygo-sc' }).bounds.width, '另一字体、1000 单位字框同样可用，无固定字体配置');
   const samples = [];
@@ -85,25 +85,25 @@ try {
   }
   document.querySelector('#update').onclick = () => samples.forEach(text => text.set({ text: document.querySelector('#input').value }));
   const mixed = make('[日AV。　あ(X)]', 0.5, { gradient: true, letterSpacing: 2 });
-  const leaves = mixed.rubyList[0].rubyLeaf.children;
-  check(leaves.map(leaf => leaf.text).join('|') === '日|AV。　|あ' && leaves.every(leaf => leaf.fill.type === 'linear'), '混合文字保留西文段、全角空格和渐变');
-  check(equal(leaves[0].x + leaves[0].fill.from.x, leaves[1].x + leaves[1].fill.from.x), '子字形使用共同的渐变坐标');
+  const nodes = mixed.rubyList[0].rubyNode.children;
+  check(nodes.map(node => node.text).join('|') === '日|AV。　|あ' && nodes.every(node => node.fill.type === 'linear'), '混合文字保留西文段、全角空格和渐变');
+  check(equal(nodes[0].x + nodes[0].fill.from.x, nodes[1].x + nodes[1].fill.from.x), '子字形使用共同的渐变坐标');
   const exports = [];
   for (const card of cards) {
-    check(card.nameLeaf.rubyList.some(ruby => ruby.bodyRun) && card.descriptionLeaf.rubyList.some(ruby => ruby.bodyRun), `${card.tag} 日文样式传递比例并完成 ready`);
+    check(card.nameNode.rubyList.some(ruby => ruby.bodyRun) && card.cardTextNode.rubyList.some(ruby => ruby.bodyRun), `${card.tag} 日文样式传递比例并完成 ready`);
     const png = (await card.leafer.export('png', { screenshot: true })).data;
     check(png.startsWith('data:image/png;base64,') && png.length > 10000, `${card.tag} 实际 PNG 导出成功`);
     exports.push(png.length);
   }
-  cards[0].setData({ language: 'en', name: 'Normal English', description: 'Normal English' });
+  cards[0].setData({ language: 'en', name: 'Normal English', cardText: 'Normal English' });
   await cards[0].ready;
-  check(cards[0].nameLeaf.rubyList.every(ruby => !ruby.bodyRun), '切换英文后恢复原生路径');
-  cards[0].setData({ ...data, type: 'pendulum', pendulumDescription: 'コーヒー 日あー' });
+  check(cards[0].nameNode.rubyList.every(ruby => !ruby.bodyRun), '切换英文后恢复原生路径');
+  cards[0].setData({ ...data, cardLayout: 'pendulum', pendulumEffect: 'コーヒー 日あー' });
   await cards[0].ready;
-  check(cards[0].pendulumDescriptionLeaf.rubyList.some(ruby => ruby.bodyRun), '切回日文并切换灵摆时正确更新留白');
-  cards[1].setData({ type: 'monster', atk: 3000, def: 2500 });
+  check(cards[0].pendulumEffectNode.rubyList.some(ruby => ruby.bodyRun), '切回日文并切换灵摆时正确更新留白');
+  cards[1].setData({ cardLayout: 'monster', atk: 3000, def: 2500 });
   await cards[1].ready;
-  check(cards[1].atkDefLeaf.children.every(text => text.rubyList.some(ruby => ruby.bodyRun)), '第二期攻守文字也使用日文内部比例');
+  check(cards[1].battleStatsNode.children.every(text => text.rubyList.some(ruby => ruby.bodyRun)), '第二期攻守文字也使用日文内部比例');
   check(unhandled.length === 0, '没有未处理 Promise 拒绝');
   status.className = 'pass'; status.textContent = `${mode === 'package' ? '发布包' : '源码'}：全部 ${results.length} 项检查通过`;
   await fetch(`/jp-test-report?mode=${mode}`, { method: 'POST', body: JSON.stringify({ ok: true, checks: results.length, results, exports, userAgent: navigator.userAgent }) });

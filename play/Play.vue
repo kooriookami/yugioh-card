@@ -102,9 +102,16 @@
             </el-select>
           </label>
 
-          <label class="field field-switch">
-            <span>首段压成一行</span>
-            <el-switch v-model="editableConfig.compressFirstSegment" />
+          <label class="field">
+            <span>指定段压成一行</span>
+            <el-select v-model="editableConfig.compressSegments" multiple>
+              <el-option
+                v-for="number in segmentCount"
+                :key="number"
+                :label="'第 ' + number + ' 段'"
+                :value="number"
+              />
+            </el-select>
           </label>
 
           <label class="field field-switch">
@@ -147,8 +154,9 @@
 import { Leafer } from 'leafer-unified';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { CompressText } from '/packages/src/compress-text';
-import { splitBreakWordWithBracket } from '/packages/src/compress-text/breaking/split-break-word.js';
-import { loadFontBrowser } from '/packages/src/utils/font-loader.js';
+import { parseBreakText, splitBreakWordWithBracket } from '/packages/src/compress-text/breaking/split-break-word.ts';
+import { loadFontBrowser } from '/packages/src/utils/font-loader.ts';
+import { resourcePath } from '@/assets/resource-path.js';
 
 const rubyPlainTextPattern = /\[([^\[\]()]+)\(([^\[\]()]*)\)]/g;
 
@@ -169,12 +177,13 @@ const previewBaseConfig = {
   rtFontSize: 16,
   rtOffsetY: -8,
   textAlign: 'justify',
-  compressFirstSegment: false,
+  compressSegments: [],
   smallFontSize: 16,
   autoSmallSize: false,
 };
 
 const editableConfig = reactive({ ...previewBaseConfig });
+const segmentCount = computed(() => 1 + parseBreakText(editableConfig.text).filter(group => group.some(item => item.text === '\n')).length);
 const renderCost = ref(null);
 
 // 移除假名
@@ -220,7 +229,7 @@ const cases = [
     config: {
       text: '【[永(えい)][続(ぞく)][魔(ま)][法(ほう)]】[自(じ)][分(ぶん)]は１ターンに１[度(ど)]、[手(て)][札(ふだ)]を１[枚(まい)][捨(す)]てて[発(はつ)][動(どう)]できる。デッキから[魔(ま)][法(ほう)]カード１[枚(まい)]を[手(て)][札(ふだ)]に[加(くわ)]える。',
       width: 420,
-      compressFirstSegment: true,
+      compressSegments: [1],
     },
   },
   {
@@ -327,10 +336,7 @@ const updatePreview = () => {
 };
 
 onMounted(() => {
-  const fontPath = import.meta.env.PROD
-    ? 'https://raw.githubusercontent.com/kooriookami/yugioh-card/refs/heads/master/src/assets/yugioh-card/yugioh/font'
-    : '/src/assets/yugioh-card/yugioh/font';
-  loadFontBrowser(fontPath).catch(error => console.error('Playground font loading failed', error));
+  loadFontBrowser(`${resourcePath}/yugioh/font`).catch(error => console.error('Playground font loading failed', error));
   const leafer = new Leafer({
     view: leaferRef.value,
     grow: true,

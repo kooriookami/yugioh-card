@@ -12,8 +12,8 @@ h1 {font-size:24px} button {font:inherit;padding:10px 16px;cursor:pointer} .card
 <div class="cards"><div id="a" class="card"></div><div id="b" class="card"></div></div>
 <pre id="report">初始化中</pre><img id="export" alt="等待导出">
 <script type="module">
-import { FieldCenterCard, YugiohCard } from '/packages/index.js';
-import { CompressText } from '/packages/src/compress-text/compress-text.js';
+import { FieldCenterCard, YugiohCard } from '/packages/index.ts';
+import { CompressText } from '/packages/src/compress-text/compress-text.ts';
 import { Leafer } from 'leafer-unified';
 const report = document.querySelector('#report');
 const results = [];
@@ -28,7 +28,6 @@ const check = (condition, label) => {
 const controlOrigin = `${location.protocol}//${location.hostname === 'localhost' ? '127.0.0.1' : 'localhost'}:${location.port}`;
 const release = name => fetch(`${controlOrigin}/ready-test/release/${name}`, { method: 'POST' });
 await fetch(`${controlOrigin}/ready-test/reset`, { method: 'POST' });
-const baseline = {};
 const waitFor = async predicate => {
   const deadline = performance.now() + 20000;
   while (!predicate()) {
@@ -42,24 +41,24 @@ class ObservedCard extends YugiohCard {
 const options = {
   resourcePath: '/ready-resources',
   readyTimeout: 120000,
-  data: { name: 'Blue-Eyes White Dragon', language: 'en', monsterType: 'Beast-Warrior / Pendulum / Tuner / Effect', description: 'A visible fallback preview while fonts and images are loading.', image: '/ready-resources/photo.jpg', package: 'READY-EN001', password: '89631139', scale: 0.2 },
+  data: { name: 'Blue-Eyes White Dragon', language: 'en', monsterTypeLine: 'Beast-Warrior / Pendulum / Tuner / Effect', cardText: 'A visible fallback preview while fonts and images are loading.', artwork: '/ready-resources/photo.jpg', cardNumber: 'READY-EN001', password: '89631139', renderScale: 0.2 },
 };
 const a = new ObservedCard({ ...options, view: 'a' });
 const b = new ObservedCard({ ...options, view: 'b' });
 class FailedMaskCard extends FieldCenterCard {
-  drawMask() { super.drawMask(); this.maskLeaf.url = '/ready-resources/missing-mask.png'; }
+  drawArtworkMask() { super.drawArtworkMask(); this.artworkMaskNode.url = '/ready-resources/missing-mask.png'; }
 }
-const fontProbe = new ObservedCard({ ...options, data: { ...options.data, image: '/ready-resources/retry.jpg' } });
-const imageProbe = new FailedMaskCard({ ...options, data: { scale: 0.1, image: '/ready-resources/photo.jpg' } });
+const fontProbe = new ObservedCard({ ...options, data: { ...options.data, artwork: '/ready-resources/retry.jpg' } });
+const imageProbe = new FailedMaskCard({ ...options, data: { renderScale: 0.1, artwork: '/ready-resources/photo.jpg' } });
 let fontProbeError, imageProbeError;
 fontProbe.ready.catch(error => { fontProbeError = error; });
 imageProbe.ready.catch(error => { imageProbeError = error; });
 let state = 'pending';
 a.ready.then(() => { state = 'ready'; }, error => { state = error.code; });
-const initial = { name: a.nameLeaf.bounds.width, race: a.monsterTypeLeaf.lastSegmentScaleX, packageX: a.packageLeaf.x };
+const initial = { name: a.nameNode.bounds.width, race: a.monsterTypeLineNode.lastSegmentScaleX, packageX: a.cardNumberNode.x };
 window.readyTest = { a, b, initial, results, failures };
 await new Promise(requestAnimationFrame);
-check(state === 'pending' && a.nameLeaf.rubyList.length > 0 && initial.name > 0, '字体清单返回前有可用 fallback 文字，ready 保持 pending');
+check(state === 'pending' && a.nameNode.rubyList.length > 0 && initial.name > 0, '字体清单返回前有可用 fallback 文字，ready 保持 pending');
 document.querySelector('#start').onclick = async event => {
   event.target.disabled = true;
   try {
@@ -77,17 +76,18 @@ document.querySelector('#start').onclick = async event => {
     await release('fonts');
     await waitFor(() => a.drawCount === 2 && b.drawCount === 2);
     check(state === 'pending', '字体最终排版完成，仍等待卡图');
-    check(a.nameLeaf.bounds.width !== initial.name && a.packageLeaf.x !== initial.packageX, '相同文字参数使用真实字体重测量，并更新依赖位置');
-    await waitFor(() => a._readiness.fonts.fonts.get('ygo-kr').status === 'failed');
-    check(a._readiness.fonts.fonts.get('ygo-kr').status === 'failed', '未使用的韩文字体失败被记录');
+    check(a.nameNode.bounds.width !== initial.name && a.cardNumberNode.x !== initial.packageX, '相同文字参数使用真实字体重测量，并更新依赖位置');
+    check(a._readiness.fonts.fonts.get('ygo-kr').status === 'idle', '英文卡片未加载韩文字体');
     await release('photo');
     await Promise.all([a.ready, b.ready]);
     check(state === 'ready' && a.leafer.imageReady && b.leafer.imageReady, '两张卡片的资源、排版和实际渲染全部完成');
     const counts = await (await fetch(`${controlOrigin}/ready-test/counts`)).json();
-    check(counts['yugioh/font/font-list.json'] - (baseline['yugioh/font/font-list.json'] || 0) === 1 && counts['yugioh/font/ygo-en.woff2'] - (baseline['yugioh/font/ygo-en.woff2'] || 0) === 1, '并发卡片共用一次真实字体请求');
+    window.readyTest.coldFontFiles = Object.keys(counts).filter(file => file.endsWith('.woff2'));
+    check(counts['yugioh/font/font-list.json'] === 1 && counts['yugioh/font/ygo-en-italic.woff2'] === 1 && window.readyTest.coldFontFiles.every(file => counts[file] === 1), '并发卡片共用真实字体请求');
+    check(!counts['yugioh/font/ygo-kr.woff2'] && !counts['yugioh/font/ygo-jp.woff2'] && !counts['yugioh/font/ygo-sc.woff2'], '英文首屏只请求当前卡片使用的字体');
     const old = a.ready, draws = a.drawCount;
     a.setData({ name: 'Cached synchronous update' });
-    check(a.nameLeaf.text === 'Cached synchronous update' && a.drawCount === draws + 1 && a.ready !== old, '缓存后的 setData 同步更新节点并建立新 Promise');
+    check(a.nameNode.text === 'Cached synchronous update' && a.drawCount === draws + 1 && a.ready !== old, '缓存后的 setData 同步更新节点并建立新 Promise');
     await a.ready;
     check(a.drawCount === draws + 1, '缓存更新没有额外完整排版');
     for (const [label, data] of [['空对象', {}], ['完全相同的数据', { ...a.data }]]) {
@@ -117,20 +117,29 @@ document.querySelector('#start').onclick = async event => {
     catch (error) { check(error === updateError && !a._readiness.disposed && !view.destroyed, '后续更新失败保留实例和原始异常'); }
     a.setData({ language: 'en' });
     await a.ready;
-    check(a.leafer === view && a.nameLeaf.text === 'Cached synchronous update', '修正数据后原实例可以继续使用');
-    a.setData({ image: '/ready-resources/retry.jpg' });
+    check(a.leafer === view && a.nameNode.text === 'Cached synchronous update', '修正数据后原实例可以继续使用');
+    a.setData({ artwork: '/ready-resources/retry.jpg' });
     try { await a.ready; check(false, '必需图片失败应拒绝'); }
     catch (error) { check(error.code === 'RESOURCE_FAILED' && error.resourceType === 'image', '必需图片失败严格拒绝 ready'); }
-    a.setData({ image: '' });
+    a.setData({ artwork: '' });
     await a.ready;
-    check(!a.imageStatusLeaf.visible, '移除失败的卡图后不残留错误占位');
+    check(!a.artworkStatusNode.visible, '移除失败的卡图后不残留错误占位');
     await release('retry');
-    a.setData({ image: '/ready-resources/retry.jpg' });
+    a.setData({ artwork: '/ready-resources/retry.jpg' });
     await a.ready;
-    check(!a.imageStatusLeaf.visible, '同一图片地址重试成功，错误占位已清除');
-    a.setData({ language: 'jp', type: 'spell', name: '[青眼(ブルーアイズ)]', description: '[魔法(まほう)]カードのテスト。', icon: 'continuous' });
+    check(!a.artworkStatusNode.visible, '同一图片地址重试成功，错误占位已清除');
+    for (const data of [{ language: 'kr' }, {}]) {
+      a.setData(data);
+      const error = await a.ready.then(() => null, error => error);
+      check(error?.resourceType === 'font' && error.resource.endsWith('/ygo-kr.woff2') && error.cause, '切换到需要韩文字体时报告加载失败及其原因');
+    }
+    const afterRetry = await (await fetch(`${controlOrigin}/ready-test/counts`)).json();
+    check(afterRetry['yugioh/font/ygo-kr.woff2'] === 2, '显式更新只重试必需的失败字体');
+    a.setData({ language: 'jp', cardLayout: 'spell', name: '[青眼(ブルーアイズ)]', cardText: '[魔法(まほう)]カードのテスト。', spellTrapIcon: 'continuous' });
     await a.ready;
-    check(a.spellTrapLeaf.visible && a.nameLeaf.rubyList.length > 0, '切换语言、注音和魔陷布局后等待最终画面');
+    check(a.spellTrapLabelNode.visible && a.nameNode.rubyList.length > 0, '切换语言、注音和魔陷布局后等待最终画面');
+    const afterSwitch = await (await fetch(`${controlOrigin}/ready-test/counts`)).json();
+    check(afterSwitch['yugioh/font/ygo-jp.woff2'] === 1 && b.leafer.imageReady, '切换到日文时按需加载，英文卡片保持可用');
     for (const [label, data, family, part] of [
       ['正文大小写', { text: 'WWWWWWiiiiii', fontFamily: 'READY-Body' }, 'ready-body', 'ruby'],
       ['注音大小写', { text: '[A(WWWWWWiiiiii)]', fontFamily: 'serif', rtFontFamily: 'READY-Ruby' }, 'ready-ruby', 'rt'],
@@ -160,7 +169,7 @@ document.querySelector('#start').onclick = async event => {
         check(layouts === 1 && measured() !== before, `${label}：初次 fonts.ready 后加载真实字体仍会正确重排`);
       } finally { standaloneView.destroy(true); }
     }
-    const doomed = new ObservedCard({ ...options, data: { ...options.data, image: '/ready-resources/destroy.jpg' } });
+    const doomed = new ObservedCard({ ...options, data: { ...options.data, artwork: '/ready-resources/destroy.jpg' } });
     const promise = doomed.ready;
     doomed.leafer.destroy(true);
     try { await promise; check(false, '销毁应拒绝'); }

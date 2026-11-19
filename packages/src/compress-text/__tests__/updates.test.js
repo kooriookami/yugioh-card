@@ -4,9 +4,9 @@ import path from 'node:path';
 import { useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
 import { textSnapshot, updateCases } from '../../../../tools/perf/layout-cases.js';
-import { getNodeFontResource } from '../../utils/font-loader.js';
-import { withTextLayoutContext } from '../layout-context.js';
-import { CompressText } from '../compress-text.js';
+import { getNodeFontResource } from '../../utils/font-loader.ts';
+import { withTextLayoutContext } from '../layout-context.ts';
+import { CompressText } from '../compress-text.ts';
 
 useCanvas('skia', skia);
 const fonts = getNodeFontResource(path.resolve('src/assets/yugioh-card/yugioh/font'), skia);
@@ -27,16 +27,16 @@ for (const extra of [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 
   });
 }
 
-test('container and plain color updates preserve measured leaves; complex paint still matches fresh output', () => {
+test('container and plain color updates preserve measured nodes; complex paint still matches fresh output', () => {
   const data = { text: '[日(にち)] AV', fontFamily: 'ygo-jp', width: 400, sideBearingRatio: 0.5, strokeWidth: 1, rtStrokeWidth: 1 };
   const text = new CompressText(data);
   try {
-    const leaves = text.rubyList.map(ruby => ruby.rubyLeaf);
+    const nodes = text.rubyList.map(ruby => ruby.rubyNode);
     const bounds = { ...text.bounds };
     text.set({ color: 'red', rtColor: 'blue', x: 20, y: 30 });
-    assert.deepEqual(text.rubyList.map(ruby => ruby.rubyLeaf), leaves);
+    assert.deepEqual(text.rubyList.map(ruby => ruby.rubyNode), nodes);
     assert.deepEqual(text.bounds, bounds);
-    assert.equal(text.flatItemList[0].rt.rtLeaf.stroke, 'red');
+    assert.equal(text.flatItemList[0].rt.rtNode.stroke, 'red');
     const color = { type: 'linear', stops: [{ offset: 0, color: 'red' }, { offset: 1, color: 'blue' }] };
     text.set({ color });
     const fresh = new CompressText({ ...data, color, rtColor: 'blue', x: 20, y: 30 });

@@ -1,15 +1,16 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
-import { pathToFileURL } from 'node:url';
 import { useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
 import { japaneseText } from './layout-cases.js';
+import { moduleLoader } from './runtime-entry.js';
 
 const args = Object.fromEntries(process.argv.slice(2).map(arg => arg.replace(/^--/, '').split('=')));
 const root = path.resolve(args.root || '.', args.entry || 'packages');
-const { CompressText } = await import(pathToFileURL(path.join(root, 'src/compress-text/compress-text.js')));
-const { getNodeFontResource } = await import(pathToFileURL(path.join(root, 'src/utils/font-loader.js')));
+const moduleAt = moduleLoader(root);
+const { CompressText } = await moduleAt('src/compress-text/compress-text');
+const { getNodeFontResource } = await moduleAt('src/utils/font-loader');
 useCanvas('skia', skia);
 getNodeFontResource(path.resolve('src/assets/yugioh-card/yugioh/font'), skia);
 const data = { text: japaneseText.repeat(4), fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, width: 1175, height: 270, sideBearingRatio: 0.5 };

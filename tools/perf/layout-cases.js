@@ -76,13 +76,37 @@ export const updateCases = [
   {},
 ];
 
+// The shared card fixtures use the frozen baseline's field names.
+const cardFieldNames = {
+  description: 'cardText',
+  scale: 'renderScale',
+  image: 'artwork',
+  type: 'cardLayout',
+  cardType: 'monsterFrame',
+  pendulumType: 'pendulumFrame',
+  monsterType: 'monsterTypeLine',
+  pendulumDescription: 'pendulumEffect',
+  arrowList: 'linkArrows',
+  icon: 'spellTrapIcon',
+  gradient: 'applyNameGradient',
+  package: 'cardNumber',
+  logo: 'gameLogo',
+  konami: 'showKonamiLogo',
+  cardBack: 'renderBackSide',
+};
+
+const cardFieldsFor = (defaults, fields) => {
+  if (!Object.hasOwn(defaults, 'renderScale')) return fields;
+  return Object.fromEntries(Object.entries(fields).map(([key, value]) => [cardFieldNames[key] ?? key, value]));
+};
+
 export const batchData = (defaults, index, images) => {
   const language = ['sc', 'jp', 'en'][index % 3];
   const variant = index % 5;
   const description = language === 'en' ? 'Once per turn: You can target 1 face-up monster on the field; it gains 500 ATK until the end of this turn. '.repeat(2)
     : language === 'jp' ? japaneseText.repeat(2) : '一回合一次，可以选择场上一只表侧表示怪兽发动。该怪兽的攻击力直到回合结束时上升500。'.repeat(3);
-  return {
-    ...structuredClone(defaults), language,
+  const fields = {
+    language,
     name: language === 'en' ? `Export test ${index + 1}` : language === 'jp' ? `[試験(しけん)]カード${index + 1}` : `导出测试卡片${index + 1}`,
     description, scale: 1, image: images[index % images.length],
     type: ['monster', 'pendulum', 'spell', 'trap', 'monster'][variant],
@@ -93,18 +117,34 @@ export const batchData = (defaults, index, images) => {
     level: index % 12 + 1, icon: variant === 2 ? 'quick-play' : '', gradient: index % 7 === 0,
     package: `BATCH-${String(index + 1).padStart(3, '0')}`, password: String(index + 1).padStart(8, '0'),
   };
+  return { ...structuredClone(defaults), ...cardFieldsFor(defaults, fields) };
 };
 
 export const classData = (name, defaults, index, images) => {
-  const data = batchData(defaults, index === 3 ? 0 : index, images);
-  const input = name === 'YugiohBackCard' ? { ...defaults, logo: index % 3 === 1 ? 'tcg' : 'ocg', konami: index % 3 !== 2 }
-    : name === 'FieldCenterCard' ? { ...defaults, image: data.image, cardBack: index % 3 === 2 }
-      : { ...data, type: name === 'YugiohCard' ? data.type : 'monster', language: name === 'YugiohSeries2Card' ? 'jp' : name === 'RushDuelCard' && data.language === 'en' ? 'sc' : data.language };
-  return { ...input, scale: 0.15 };
+  const sample = index === 3 ? 0 : index;
+  const scale = 0.15;
+  if (name === 'YugiohBackCard') {
+    return { ...defaults, ...cardFieldsFor(defaults, { logo: index % 3 === 1 ? 'tcg' : 'ocg', konami: index % 3 !== 2, scale }) };
+  }
+  if (name === 'FieldCenterCard') {
+    return { ...defaults, ...cardFieldsFor(defaults, { image: images[sample % images.length], cardBack: index % 3 === 2, scale }) };
+  }
+
+  const data = batchData(defaults, sample, images);
+  const fields = { scale };
+  if (name !== 'YugiohCard') fields.type = 'monster';
+  if (name === 'YugiohSeries2Card') fields.language = 'jp';
+  if (name === 'RushDuelCard' && data.language === 'en') fields.language = 'sc';
+  return { ...data, ...cardFieldsFor(defaults, fields) };
 };
 
 /** 仅在对照工具中适配冻结版本的配置名称。 */
 export const textOptionsFor = (CompressText, options) => {
+  if ('calculateSegmentScaleX' in CompressText.prototype) {
+    const { compressFirstSegment, ...current } = options;
+    if (compressFirstSegment !== undefined) current.compressSegments = compressFirstSegment ? [1] : [];
+    return current;
+  }
   if ('relayoutBody' in CompressText.prototype) return options;
   const { compressFirstSegment, fontSizeScale, rtOffsetY, ...legacy } = options;
   if ('compressFirstSegment' in options) legacy.firstLineCompress = compressFirstSegment;
@@ -123,7 +163,7 @@ export const textSnapshot = text => JSON.parse(JSON.stringify({
   bounds: text.bounds, currentX: text.currentX, currentY: text.currentY, currentLine: text.currentLine,
   // 沿用既有快照键，使改名本身不影响改动前后的对照。
   textScale: text.lastSegmentScaleX ?? text.textScale,
-  firstLineTextScale: text.firstSegmentScaleX ?? text.firstLineTextScale,
+  firstLineTextScale: text.segmentScaleX?.get(0) ?? text.firstSegmentScaleX ?? text.firstLineTextScale ?? 1,
   isSmallSize: text.isSmallSize,
   items: text.flatItemList.map(({ ruby, rt }) => ({
     ruby: Object.fromEntries(['text', 'bold', 'originalWidth', 'normalWidth', 'width', 'height', 'originalHeight', 'paddingLeft', 'paddingRight', 'line'].map(key => [key, ruby[key]])),

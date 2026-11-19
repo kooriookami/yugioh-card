@@ -1,14 +1,15 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
 import { japaneseText } from './layout-cases.js';
+import { moduleLoader } from './runtime-entry.js';
 
 const args = Object.fromEntries(process.argv.slice(2).map(arg => arg.replace(/^--/, '').split('=')));
 const entry = path.resolve(args.root || '.', args.entry || 'packages');
-const { CompressText } = await import(pathToFileURL(path.join(entry, 'src/compress-text/compress-text.js')));
-const { getNodeFontResource } = await import(pathToFileURL(path.join(entry, 'src/utils/font-loader.js')));
+const moduleAt = moduleLoader(entry);
+const { CompressText } = await moduleAt('src/compress-text/compress-text');
+const { getNodeFontResource } = await moduleAt('src/utils/font-loader');
 useCanvas('skia', skia);
 getNodeFontResource(path.resolve('src/assets/yugioh-card/yugioh/font'), skia);
 const data = { text: japaneseText.repeat(4), fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, width: 1175, sideBearingRatio: 0.5 };
@@ -39,7 +40,8 @@ for (const key of ['x', 'color']) {
 {
   const text = new CompressText(data);
   let writes = 0;
-  for (const ruby of text.rubyList) ruby.rubyLeaf = new Proxy(ruby.rubyLeaf, {
+  const rubyNodeKey = 'createRubyNode' in text ? 'rubyNode' : 'rubyLeaf';
+  for (const ruby of text.rubyList) ruby[rubyNodeKey] = new Proxy(ruby[rubyNodeKey], {
     get: (target, key) => Reflect.get(target, key, target),
     set(target, key, value) { writes++; return Reflect.set(target, key, value, target); },
   });

@@ -28,9 +28,9 @@ const fixture = () => {
       export(...args) { calls.push(args); started.resolve(); return encoding.promise; },
     },
   };
-  const cardLeaf = { value: card };
+  const cardInstance = { value: card };
   const context = {
-    cardLeaf,
+    cardInstance,
     cardPending: { value: false },
     cardError: { value: '' },
     exporting: { value: false },
@@ -42,7 +42,7 @@ const fixture = () => {
   };
   context.cancelExport = vm.runInNewContext(sourceFor(setupFunction('cancelExport')), context);
   return {
-    card, cardLeaf, ready, encoding, started, calls, messages,
+    card, cardInstance, ready, encoding, started, calls, messages,
     ...context,
     trackReady: vm.runInNewContext(sourceFor(setupFunction('trackReady')), context),
     exportImage: vm.runInNewContext(sourceFor(declaration.init), context),
@@ -56,7 +56,7 @@ for (const invalidation of ['replaced', 'destroyed']) {
   test(`a ${invalidation} card is not exported after readiness succeeds`, async () => {
     const state = fixture();
     const task = state.exportImage();
-    if (invalidation === 'replaced') state.cardLeaf.value = {};
+    if (invalidation === 'replaced') state.cardInstance.value = {};
     else state.card.leafer.destroyed = true;
     state.ready.resolve();
     await task;
@@ -72,7 +72,7 @@ for (const invalidation of ['replaced', 'destroyed']) {
         state.ready.resolve();
         await state.started.promise;
       }
-      if (invalidation === 'replaced') state.cardLeaf.value = {};
+      if (invalidation === 'replaced') state.cardInstance.value = {};
       else state.card.leafer.destroyed = true;
       state[stage].reject(new Error('Old card was stopped'));
       await task;
@@ -88,7 +88,7 @@ test('unmount invalidates the card immediately while asynchronous destruction is
   state.unmount();
   assert.equal(state.destroyed, 1);
   assert.equal(state.disconnected, 1);
-  assert.equal(state.cardLeaf.value, null);
+  assert.equal(state.cardInstance.value, null);
   assert.equal(state.card.leafer.destroyed, false);
   state.ready.reject(new Error('Loading failed during navigation'));
   await task;
@@ -126,7 +126,7 @@ test('an active card exports with the expected screenshot options', async () => 
 
 test('an export request without a current card is ignored', async () => {
   const state = fixture();
-  state.cardLeaf.value = null;
+  state.cardInstance.value = null;
   await state.exportImage();
   assert.equal(state.calls.length, 0);
   assert.deepEqual(state.messages, []);
@@ -151,7 +151,7 @@ test('an old export cannot clear the loading state of a replacement card export'
   const first = state.exportImage();
   state.cancelExport();
   const next = deferred();
-  state.cardLeaf.value = { ready: next.promise, leafer: { destroyed: false, export: async () => {} } };
+  state.cardInstance.value = { ready: next.promise, leafer: { destroyed: false, export: async () => {} } };
   const second = state.exportImage();
   state.ready.reject(new Error('Old card stopped'));
   await first;
@@ -186,7 +186,7 @@ for (const invalidation of ['replacement card', 'new update cycle']) {
     const state = fixture();
     const first = state.trackReady();
     const next = deferred();
-    if (invalidation === 'replacement card') state.cardLeaf.value = { ready: next.promise, leafer: { destroyed: false } };
+    if (invalidation === 'replacement card') state.cardInstance.value = { ready: next.promise, leafer: { destroyed: false } };
     else state.card.ready = next.promise;
     const second = state.trackReady();
     state.ready.reject(new Error('Obsolete resource failed'));

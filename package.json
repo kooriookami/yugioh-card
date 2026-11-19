@@ -9,9 +9,10 @@
     "dev:node": "vite-node --watch src/server.js",
     "play": "vite --open /play/index.html",
     "build": "vite build",
-    "build:lib": "vite build --mode lib",
+    "build:lib": "pnpm typecheck && vite build --mode lib",
     "preview": "vite preview",
-    "test": "node --test",
+    "typecheck": "tsc --project packages/tsconfig.json --noEmit",
+    "test": "node --experimental-strip-types --test",
     "publish": "pnpm publish dist --registry https://registry.npmjs.org",
     "lint": "eslint",
     "lint-fix": "eslint --fix"
@@ -32,6 +33,7 @@
   "license": "ISC",
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
+    "@leafer-ui/interface": "^2.3.4",
     "@leafer/node": "^2.3.4",
     "css-line-break": "^2.1.0",
     "element-plus": "^2.14.8",
@@ -50,6 +52,7 @@
   "devDependencies": {
     "@eslint/compat": "^2.1.1",
     "@iconify/vue": "^5.0.5",
+    "@types/node": "25.5.0",
     "@typescript/typescript6": "^6.0.2",
     "@vitejs/plugin-vue": "^6.0.11",
     "eslint": "^10.15.0",

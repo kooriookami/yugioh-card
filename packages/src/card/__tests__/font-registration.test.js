@@ -6,10 +6,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { Text, LeaferEvent, useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
-import { CompressText } from '../../compress-text/compress-text.js';
-import { getGlyphMetrics } from '../../compress-text/glyph-metrics.js';
-import { getBrowserFontResource, getLoadedFontEntry, getNodeFontResource } from '../../utils/font-loader.js';
-import { CardReadiness } from '../readiness.js';
+import { CompressText } from '../../compress-text/compress-text.ts';
+import { getGlyphMetrics } from '../../compress-text/glyph-metrics.ts';
+import { getBrowserFontResource, getLoadedFontEntry, getNodeFontResource } from '../../utils/font-loader.ts';
+import { CardReadiness } from '../readiness.ts';
 
 useCanvas('skia', skia);
 const fontDirectory = path.resolve('src/assets/yugioh-card/yugioh/font');
