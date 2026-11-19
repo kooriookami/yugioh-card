@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 const repository = 'https://github.com/kooriookami/yugioh-card';
+const base = '/yugioh-card/';
 
 const buildLocale = (prefix, lang, label, labels) => {
   const url = route => `${prefix}/${route}`;
@@ -50,7 +51,8 @@ const buildLocale = (prefix, lang, label, labels) => {
 
 export default defineConfig({
   title: 'Yugioh Card',
-  base: '/yugioh-card/',
+  base,
+  head: [['link', { rel: 'icon', type: 'image/x-icon', href: `${base}favicon.ico` }]],
   themeConfig: {
     socialLinks: [{ icon: 'github', link: repository, ariaLabel: 'Yugioh Card on GitHub' }],
     search: {
@@ -114,6 +116,11 @@ export default defineConfig({
           {
             src: '../src/assets/yugioh-card/**/*',
             dest: 'card-assets',
+            rename: { stripBase: 3 },
+          },
+          {
+            src: '../src/assets/image/banner.jpg',
+            dest: '.',
             rename: { stripBase: 3 },
           },
         ],

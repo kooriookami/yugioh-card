@@ -5,8 +5,10 @@ hero:
   text: 游戏王卡片渲染库
   tagline: 基于 LeaferJS，支持五种卡片版式、浏览器实时预览和 Node.js 批量导出。
   image:
-    src: /card-previews/yugioh.webp
-    alt: 由 Yugioh Card 渲染的青眼白龙
+    src: /banner.jpg
+    alt: 游戏王卡片的多语言版式展示
+    width: 1920
+    height: 698
   actions:
     - theme: brand
       text: 快速开始

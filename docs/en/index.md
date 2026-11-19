@@ -5,8 +5,10 @@ hero:
   text: Yu-Gi-Oh! card rendering
   tagline: Render five card layouts with LeaferJS. Preview in the browser and export batches in Node.js.
   image:
-    src: /card-previews/yugioh.webp
-    alt: Blue-Eyes White Dragon rendered by Yugioh Card
+    src: /banner.jpg
+    alt: Yu-Gi-Oh! cards in several language styles
+    width: 1920
+    height: 698
   actions:
     - theme: brand
       text: Get started

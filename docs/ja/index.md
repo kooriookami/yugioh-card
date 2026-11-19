@@ -5,8 +5,10 @@ hero:
   text: 遊戯王カード描画ライブラリ
   tagline: LeaferJS で 5 種類のカードを描画し、ブラウザでのプレビューと Node.js での一括書き出しに対応します。
   image:
-    src: /card-previews/yugioh.webp
-    alt: Yugioh Card で描画した青眼の白龍
+    src: /banner.jpg
+    alt: 複数の言語スタイルで描画した遊戯王カード
+    width: 1920
+    height: 698
   actions:
     - theme: brand
       text: はじめる
