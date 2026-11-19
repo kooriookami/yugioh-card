@@ -206,8 +206,8 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       skia-canvas:
-        specifier: ^4.0.0
-        version: 4.0.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
+        specifier: ^4.0.1
+        version: 4.0.1(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       vue:
         specifier: ^3.5.45
         version: 3.5.45(typescript@7.0.2)
@@ -222,14 +222,14 @@ importers:
         specifier: ^5.0.5
         version: 5.0.5(vue@3.5.45(typescript@7.0.2))
       '@types/node':
-        specifier: 25.5.0
-        version: 25.5.0
+        specifier: 26.6.6
+        version: 26.6.6
       '@typescript/typescript6':
         specifier: ^6.0.2
         version: 6.0.2
       '@vitejs/plugin-vue':
         specifier: ^6.0.11
-        version: 6.0.11(vite@8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2))(vue@3.5.45(typescript@7.0.2))
+        version: 6.0.11(vite@8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2))(vue@3.5.45(typescript@7.0.2))
       eslint:
         specifier: ^10.15.0
         version: 10.15.0(supports-color@8.1.1)
@@ -250,16 +250,16 @@ importers:
         version: 7.0.2
       vite:
         specifier: ^8.3.8
-        version: 8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2)
+        version: 8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2)
       vite-node:
         specifier: ^6.0.0
-        version: 6.0.0(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2)
+        version: 6.0.0(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2)
       vite-plugin-dts:
         specifier: ^5.1.2
-        version: 5.1.2(@microsoft/api-extractor@7.57.7(@types/node@25.5.0))(rolldown@1.2.19)(supports-color@8.1.1)(typescript@7.0.2)(vite@8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2))
+        version: 5.1.2(@microsoft/api-extractor@7.57.7(@types/node@26.6.6))(rolldown@1.2.19)(supports-color@8.1.1)(typescript@7.0.2)(vite@8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2))
       vite-plugin-static-copy:
         specifier: ^4.1.1
-        version: 4.1.1(vite@8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2))
+        version: 4.1.1(vite@8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2))
 
   packages:
 
@@ -1158,47 +1158,47 @@ packages:
   '@rushstack/ts-command-line@5.3.3':
     resolution: {integrity: sha512-c+ltdcvC7ym+10lhwR/vWiOhsrm/bP3By2VsFcs5qTKv+6tTmxgbVrtJ5NdNjANiV5TcmOZgUN+5KYQ4llsvEw==}
 
-  '@skia-canvas/darwin-arm64@4.0.0':
-    resolution: {integrity: sha512-0THbyAdihsVc+C8dB44BWDUxYPs8g6XY19Az77Q6F3ExUpod+QpJAkKdZ8fHB8PGtj74WzsjFt+5Ns/R+RD83A==}
+  '@skia-canvas/darwin-arm64@4.0.1':
+    resolution: {integrity: sha512-agmys9AtQDf+T1ukYHOQrqssWV7qsw252rQlYdZitLaopkVzs3MQm9CTbqoWmnXkHLupXHfw1C5mVyou1XdoDQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@skia-canvas/darwin-x64@4.0.0':
-    resolution: {integrity: sha512-cZRlVDjUVlSegG63kyTY0dMG95RUTw0ZwgkUMnMoLzrp73F2T6KcX3QFAmp2CRW/405i04Mo0PLTK5Y24gLMUA==}
+  '@skia-canvas/darwin-x64@4.0.1':
+    resolution: {integrity: sha512-w9IX9oPtOPLOGzrtSCREdu+U3myKqz7oUcfphXvXLtYclWPtlMIn2ZDVLqPPR+/Hpk+/dLlCsA4XC+6gLIYg2A==}
     cpu: [x64]
     os: [darwin]
 
-  '@skia-canvas/linux-arm64-glibc@4.0.0':
-    resolution: {integrity: sha512-/wJRyiIZjFSPtHf/Zwo7chEM5o2P12mS3+N2h8uckNstSlT3P/CWlOi8HjO9OBSypbLhwz4gJfWW7eS+lY6lyw==}
+  '@skia-canvas/linux-arm64-glibc@4.0.1':
+    resolution: {integrity: sha512-2lHGi1PEK1pAXzr/9Atim6IoZ7eTgIl5r9xt7jYVtnZS9E1QRJYiJKNiOLGaWr29AMY5McMYcwfiIO/mzTrdVQ==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@skia-canvas/linux-arm64-musl@4.0.0':
-    resolution: {integrity: sha512-rbFMxYZ1wgZjF2l+Tx5ve+oTc3ZLHyDyAQRP6dKfbxIUHGUi8zgdpV754jM+VvkuqW9ljzc2sOYe3izrpfYByQ==}
+  '@skia-canvas/linux-arm64-musl@4.0.1':
+    resolution: {integrity: sha512-UctbI9FPwnZ5iwgNbPJk2BRMnhJ/9mUVJY8MDdfiwN/2sXW2O7JHt+HJrwznQHu5sc5CPv09r03ycyJEo4dKTA==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@skia-canvas/linux-x64-glibc@4.0.0':
-    resolution: {integrity: sha512-rpgx6WX6OrNFuBNz1tjOnxbNG6il5wfe72HhpA6fOo1ZBWPgzmHEmeAXvSMvhbnsJEdcfBV9akThufzitQ4sgA==}
+  '@skia-canvas/linux-x64-glibc@4.0.1':
+    resolution: {integrity: sha512-JZ3i8ohkEA88WDjbqcw260x+iFv64HtgmXHQLAsyMAClMPpxxrarNUTlQEUOV+noakvX0dyTXRd3JW66eaLgRA==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@skia-canvas/linux-x64-musl@4.0.0':
-    resolution: {integrity: sha512-xOh7dt9Z5pAMVc6KNkJEu906usaa5HAUEQ8CwEQHWtiZQNvQx6Ma71+I0c4mEWFEJaA1mwK5xUoGSzONY+wsmw==}
+  '@skia-canvas/linux-x64-musl@4.0.1':
+    resolution: {integrity: sha512-NkD2hhuBo0OQmMmP64BtAG/zeRo/V3u3aRXfy/wDuoiiDFtjHqJB08PhGANu4tnYgvppZCbzsh5xuSD1hWkBKg==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@skia-canvas/win32-arm64@4.0.0':
-    resolution: {integrity: sha512-5+yXHAQLp0jacna/zhLKMfesDfKcZBXoKxcu82adLYI6vu5hj5P+iUI2416rfRdeUzX/E9n+mIfKTylEHgIdMA==}
+  '@skia-canvas/win32-arm64@4.0.1':
+    resolution: {integrity: sha512-K48VJ0cAbmxmPX9q7Hvs9YW/cF9c/4Q2uBaRumjNdMJ7VbhIOuk8HQCrCJNNoTVi3JJY7RoA/x43+HWiJ0bNBQ==}
     cpu: [arm64]
     os: [win32]
 
-  '@skia-canvas/win32-x64@4.0.0':
-    resolution: {integrity: sha512-qLmlrca+VRR+JZAmN0TYCmztVabi3YWKAbxXD9HLHcUP5HKOk2wh+y/9nMqJsJLQyQqItBeNjnLHLfsDS65RnQ==}
+  '@skia-canvas/win32-x64@4.0.1':
+    resolution: {integrity: sha512-OLv/NPt8pKT/OrPqaetaYNbYd33ZJvjoz1qEL+gcShTEQOsoPA4lp8abwYsbo0+/+O/Nxw601/t5J60QZmcGRQ==}
     cpu: [x64]
     os: [win32]
 
@@ -1237,8 +1237,8 @@ packages:
   '@types/lodash@4.17.24':
     resolution: {integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==}
 
-  '@types/node@25.5.0':
-    resolution: {integrity: sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw==}
+  '@types/node@26.6.6':
+    resolution: {integrity: sha512-MzQj+8Kx3XI40OmUAE6Qoh58ZMNstNNMwn2nfd3qWsfe7nDNSqJNzes4njhz6AHwrSHOffSLwXU6yb474Q4aog==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -2707,8 +2707,8 @@ packages:
     resolution: {integrity: sha512-ZX99e6tRweoUXqR+VBrslhda51Nh5MTQwou5tnUDgbtyM0dBgmhEDtWGP/xbKn6hqfPRHujUNwz5fy/wbbhnpw==}
     engines: {node: '>= 0.4'}
 
-  skia-canvas@4.0.0:
-    resolution: {integrity: sha512-Y4K2xKy1nxj6fhT/ZTHQ+KJnSqV/oOXqbgjML8ie2Jj8eJ3satsiz9y/L8OWYclpNhEAvBSOIurdZ9hDs6fsGA==}
+  skia-canvas@4.0.1:
+    resolution: {integrity: sha512-EdHk0VDe/qe/FfwfW2C8y8/Rl0a28z1ZGQMkgPnoIehP6Gikv4cHiHCen6MWnY1e8zvliDnxGu70zaA9e7Mc7w==}
     engines: {node: '>=18'}
 
   source-map-js@1.2.1:
@@ -2833,8 +2833,8 @@ packages:
     resolution: {integrity: sha512-nWJ91DjeOkej/TA8pXQ3myruKpKEYgqvpw9lz4OPHj/NWFNluYrjbz9j01CJ8yKQd2g4jFoOkINCTW2I5LEEyw==}
     engines: {node: '>= 0.4'}
 
-  undici-types@7.18.2:
-    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
+  undici-types@8.9.0:
+    resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
   unicode-properties@2.0.2:
     resolution: {integrity: sha512-7MWOxBC6aT/+xeMKjdnp3GEuAMLmu0uRGD3jAN3PrGnjKynnellVkvQ6OYdeSIBwSdo67+zvgs1//7Qenb9iSA==}
@@ -3863,24 +3863,24 @@ snapshots:
 
   '@marijn/find-cluster-break@1.0.2': {}
 
-  '@microsoft/api-extractor-model@7.33.4(@types/node@25.5.0)':
+  '@microsoft/api-extractor-model@7.33.4(@types/node@26.6.6)':
     dependencies:
       '@microsoft/tsdoc': 0.16.0
       '@microsoft/tsdoc-config': 0.18.1
-      '@rushstack/node-core-library': 5.20.3(@types/node@25.5.0)
+      '@rushstack/node-core-library': 5.20.3(@types/node@26.6.6)
     transitivePeerDependencies:
       - '@types/node'
     optional: true
 
-  '@microsoft/api-extractor@7.57.7(@types/node@25.5.0)':
+  '@microsoft/api-extractor@7.57.7(@types/node@26.6.6)':
     dependencies:
-      '@microsoft/api-extractor-model': 7.33.4(@types/node@25.5.0)
+      '@microsoft/api-extractor-model': 7.33.4(@types/node@26.6.6)
       '@microsoft/tsdoc': 0.16.0
       '@microsoft/tsdoc-config': 0.18.1
-      '@rushstack/node-core-library': 5.20.3(@types/node@25.5.0)
+      '@rushstack/node-core-library': 5.20.3(@types/node@26.6.6)
       '@rushstack/rig-package': 0.7.2
-      '@rushstack/terminal': 0.22.3(@types/node@25.5.0)
-      '@rushstack/ts-command-line': 5.3.3(@types/node@25.5.0)
+      '@rushstack/terminal': 0.22.3(@types/node@26.6.6)
+      '@rushstack/ts-command-line': 5.3.3(@types/node@26.6.6)
       diff: 8.0.3
       lodash: 4.17.23
       minimatch: 10.2.3
@@ -4041,7 +4041,7 @@ snapshots:
 
   '@rtsao/scc@1.1.0': {}
 
-  '@rushstack/node-core-library@5.20.3(@types/node@25.5.0)':
+  '@rushstack/node-core-library@5.20.3(@types/node@26.6.6)':
     dependencies:
       ajv: 8.18.0
       ajv-draft-04: 1.0.0(ajv@8.18.0)
@@ -4052,12 +4052,12 @@ snapshots:
       resolve: 1.22.11
       semver: 7.5.4
     optionalDependencies:
-      '@types/node': 25.5.0
+      '@types/node': 26.6.6
     optional: true
 
-  '@rushstack/problem-matcher@0.2.1(@types/node@25.5.0)':
+  '@rushstack/problem-matcher@0.2.1(@types/node@26.6.6)':
     optionalDependencies:
-      '@types/node': 25.5.0
+      '@types/node': 26.6.6
     optional: true
 
   '@rushstack/rig-package@0.7.2':
@@ -4066,18 +4066,18 @@ snapshots:
       strip-json-comments: 3.1.1
     optional: true
 
-  '@rushstack/terminal@0.22.3(@types/node@25.5.0)':
+  '@rushstack/terminal@0.22.3(@types/node@26.6.6)':
     dependencies:
-      '@rushstack/node-core-library': 5.20.3(@types/node@25.5.0)
-      '@rushstack/problem-matcher': 0.2.1(@types/node@25.5.0)
+      '@rushstack/node-core-library': 5.20.3(@types/node@26.6.6)
+      '@rushstack/problem-matcher': 0.2.1(@types/node@26.6.6)
       supports-color: 8.1.1
     optionalDependencies:
-      '@types/node': 25.5.0
+      '@types/node': 26.6.6
     optional: true
 
-  '@rushstack/ts-command-line@5.3.3(@types/node@25.5.0)':
+  '@rushstack/ts-command-line@5.3.3(@types/node@26.6.6)':
     dependencies:
-      '@rushstack/terminal': 0.22.3(@types/node@25.5.0)
+      '@rushstack/terminal': 0.22.3(@types/node@26.6.6)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.2
@@ -4085,28 +4085,28 @@ snapshots:
       - '@types/node'
     optional: true
 
-  '@skia-canvas/darwin-arm64@4.0.0':
+  '@skia-canvas/darwin-arm64@4.0.1':
     optional: true
 
-  '@skia-canvas/darwin-x64@4.0.0':
+  '@skia-canvas/darwin-x64@4.0.1':
     optional: true
 
-  '@skia-canvas/linux-arm64-glibc@4.0.0':
+  '@skia-canvas/linux-arm64-glibc@4.0.1':
     optional: true
 
-  '@skia-canvas/linux-arm64-musl@4.0.0':
+  '@skia-canvas/linux-arm64-musl@4.0.1':
     optional: true
 
-  '@skia-canvas/linux-x64-glibc@4.0.0':
+  '@skia-canvas/linux-x64-glibc@4.0.1':
     optional: true
 
-  '@skia-canvas/linux-x64-musl@4.0.0':
+  '@skia-canvas/linux-x64-musl@4.0.1':
     optional: true
 
-  '@skia-canvas/win32-arm64@4.0.0':
+  '@skia-canvas/win32-arm64@4.0.1':
     optional: true
 
-  '@skia-canvas/win32-x64@4.0.0':
+  '@skia-canvas/win32-x64@4.0.1':
     optional: true
 
   '@sphinxxxx/color-conversion@2.2.2': {}
@@ -4139,9 +4139,9 @@ snapshots:
 
   '@types/lodash@4.17.24': {}
 
-  '@types/node@25.5.0':
+  '@types/node@26.6.6':
     dependencies:
-      undici-types: 7.18.2
+      undici-types: 8.9.0
 
   '@types/trusted-types@2.0.7': {}
 
@@ -4213,10 +4213,10 @@ snapshots:
     dependencies:
       '@typescript/old': typescript@6.0.3
 
-  '@vitejs/plugin-vue@6.0.11(vite@8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2))(vue@3.5.45(typescript@7.0.2))':
+  '@vitejs/plugin-vue@6.0.11(vite@8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2))(vue@3.5.45(typescript@7.0.2))':
     dependencies:
       '@rolldown/pluginutils': 1.1.0
-      vite: 8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2)
+      vite: 8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2)
       vue: 3.5.45(typescript@7.0.2)
 
   '@volar/language-core@2.4.28':
@@ -5711,20 +5711,20 @@ snapshots:
       side-channel-map: 1.0.1
       side-channel-weakmap: 1.0.2
 
-  skia-canvas@4.0.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
+  skia-canvas@4.0.1(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
       detect-libc: 2.1.2
       follow-redirects: 1.16.3(debug@4.4.3(supports-color@8.1.1))
       https-proxy-agent: 9.1.0(supports-color@8.1.1)
     optionalDependencies:
-      '@skia-canvas/darwin-arm64': 4.0.0
-      '@skia-canvas/darwin-x64': 4.0.0
-      '@skia-canvas/linux-arm64-glibc': 4.0.0
-      '@skia-canvas/linux-arm64-musl': 4.0.0
-      '@skia-canvas/linux-x64-glibc': 4.0.0
-      '@skia-canvas/linux-x64-musl': 4.0.0
-      '@skia-canvas/win32-arm64': 4.0.0
-      '@skia-canvas/win32-x64': 4.0.0
+      '@skia-canvas/darwin-arm64': 4.0.1
+      '@skia-canvas/darwin-x64': 4.0.1
+      '@skia-canvas/linux-arm64-glibc': 4.0.1
+      '@skia-canvas/linux-arm64-musl': 4.0.1
+      '@skia-canvas/linux-x64-glibc': 4.0.1
+      '@skia-canvas/linux-x64-musl': 4.0.1
+      '@skia-canvas/win32-arm64': 4.0.1
+      '@skia-canvas/win32-x64': 4.0.1
     transitivePeerDependencies:
       - debug
       - kerberos
@@ -5902,7 +5902,7 @@ snapshots:
       has-symbols: 1.1.0
       which-boxed-primitive: 1.1.1
 
-  undici-types@7.18.2: {}
+  undici-types@8.9.0: {}
 
   unicode-properties@2.0.2:
     dependencies:
@@ -5915,7 +5915,7 @@ snapshots:
   universalify@2.0.1:
     optional: true
 
-  unplugin-dts@1.1.2(@microsoft/api-extractor@7.57.7(@types/node@25.5.0))(rolldown@1.2.19)(supports-color@8.1.1)(typescript@7.0.2)(vite@8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2)):
+  unplugin-dts@1.1.2(@microsoft/api-extractor@7.57.7(@types/node@26.6.6))(rolldown@1.2.19)(supports-color@8.1.1)(typescript@7.0.2)(vite@8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2)):
     dependencies:
       '@rollup/pluginutils': 5.3.0
       '@volar/typescript': 2.4.28(typescript@7.0.2)
@@ -5928,9 +5928,9 @@ snapshots:
       typescript: 7.0.2
       unplugin: 2.3.11
     optionalDependencies:
-      '@microsoft/api-extractor': 7.57.7(@types/node@25.5.0)
+      '@microsoft/api-extractor': 7.57.7(@types/node@26.6.6)
       rolldown: 1.2.19
-      vite: 8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2)
+      vite: 8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -5986,13 +5986,13 @@ snapshots:
 
   varint@6.0.0: {}
 
-  vite-node@6.0.0(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2):
+  vite-node@6.0.0(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2):
     dependencies:
       cac: 7.0.0
       es-module-lexer: 2.0.0
       obug: 2.1.1
       pathe: 2.0.3
-      vite: 8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2)
+      vite: 8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2)
     transitivePeerDependencies:
       - '@types/node'
       - '@vitejs/devtools'
@@ -6007,12 +6007,12 @@ snapshots:
       - tsx
       - yaml
 
-  vite-plugin-dts@5.1.2(@microsoft/api-extractor@7.57.7(@types/node@25.5.0))(rolldown@1.2.19)(supports-color@8.1.1)(typescript@7.0.2)(vite@8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2)):
+  vite-plugin-dts@5.1.2(@microsoft/api-extractor@7.57.7(@types/node@26.6.6))(rolldown@1.2.19)(supports-color@8.1.1)(typescript@7.0.2)(vite@8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2)):
     dependencies:
-      unplugin-dts: 1.1.2(@microsoft/api-extractor@7.57.7(@types/node@25.5.0))(rolldown@1.2.19)(supports-color@8.1.1)(typescript@7.0.2)(vite@8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2))
+      unplugin-dts: 1.1.2(@microsoft/api-extractor@7.57.7(@types/node@26.6.6))(rolldown@1.2.19)(supports-color@8.1.1)(typescript@7.0.2)(vite@8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2))
     optionalDependencies:
-      '@microsoft/api-extractor': 7.57.7(@types/node@25.5.0)
-      vite: 8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2)
+      '@microsoft/api-extractor': 7.57.7(@types/node@26.6.6)
+      vite: 8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2)
     transitivePeerDependencies:
       - '@rspack/core'
       - '@vue/language-core'
@@ -6022,15 +6022,15 @@ snapshots:
       - typescript
       - webpack
 
-  vite-plugin-static-copy@4.1.1(vite@8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2)):
+  vite-plugin-static-copy@4.1.1(vite@8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2)):
     dependencies:
       chokidar: 3.6.0
       p-map: 7.0.4
       picocolors: 1.1.1
       tinyglobby: 0.2.17
-      vite: 8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2)
+      vite: 8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2)
 
-  vite@8.3.8(@types/node@25.5.0)(sass-embedded@1.108.2)(sass@1.108.2):
+  vite@8.3.8(@types/node@26.6.6)(sass-embedded@1.108.2)(sass@1.108.2):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
@@ -6038,7 +6038,7 @@ snapshots:
       rolldown: 1.2.19
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 25.5.0
+      '@types/node': 26.6.6
       fsevents: 2.3.3
       sass: 1.108.2
       sass-embedded: 1.108.2
