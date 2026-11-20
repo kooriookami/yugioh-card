@@ -1,13 +1,44 @@
 <!doctype html>
 <html lang="zh-CN">
-<meta charset="UTF-8">
-<title>排版等价与批量导出验证</title>
-<style>body{font:16px system-ui;margin:24px;color:#234}#status{font-size:20px}.pass{color:#167044}.fail{color:#a22}#host{width:1400px;height:650px}pre{white-space:pre-wrap}</style>
-<h1>排版等价与批量导出验证</h1><p id="status">正在加载测试运行时…</p><pre id="summary"></pre><div id="host"></div>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>排版回归与批量导出 · Yugioh Card</title>
+    <link rel="icon" href="/docs/public/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/test-pages/style.css">
+  </head>
+  <body class="test-site" data-test-page="layout-batch" data-test-state="running">
+    <header class="test-nav">
+      <div class="test-shell"><a href="/test-pages/">← 全部测试</a></div>
+    </header>
+    <main class="test-shell test-main">
+      <header class="test-heading">
+        <h1>排版回归与批量导出</h1>
+        <p class="test-description">检查文本样例和卡片更新，连续导出 100 张 PNG，再验证五种卡片的渲染结果可复现。</p>
+      </header>
+      <div class="test-layout">
+        <p id="status" class="test-status" role="status">正在加载测试运行时…</p>
+        <div id="results" class="test-layout">
+          <section class="test-panel" id="render">
+            <h2 id="render-title">正在验证的画布</h2>
+            <div class="test-stage">
+              <div id="host" style="width:1400px;height:650px"></div>
+              <img id="preview" class="test-export-preview" alt="批量导出的首张卡片" hidden>
+            </div>
+          </section>
+          <section class="test-panel">
+            <h2>检查结果</h2>
+            <pre id="summary" class="test-report">等待检查完成。</pre>
+          </section>
+        </div>
+      </div>
+    </main>
 <script type="module">
 import { textCases, updateCases, batchData, classData, textOptionsFor, textSnapshot, nodeSnapshot } from './layout-cases.js';
 import { textCases as breakingCases } from './breaking-cases.js';
 const mode = new URLSearchParams(location.search).get('mode') || 'source';
+const preview = mode === 'preview';
+const modeLabel = preview ? '源码预览' : mode;
 const run = new URLSearchParams(location.search).get('run');
 const baselineRoots = {
   breaking: '/node_modules/.cache/text-breaking/baseline-dd15fac',
@@ -23,11 +54,12 @@ const summary = document.querySelector('#summary');
 const host = document.querySelector('#host');
 const unhandled = [];
 window.addEventListener('unhandledrejection', event => unhandled.push(String(event.reason)));
-const progress = text => { status.textContent = `${mode}：${text}`; };
+const progress = text => { status.textContent = `${modeLabel}：${text}`; };
 const digest = async data => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', data))).map(byte => byte.toString(16).padStart(2, '0')).join('');
 const pixels = async (view, label) => {
   // 固定 CPU 2D 导出与像素倍率，减少图片缩放后端对像素对照的干扰。
   const result = await view.export('png', { screenshot: true, pixelRatio: devicePixelRatio, contextSettings: { willReadFrequently: true } });
+  if (preview && label === 'batch-0') document.querySelector('#preview').src = result.data;
   if (debugImages && label) await fetch(`/layout-image?mode=${mode}&label=${label}${runQuery}`, { method: 'POST', body: result.data });
   const image = new window.Image(); image.src = result.data; await image.decode();
   const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
@@ -79,7 +111,9 @@ try {
       output.updates.push(steps);
     } finally { view.destroy(true); }
   }
-  const images = [0, 1, 2].map(index => `/node_modules/.cache/layout-perf/browser-images/${index}.png`);
+  const images = preview
+    ? ['blue-eyes', 'leviathan-dragon', 'blue-eyes-old'].map(name => `/src/assets/image/${name}.jpg`)
+    : [0, 1, 2].map(index => `/node_modules/.cache/layout-perf/browser-images/${index}.png`);
   const card = new api.YugiohCard({ view: host, resourcePath: '/src/assets/yugioh-card', data: { [scaleKey]: 1 } });
   const defaults = structuredClone(card.data);
   try {
@@ -103,12 +137,23 @@ try {
   const response = await fetch(`/layout-report?mode=${mode}${runQuery}`, { method: 'POST', body: JSON.stringify(output) });
   const result = await response.json();
   if (!result.ok) throw new Error(result.error);
-  status.className = 'pass'; status.textContent = `${mode}：全部验证通过`;
+  status.classList.add('pass');
+  progress(`验证通过，已导出 ${result.batch} 张 PNG`);
   summary.textContent = JSON.stringify(result, null, 2);
+  host.hidden = true;
+  document.querySelector('#render').hidden = !preview;
+  document.querySelector('#render-title').textContent = '导出样例';
+  document.querySelector('#preview').hidden = !preview;
+  document.querySelector('#results').classList.toggle('test-compare', preview);
+  document.body.dataset.testState = 'passed';
 } catch (error) {
-  status.className = 'fail'; status.textContent = `${mode}：${error.message}`;
+  status.classList.add('fail');
+  progress(`验证失败：${error.message}`);
+  document.querySelector('#render').hidden = true;
+  document.body.dataset.testState = 'failed';
   summary.textContent = error.stack;
   await fetch(`/layout-error?mode=${mode}${runQuery}`, { method: 'POST', body: JSON.stringify({ error: error.stack, unhandled }) });
 }
 </script>
+  </body>
 </html>

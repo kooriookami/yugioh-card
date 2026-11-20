@@ -38,3 +38,5 @@ Currently there are 5 types of cards: 🚀🚀🚀🚀🚀
 ## 🚩 Documentation and Demo
 
 [Documentation](https://kooriookami.github.io/yugioh-card/en/) · [Playground](https://kooriookami.github.io/yugioh-card/en/playground/)
+
+After cloning the repository and running `pnpm install`, use `pnpm test:pages` to open the local browser tests and previews.

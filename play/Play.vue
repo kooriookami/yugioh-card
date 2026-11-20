@@ -1,9 +1,9 @@
 <template>
   <div class="play">
-    <div class="toolbar">
-      <h1 class="title">CompressText Playground</h1>
-      <p class="subtitle">切换不同样例，检查注音、压缩、换行和自动缩小行为。</p>
-      <el-radio-group v-model="selectedCaseId" class="case-list">
+    <header class="test-heading">
+      <h1>文本排版调试</h1>
+      <p class="test-description">切换样例并修改参数，观察注音、换行、压缩与分词结果。</p>
+      <el-radio-group v-model="selectedCaseId" class="case-list" aria-label="排版样例">
         <el-radio-button
           v-for="item in cases"
           :key="item.id"
@@ -12,29 +12,26 @@
           {{ item.label }}
         </el-radio-button>
       </el-radio-group>
-    </div>
+      <p v-if="fontLoadError" class="test-status" role="status">{{ fontLoadError }}</p>
+    </header>
 
     <div class="content">
-      <section class="preview-panel">
-        <div class="preview-header">
+      <section class="test-panel">
+        <header class="preview-header">
           <h2>{{ currentCase.label }}</h2>
-          <p>{{ currentCase.description }}</p>
-        </div>
-
-        <div class="render-preview">
-          <div class="render-header">
-            <h3>当前预览</h3>
-            <span :class="['render-metric', getRenderMetricClass(renderCost)]">
-              最近一次渲染 {{ formatRenderCost(renderCost) }}
-            </span>
-          </div>
-          <div ref="leaferRef" class="leafer-host" />
+          <span :class="['render-metric', getRenderMetricClass(renderCost)]">
+            最近一次渲染 {{ formatRenderCost(renderCost) }}
+          </span>
+          <p class="test-description">{{ currentCase.description }}</p>
+        </header>
+        <div class="test-stage">
+          <div ref="leaferRef" class="leafer-host" :style="{ minWidth: Math.max(540, editableConfig.width ?? 0) + 'px' }" />
         </div>
       </section>
 
-      <section class="editor-panel info-block">
+      <section class="test-panel">
         <div class="info-header">
-          <h3>编辑参数</h3>
+          <h2>编辑参数</h2>
           <el-button size="small" plain @click="resetCurrentCase">
             恢复样例默认值
           </el-button>
@@ -121,20 +118,20 @@
         </div>
       </section>
 
-      <section class="inspector-grid">
-        <div class="info-block">
-          <h3>当前渲染参数</h3>
-          <pre>{{ currentConfigText }}</pre>
+      <section class="inspector-grid" aria-label="排版详情">
+        <div class="test-panel">
+          <h2>当前渲染参数</h2>
+          <pre class="test-report">{{ currentConfigText }}</pre>
         </div>
 
-        <div class="info-block">
-          <h3>纯文本参考</h3>
+        <div class="test-panel">
+          <h2>纯文本参考</h2>
           <div class="plain-text">{{ plainText }}</div>
         </div>
 
-        <div class="info-block">
-          <h3>分词结果</h3>
-          <div class="token-list">
+        <div class="test-panel field-full">
+          <h2>分词结果</h2>
+          <div class="test-report token-list">
             <div
               v-for="(token, index) in splitResult"
               :key="index"
@@ -152,7 +149,7 @@
 
 <script setup>
 import { Leafer } from 'leafer-unified';
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { CompressText } from '/packages/src/compress-text';
 import { parseBreakText, splitBreakWordWithBracket } from '/packages/src/compress-text/breaking/split-break-word.ts';
 import { loadFontBrowser } from '/packages/src/utils/font-loader.ts';
@@ -161,8 +158,8 @@ import { resourcePath } from '@/assets/resource-path.js';
 const rubyPlainTextPattern = /\[([^\[\]()]+)\(([^\[\]()]*)\)]/g;
 
 const leaferRef = ref(null);
-const leaferInstanceRef = ref(null);
-const compressTextRef = ref(null);
+const leaferInstanceRef = shallowRef(null);
+const compressTextRef = shallowRef(null);
 const selectedCaseId = ref('ruby-basic');
 
 const previewBaseConfig = {
@@ -185,6 +182,7 @@ const previewBaseConfig = {
 const editableConfig = reactive({ ...previewBaseConfig });
 const segmentCount = computed(() => 1 + parseBreakText(editableConfig.text).filter(group => group.some(item => item.text === '\n')).length);
 const renderCost = ref(null);
+const fontLoadError = ref('');
 
 // 移除假名
 const removeKanjiKana = (text = '') => {
@@ -335,8 +333,7 @@ const updatePreview = () => {
   });
 };
 
-onMounted(() => {
-  loadFontBrowser(`${resourcePath}/yugioh/font`).catch(error => console.error('Playground font loading failed', error));
+onMounted(async () => {
   const leafer = new Leafer({
     view: leaferRef.value,
     grow: true,
@@ -348,6 +345,13 @@ onMounted(() => {
   leafer.add(compressText);
 
   updatePreview();
+  try {
+    await loadFontBrowser(`${resourcePath}/yugioh/font`);
+    document.body.dataset.testState = 'ready';
+  } catch (error) {
+    fontLoadError.value = `字体加载失败：${error.message}`;
+    document.body.dataset.testState = 'failed';
+  }
 });
 
 onBeforeUnmount(() => {
@@ -365,239 +369,151 @@ watch(editableConfig, () => {
 loadCaseConfig();
 </script>
 
-<style lang="scss">
+<style scoped>
 .play {
-  min-height: 100vh;
-  padding: 24px;
-  background:
-    radial-gradient(circle at top left, rgba(215, 232, 255, 0.8), transparent 28%),
-    linear-gradient(135deg, #f5f1e8 0%, #eef4f8 100%);
-}
-
-.toolbar {
-  max-width: 1400px;
-  margin: 0 auto 24px;
-}
-
-.title {
-  margin: 0;
-  font-size: 32px;
-  line-height: 1.1;
-}
-
-.subtitle {
-  margin: 8px 0 0;
-  color: rgba(0, 0, 0, 0.65);
+  --el-color-primary: var(--test-accent);
+  --el-color-primary-light-3: #9c7e60;
+  --el-color-primary-light-5: #b9a38e;
+  --el-color-primary-light-7: #d7c7b9;
+  --el-color-primary-light-9: var(--test-soft);
+  --el-color-primary-dark-2: var(--test-accent-hover);
+  --el-border-color: var(--test-border);
+  --el-text-color-regular: var(--test-text);
 }
 
 .case-list {
-  margin-top: 16px;
+  gap: .5rem;
+  margin-top: .25rem;
+}
+
+.case-list :deep(.el-radio-button__inner) {
+  border: 1px solid var(--test-border);
+  border-radius: .5rem;
+  box-shadow: none;
 }
 
 .content {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
 }
 
-.preview-panel,
-.editor-panel,
-.info-block {
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 24px 80px rgba(50, 70, 90, 0.12);
-  backdrop-filter: blur(10px);
-}
-
-.preview-panel {
-  padding: 24px;
-}
-
-.editor-panel {
-  padding: 20px;
-}
-
-.render-preview {
-  margin-top: 20px;
-  padding: 16px;
-  border-radius: 18px;
-  background: rgba(248, 250, 252, 0.78);
-}
-
-.render-header {
+.preview-header,
+.info-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.render-header h3 {
-  margin: 0;
-}
-
-.render-metric {
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(15, 23, 42, 0.62);
-}
-
-.render-metric-idle {
-  color: rgba(15, 23, 42, 0.45);
-}
-
-.render-metric-ok {
-  color: #0f766e;
-}
-
-.render-metric-warn {
-  color: #b45309;
-}
-
-.render-metric-danger {
-  color: #b91c1c;
+  flex-wrap: wrap;
+  gap: .4rem .75rem;
+  margin-bottom: .65rem;
 }
 
 .preview-header h2,
-.info-block h3 {
+.info-header h2 {
   margin: 0;
 }
 
 .preview-header p {
-  margin: 8px 0 0;
-  color: rgba(0, 0, 0, 0.65);
+  flex-basis: 100%;
 }
 
 .leafer-host {
-  min-height: 420px;
-  padding: 20px;
-  border-radius: 20px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(241, 245, 249, 0.9)),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.2) 1px, transparent 1px),
-    linear-gradient(rgba(148, 163, 184, 0.2) 1px, transparent 1px);
-  background-size: auto, 24px 24px, 24px 24px;
+  min-height: 26.25rem;
+  padding: .55rem;
 }
 
-.info-block {
-  padding: 18px;
-  background: rgba(248, 250, 252, 0.86);
+.render-metric {
+  color: var(--test-muted);
+  font: 12px/1.5 var(--test-mono);
 }
 
+.render-metric-ok {
+  color: var(--test-pass);
+}
+
+.render-metric-warn {
+  color: var(--test-accent);
+}
+
+.render-metric-danger {
+  color: var(--test-fail);
+}
+
+.editor-grid,
 .inspector-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.info-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.editor-grid {
-  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 12px;
+  gap: .85rem;
 }
 
 .field {
   display: grid;
-  gap: 8px;
+  gap: .35rem;
+  min-width: 0;
 }
 
 .field > span {
+  color: var(--test-muted);
   font-size: 13px;
-  font-weight: 600;
-  color: rgba(15, 23, 42, 0.8);
+  font-weight: 650;
 }
 
-.field-full {
+.field :deep(.el-input-number) {
+  width: 100%;
+  max-width: 11rem;
+}
+
+.field-full,
+.inspector-grid {
   grid-column: 1 / -1;
 }
 
 .field-switch {
-  align-items: center;
   grid-template-columns: 1fr auto;
+  align-items: center;
 }
 
-.field-switch > span {
-  align-self: center;
-}
-
-.info-block pre,
 .plain-text {
-  margin: 12px 0 0;
   white-space: pre-wrap;
-  word-break: break-word;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.info-block pre {
-  max-height: 260px;
-  overflow: auto;
+  overflow-wrap: anywhere;
 }
 
 .token-list {
   display: grid;
-  gap: 8px;
-  margin-top: 12px;
+  gap: .35rem;
 }
 
 .token-row {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-  padding: 8px 10px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.75);
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: .5rem;
+  padding: .4rem .6rem;
+  border-radius: .45rem;
+  background: var(--test-surface);
 }
 
 .token-index {
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(15, 23, 42, 0.5);
+  color: var(--test-muted);
 }
 
 .token-value {
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: 'Consolas', 'SFMono-Regular', monospace;
-  font-size: 13px;
-  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
-.inspector-grid > .info-block:last-child {
-  grid-column: 1 / -1;
-}
-
-@media (max-width: 960px) {
-  .play {
-    padding: 16px;
-  }
-
+@media (max-width: 990px) {
   .content {
-    grid-template-columns: 1fr;
-  }
-
-  .editor-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .inspector-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .leafer-host {
-    min-height: 320px;
+    min-height: 20rem;
+  }
+}
+
+@media (max-width: 580px) {
+  .inspector-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>

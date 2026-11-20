@@ -1,20 +1,30 @@
 <!doctype html>
 <html lang="zh-CN">
-<meta charset="UTF-8">
-<title>CompressText 高度回归验证</title>
-<style>
-body { margin:24px; max-width:1200px; font:15px system-ui; color:#22314b; background:#f3f6fb; }
-h1 { font-size:25px; } h2 { font-size:16px; margin:0 0 10px; }
-#samples { display:flex; flex-wrap:wrap; gap:16px; margin:20px 0; }
-article { padding:16px; border-radius:12px; background:white; border:1px solid #d8e1ed; }
-article p { margin:8px 0 0; color:#546782; } .canvas { width:240px; height:130px; }
-pre { white-space:pre-wrap; line-height:1.65; padding:18px; border-radius:12px; background:white; }
-.pass { color:#167044; } .fail { color:#b42d3c; }
-</style>
-<h1>CompressText · 高度边界验证</h1>
-<p id="status">正在加载真实字体…</p>
-<div id="samples"></div>
-<pre id="report">初始化中</pre>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>文本高度边界 · Yugioh Card</title>
+    <link rel="icon" href="/docs/public/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/test-pages/style.css">
+  </head>
+  <body class="test-site" data-test-page="text-height" data-test-state="running">
+    <header class="test-nav">
+      <div class="test-shell"><a href="/test-pages/">← 全部测试</a></div>
+    </header>
+    <main class="test-shell test-main">
+      <header class="test-heading">
+        <h1>文本高度边界</h1>
+        <p class="test-description">观察换行和小字回退，验证文字与容器边界及导出图中的行距。</p>
+      </header>
+      <div class="test-layout">
+        <p id="status" class="test-status" role="status">正在加载字体并生成样例…</p>
+        <div id="samples" class="test-grid"></div>
+        <section class="test-panel">
+          <h2>检查结果</h2>
+          <pre id="report" class="test-report">等待样例绘制。</pre>
+        </section>
+      </div>
+    </main>
 <script type="module">
 import { Leafer, Rect } from 'leafer-unified';
 import { CompressText } from '/packages/src/compress-text/compress-text.ts';
@@ -48,10 +58,13 @@ try {
     ['末尾换行沿用裁剪', { text:'ABC\n\n', height:21 }, 21, false],
   ]) {
     const article = document.createElement('article');
+    article.className = 'test-panel';
     const title = document.createElement('h2'); title.textContent = label;
+    const stage = document.createElement('div'); stage.className = 'test-stage';
     const host = document.createElement('div'); host.className = 'canvas';
-    const summary = document.createElement('p');
-    article.append(title, host, summary); document.querySelector('#samples').append(article);
+    const summary = document.createElement('p'); summary.className = 'test-note test-sample-note';
+    stage.append(host);
+    article.append(title, stage, summary); document.querySelector('#samples').append(article);
     const view = new Leafer({ view:host, width:240, height:130 }); views.push(view);
     view.add(new Rect({ x:9, y:9, width:202, height:data.height + 2, stroke:'#c68b2e', strokeWidth:1 }));
     const text = new MeasuredText({ fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:200, textAlign:'left', x:10, y:10, ...data });
@@ -105,12 +118,15 @@ try {
   }
   check(failures.length===0,'没有未处理的 Promise rejection');
   status.textContent=`全部 ${results.length} 项检查通过：正常行距保留，边界已合理化。`;
-  report.className='pass';
+  report.classList.add('pass');
+  document.body.dataset.testState = 'passed';
   if (resourcePath === '/ready-resources') await fetch('/height-results', { method:'POST', body:JSON.stringify({ complete:true, results, failures }) });
 } catch (error) {
-  status.textContent=`验证失败：${error.message}`; report.className='fail';
+  status.textContent=`验证失败：${error.message}`; report.classList.add('fail');
+  document.body.dataset.testState = 'failed';
   report.textContent=results.join('\n')+'\n'+error.stack;
   if (resourcePath === '/ready-resources') await fetch('/height-results', { method:'POST', body:JSON.stringify({ complete:false, results, failures, error:String(error) }) });
 }
 </script>
+  </body>
 </html>

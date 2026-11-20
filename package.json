@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vitepress dev docs",
     "dev:node": "vite-node --watch src/server.js",
-    "play": "vite --open /play/index.html",
+    "play": "pnpm test:pages --open /play/index.html",
+    "test:pages": "vite --config test-pages/vite.config.js",
     "build": "vitepress build docs",
     "build:lib": "pnpm typecheck && vite build --mode lib",
     "preview": "vitepress preview docs",

@@ -1,28 +1,48 @@
 <!doctype html>
 <html lang="zh-CN">
-<meta charset="UTF-8">
-<title>导出取消 · Edge 验证</title>
-<style>
-#controls { padding: 12px; background: #eef4fb; font: 15px system-ui; display: flex; gap: 16px; align-items: center; }
-#controls button { padding: 6px 12px; cursor: pointer; }
-</style>
-<div id="controls">
-  <button id="release">释放字体清单</button>
-  <button id="unmount">卸载组件</button>
-  <output id="report">初始化中</output>
-  <span>累计错误提示：<b id="errors">0</b></span>
-</div>
-<div id="app"></div>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>导出取消 · Yugioh Card</title>
+    <link rel="icon" href="/docs/public/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/test-pages/style.css">
+  </head>
+  <body class="test-site" data-test-page="export-cancel" data-test-state="loading">
+    <header class="test-nav">
+      <div class="test-shell"><a href="/test-pages/">← 全部测试</a></div>
+    </header>
+    <main class="test-shell test-main">
+      <header class="test-heading">
+        <h1>导出取消</h1>
+        <p class="test-description">字体清单等待期间点击「导出 PNG」，切换卡片类型或卸载组件，再释放清单并查看错误提示计数。</p>
+      </header>
+      <div class="test-layout">
+        <section id="controls" class="test-panel test-layout" aria-label="测试控制">
+          <output id="report" class="test-status" role="status">正在挂载组件…</output>
+          <div class="test-actions">
+            <button id="release" class="test-button test-button-primary" type="button" disabled>释放字体清单</button>
+            <button id="unmount" class="test-button" type="button" disabled>卸载组件</button>
+            <span class="test-note">累计错误提示 <b id="errors">0</b></span>
+          </div>
+        </section>
+        <div id="app"></div>
+      </div>
+    </main>
 <script type="module">
 import { createApp } from 'vue';
 import YugiohCard from '/src/components/YugiohCard.vue';
 import 'normalize.css';
 
 // 测试真实组件，延迟清单以便在 ready 等待期间切换卡片或卸载。
-await fetch('/ready-test/reset', { method: 'POST' });
-const app = createApp(YugiohCard, { resourcePath: '/src/assets/yugioh-card' });
+await fetch('/ready-test/reset?fixture=export', { method: 'POST' });
+const app = createApp(YugiohCard, { resourcePath: '/export-resources' });
 app.mount('#app');
 const report = document.querySelector('#report');
+const release = document.querySelector('#release');
+const unmount = document.querySelector('#unmount');
+release.disabled = false;
+unmount.disabled = false;
+document.body.dataset.testState = 'waiting';
 report.textContent = '组件已挂载，字体清单等待中';
 let errors = 0;
 const seen = new WeakSet();
@@ -33,15 +53,17 @@ new MutationObserver(() => {
     document.querySelector('#errors').textContent = String(++errors);
   }
 }).observe(document.body, { childList: true, subtree: true });
-document.querySelector('#release').onclick = async event => {
-  event.target.disabled = true;
-  await fetch('/ready-test/release/manifest', { method: 'POST' });
+release.onclick = async () => {
+  release.disabled = true;
+  await fetch('/ready-test/release/manifest?fixture=export', { method: 'POST' });
+  document.body.dataset.testState = 'released';
   report.textContent = '字体清单已释放';
 };
-document.querySelector('#unmount').onclick = event => {
+unmount.onclick = () => {
   app.unmount();
-  event.target.disabled = true;
+  unmount.disabled = true;
   report.textContent = '组件已卸载，旧导出等待已取消';
 };
 </script>
+  </body>
 </html>

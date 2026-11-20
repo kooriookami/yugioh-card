@@ -38,3 +38,5 @@
 ## 🚩 文档与在线演示
 
 [项目文档](https://kooriookami.github.io/yugioh-card/) · [在线演示](https://kooriookami.github.io/yugioh-card/playground/)
+
+克隆仓库并运行 `pnpm install` 后，可用 `pnpm test:pages` 在本地打开浏览器测试和预览页面。

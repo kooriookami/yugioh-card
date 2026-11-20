@@ -1,13 +1,19 @@
 <!doctype html>
-<html lang="zh-cmn-Hans">
+<html lang="zh-CN">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Yugioh Card</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>文本排版调试 · Yugioh Card</title>
+    <link rel="icon" href="/docs/public/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/test-pages/style.css">
   </head>
-  <body>
-    <div id="app"></div>
+  <body class="test-site" data-test-page="text-layout" data-test-state="loading">
+    <header class="test-nav"><div class="test-shell">
+      <a href="/test-pages/">← 全部测试</a>
+    </div></header>
+    <main class="test-shell test-main">
+      <div id="app"></div>
+    </main>
     <script type="module" src="/play/main.js"></script>
   </body>
 </html>

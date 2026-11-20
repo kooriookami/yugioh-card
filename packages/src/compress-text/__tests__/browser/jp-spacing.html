@@ -1,23 +1,54 @@
 <!doctype html>
 <html lang="zh-CN">
-<meta charset="UTF-8">
-<title>日文留白排版验证</title>
-<style>
-body { margin:28px auto; padding:0 24px; max-width:1380px; color:#24344c; background:#f5f7fa; font:15px system-ui; }
-h1 { font-size:25px; } h2 { font-size:18px; margin:0 0 14px; }
-#status { font-size:18px; color:#567; } .pass { color:#167044 !important; } .fail { color:#a32b37 !important; }
-.row { display:flex; flex-wrap:wrap; gap:18px; margin:20px 0; } article, pre { padding:18px; background:white; border:1px solid #d6dfeb; border-radius:10px; }
-.host { width:620px; height:220px; border:1px dashed #c5d3e1; } .card { width:280px; height:420px; }
-pre { line-height:1.7; white-space:pre-wrap; } textarea { box-sizing:border-box; width:100%; padding:10px; font:16px system-ui; }
-button { margin-top:10px; padding:8px 20px; cursor:pointer; }
-</style>
-<h1>日文留白排版验证</h1>
-<p id="status">正在检查字体加载和排版…</p>
-<textarea id="input" rows="2">[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)] コーヒー スーパー 々〆゛゜ゝゞー ０１２３４５６７８９ AV。</textarea>
-<button id="update">更新对照</button>
-<div class="row"><article><h2>字体原始留白</h2><div id="original" class="host"></div></article><article><h2>缩减左右留白</h2><div id="trimmed" class="host"></div></article></div>
-<div class="row"><article><h2>OCG 日文卡片</h2><div id="ocg" class="card"></div></article><article><h2>第二期日文卡片</h2><div id="series2" class="card"></div></article></div>
-<pre id="report"></pre>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>日文留白 · Yugioh Card</title>
+    <link rel="icon" href="/docs/public/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/test-pages/style.css">
+  </head>
+  <body class="test-site" data-test-page="jp-spacing" data-test-state="running">
+    <header class="test-nav">
+      <div class="test-shell"><a href="/test-pages/">← 全部测试</a></div>
+    </header>
+    <main class="test-shell test-main">
+      <header class="test-heading">
+        <h1>日文留白</h1>
+        <p class="test-description">用实际日文字体对比原始字距与左右留白减半后的排版。</p>
+      </header>
+      <div class="test-layout">
+        <p id="status" class="test-status" role="status">正在检查字体加载和排版…</p>
+        <section class="test-panel">
+          <label for="input"><strong>对照文本</strong></label>
+          <textarea id="input" class="test-input" rows="2">[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)] コーヒー スーパー 々〆゛゜ゝゞー ０１２３４５６７８９ AV。</textarea>
+          <button id="update" class="test-button test-button-primary" type="button" disabled>更新对照</button>
+        </section>
+        <div class="test-compare">
+          <section class="test-panel">
+            <h2>字体原始留白</h2>
+            <div class="test-stage"><div id="original"></div></div>
+          </section>
+          <section class="test-panel">
+            <h2>缩减左右留白</h2>
+            <div class="test-stage"><div id="trimmed"></div></div>
+          </section>
+        </div>
+        <div class="test-compare">
+          <section class="test-panel">
+            <h2>OCG 日文卡片</h2>
+            <div class="test-stage"><div id="ocg" class="test-card"></div></div>
+          </section>
+          <section class="test-panel">
+            <h2>第二期日文卡片</h2>
+            <div class="test-stage"><div id="series2" class="test-card"></div></div>
+          </section>
+        </div>
+        <section class="test-panel">
+          <h2>检查结果</h2>
+          <pre id="report" class="test-report"></pre>
+        </section>
+      </div>
+    </main>
 <script type="module">
 const mode = new URLSearchParams(location.search).has('package') ? 'package' : 'source';
 const results = [], temporary = [], views = [], cards = [], unhandled = [];
@@ -33,8 +64,8 @@ window.addEventListener('unhandledrejection', event => unhandled.push(String(eve
 try {
   await fetch('/jp-test-reset', { method: 'POST' });
   const entry = mode === 'package' ? '/node_modules/.cache/jp-package-consumer/browser.mjs' : './jp-spacing-runtime.js';
-  const { Leafer, CompressText, YugiohCard, YugiohSeries2Card, getBrowserFontResource, getFontInfo } = await import(entry);
-  const resourcePath = '/src/assets/yugioh-card';
+  const { Leafer, CompressText, YugiohCard, YugiohSeries2Card, getBrowserFontResource, getFontInfo } = await import(/* @vite-ignore */ entry);
+  const resourcePath = '/jp-resources';
   const data = {
     language: 'jp', renderScale: 0.2, name: '[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)]',
     monsterTypeLine: 'ドラゴン族／通常', cardText: '[高(たか)]い[攻撃力(こうげきりょく)]を[誇(ほこ)]るドラゴン。\nコーヒーとスーパー、０１２３４５６７８９。',
@@ -83,7 +114,9 @@ try {
     const text = new CompressText({ text: document.querySelector('#input').value, fontFamily: 'ygo-jp', fontSize: 32, rtFontSize: 13, rtOffsetY: -8, width: 596, height: 190, x: 12, y: 22, textAlign: 'left', sideBearingRatio: ratio });
     view.add(text); samples.push(text);
   }
-  document.querySelector('#update').onclick = () => samples.forEach(text => text.set({ text: document.querySelector('#input').value }));
+  const update = document.querySelector('#update');
+  update.onclick = () => samples.forEach(text => text.set({ text: document.querySelector('#input').value }));
+  update.disabled = false;
   const mixed = make('[日AV。　あ(X)]', 0.5, { gradient: true, letterSpacing: 2 });
   const nodes = mixed.rubyList[0].rubyNode.children;
   check(nodes.map(node => node.text).join('|') === '日|AV。　|あ' && nodes.every(node => node.fill.type === 'linear'), '混合文字保留西文段、全角空格和渐变');
@@ -105,16 +138,19 @@ try {
   await cards[1].ready;
   check(cards[1].battleStatsNode.children.every(text => text.rubyList.some(ruby => ruby.bodyRun)), '第二期攻守文字也使用日文内部比例');
   check(unhandled.length === 0, '没有未处理 Promise 拒绝');
-  status.className = 'pass'; status.textContent = `${mode === 'package' ? '发布包' : '源码'}：全部 ${results.length} 项检查通过`;
+  status.classList.add('pass'); status.textContent = `${mode === 'package' ? '发布包' : '源码'}：全部 ${results.length} 项检查通过`;
   await fetch(`/jp-test-report?mode=${mode}`, { method: 'POST', body: JSON.stringify({ ok: true, checks: results.length, results, exports, userAgent: navigator.userAgent }) });
+  document.body.dataset.testState = 'passed';
 } catch (error) {
   await fetch('/jp-test-release', { method: 'POST' });
-  status.className = 'fail'; status.textContent = `${mode}：${error.message}`;
+  status.classList.add('fail'); status.textContent = `${mode}：${error.message}`;
   report.textContent += `\n${error.stack}`;
   await fetch(`/jp-test-report?mode=${mode}`, { method: 'POST', body: JSON.stringify({ ok: false, results, error: error.stack, unhandled }) });
+  document.body.dataset.testState = 'failed';
 } finally {
   temporary.forEach(text => text.destroy());
 }
 window.addEventListener('pagehide', () => { cards.forEach(card => card.leafer.destroy(true)); views.forEach(view => view.destroy(true)); });
 </script>
+  </body>
 </html>

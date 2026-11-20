@@ -12,7 +12,8 @@
 ## 环境与验证
 
 - 使用 [package.json](package.json) 声明的 Node.js 版本（`^22.13.0 || >=24.0.0`）和 pnpm；依赖安装使用 `pnpm install`。
-- `pnpm dev` 启动文档站，`pnpm play` 打开排版调试页，`pnpm dev:node` 运行 Node 渲染示例。
+- `pnpm dev` 启动文档站，`pnpm dev:node` 运行 Node 渲染示例。
+- `pnpm test:pages` 打开浏览器测试首页，`pnpm play` 直接打开排版调试页。自动化可用 `pnpm test:pages --no-open --port 5185 --strictPort`，以 `body[data-test-state]` 读取自动检查结果。
 - `pnpm typecheck`：按 [库配置](packages/tsconfig.json) 严格检查 TypeScript 源码。
 - `pnpm test`：通过 Node 的类型擦除运行源码回归，包含文字布局、字体与图片资源、真实 Skia 渲染和演示组件状态。使用 Node 22 运行直接导入源码的性能命令时，可传入 `--experimental-strip-types`。
 - 对修改的 JavaScript、Vue 文件执行 `pnpm exec eslint <文件>`；测试围绕可观察行为和必要的真实引擎边界。
