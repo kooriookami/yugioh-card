@@ -166,10 +166,44 @@ test('wrapping uses the trimmed advance; ruby remains atomic and aligns to logic
   assert.equal(text.rubyList.length, 1);
   const item = text.flatItemList[0];
   close(item.ruby.width, 774 * 38 / 1024 * 2);
-  close(item.rt.rtNode.x, item.ruby.rubyNode.x + (item.ruby.width + text.getPaddingWidth(item.ruby)) / 2 - (item.ruby.paddingLeft || 0) + item.rt.rtNode.letterSpacing / 2);
+  close(item.rt.rtNode.x, item.ruby.rubyNode.x + item.ruby.width / 2);
   const trimmed = make(t, { text: '日日', width: 60 });
   assert.equal(trimmed.currentLine, 0);
   assert.equal(make(t, { text: '日日', width: 60, sideBearingRatio: 1 }).currentLine, 1);
+});
+
+test('short and wide annotations keep native spacing across body side bearing ratios', t => {
+  for (const input of ['[艮神鬼門(アシュトラーシェン)]', '[日(にちにち)]']) {
+    const text = make(t, { text: input, sideBearingRatio: 1 });
+    const { ruby: reference, rt: referenceRt } = text.flatItemList[0];
+
+    for (const ratio of [1, 0.5, 0]) {
+      text.set({ sideBearingRatio: ratio });
+      const { ruby, rt } = text.flatItemList[0];
+      if (ratio < 1) assert.ok(ruby.width < reference.width);
+      assert.equal(rt.rtNode.letterSpacing, 0);
+      assert.equal(rt.rtNode.scaleX, 1);
+      close(rt.rtNode.getBounds('content', 'inner').width, referenceRt.width);
+      close(rt.rtNode.x, ruby.rubyNode.x + ruby.width / 2);
+    }
+  }
+});
+
+test('body compression reserves the natural width of adjacent annotations', t => {
+  const input = '[日(にちにち)][日(にちにち)][日日(にちにち)]';
+  for (const limits of [{ compressSegments: [1] }, { height: 45 }]) {
+    const text = make(t, { text: input, width: 157, ...limits });
+    let right = 0;
+    for (const { ruby, rt } of text.flatItemList) {
+      assert.equal(ruby.line, 0);
+      assert.ok(ruby.rubyNode.scaleX < 1);
+      assert.equal(rt.rtNode.scaleX, 1);
+      const bounds = rt.rtNode.getBounds('content', 'local');
+      assert.ok(bounds.x >= right - 1e-7);
+      right = bounds.x + bounds.width;
+    }
+    assert.ok(right <= text.width);
+  }
 });
 
 test('small font fallback and external scale update both logical and drawn positions', t => {

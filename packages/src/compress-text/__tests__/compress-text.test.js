@@ -248,33 +248,40 @@ test('CompressText gradient styling is applied to ruby nodes', () => {
   assert.equal(rubyNode.shadow.color, 'rgba(0, 0, 0, 0.6)');
 });
 
-test('CompressText updates ruby padding when rt is much wider than ruby', () => {
+test('CompressText reserves space for adjacent wide annotations at their original width', t => {
   const instance = new CompressText({
     ...baseConfig,
-    text: '[魔(まほうほうほう)]カード',
-    width: 220,
+    text: '[魔(まほうほうほう)][法(ほうほうほう)]',
+    textAlign: 'left',
   });
-  const ruby = instance.rubyList[0];
-  const rtItem = (instance.flatItemList || instance.parseList.flat())[0];
+  t.after(() => instance.destroy());
+  const [first, second] = instance.flatItemList;
 
-  assert.ok(ruby.paddingLeft > 0);
-  assert.ok(ruby.paddingRight > 0);
-  assert.equal(instance.needCompressTwice, true);
-  assert.ok(rtItem.rt.rtNode.scaleX <= 0.6);
+  for (const { ruby, rt } of [first, second]) {
+    assert.ok(ruby.paddingLeft > 0);
+    assert.equal(ruby.paddingLeft, ruby.paddingRight);
+    assert.equal(rt.rtNode.scaleX, 1);
+    assert.ok(Math.abs(ruby.width + instance.getPaddingWidth(ruby) - rt.width) < 1e-7);
+    assert.equal(ruby.line, 0);
+  }
+  const firstRight = first.rt.rtNode.x + first.rt.width / 2;
+  const secondLeft = second.rt.rtNode.x - second.rt.width / 2;
+  assert.ok(firstRight <= secondLeft + 1e-7);
 });
 
-test('CompressText stretches rt letter spacing when ruby is much wider than rt', () => {
+test('CompressText preserves configured annotation letter spacing', t => {
   const instance = new CompressText({
     ...baseConfig,
     text: '[永続(えい)]カード',
     width: 220,
+    rtLetterSpacing: 0.5,
   });
-  const rtItem = (instance.flatItemList || instance.parseList.flat())[0];
+  t.after(() => instance.destroy());
 
-  assert.ok(rtItem.rt.rtNode.letterSpacing > 0);
+  assert.equal(instance.flatItemList[0].rt.rtNode.letterSpacing, 0.5);
 });
 
-test('CompressText applies fixed annotation scale and can return to automatic fitting', t => {
+test('CompressText applies fixed annotation scale and can return to native width', t => {
   const instance = new CompressText({
     ...baseConfig,
     text: '[魔(まほうほうほう)]',
@@ -287,10 +294,11 @@ test('CompressText applies fixed annotation scale and can return to automatic fi
   assert.equal(scaleX(), 0.75);
   instance.set({ rtScaleXOverride: 1 });
   assert.equal(scaleX(), 1);
-  assert.equal(instance.needCompressTwice, false);
+  assert.equal(instance.getPaddingWidth(instance.rubyList[0]), 0);
 
   instance.set({ rtScaleXOverride: null });
-  assert.ok(scaleX() < 1);
+  assert.equal(scaleX(), 1);
+  assert.ok(instance.rubyList[0].paddingLeft > 0);
 });
 
 test('CompressText force-wraps oversized unbreakable text without exceeding width', () => {

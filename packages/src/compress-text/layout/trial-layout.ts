@@ -1,4 +1,4 @@
-import { getBodyScaleX } from './body-scale.ts';
+import { getBodyScaleX, getRtPadding } from './body-scale.ts';
 import type { HardBreakSegment } from './types.ts';
 
 /**
@@ -24,17 +24,25 @@ export const trialLayoutHeight = (segments: readonly HardBreakSegment[], width: 
         continue;
       }
       let itemWidth = 0;
-      for (const { ruby } of items) {
+      for (const { ruby, rt } of items) {
         const scaleX = getBodyScaleX(ruby.text, selectedScaleX, isLastSegment, lastSegmentScaleX);
-        itemWidth += ruby.originalWidth * scaleX + ((ruby.paddingLeft || 0) + (ruby.paddingRight || 0));
+        const bodyWidth = ruby.originalWidth * scaleX;
+        const padding = rt.width === undefined
+          ? (ruby.paddingLeft || 0) + (ruby.paddingRight || 0)
+          : getRtPadding(bodyWidth, rt.width) * 2;
+        itemWidth += bodyWidth + padding;
       }
       if (width && x && x + itemWidth > width) {
         x = 0;
         line++;
       }
-      for (const { ruby } of items) {
+      for (const { ruby, rt } of items) {
         const scaleX = getBodyScaleX(ruby.text, selectedScaleX, isLastSegment, lastSegmentScaleX);
-        x += ruby.originalWidth * scaleX + (ruby.paddingLeft || 0) + (ruby.paddingRight || 0);
+        const bodyWidth = ruby.originalWidth * scaleX;
+        const rtPadding = rt.width === undefined ? undefined : getRtPadding(bodyWidth, rt.width);
+        const paddingLeft = rtPadding ?? (ruby.paddingLeft || 0);
+        const paddingRight = rtPadding ?? (ruby.paddingRight || 0);
+        x += bodyWidth + paddingLeft + paddingRight;
         hasRuby = true;
       }
     }

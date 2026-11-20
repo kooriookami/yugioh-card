@@ -62,14 +62,7 @@ export interface RubyLayout extends ParsedRuby {
 export interface Annotation {
   text: string;
   rtNode?: IText;
-}
-
-export interface MeasuredAnnotation extends Annotation {
-  rtNode: IText;
-  originalWidth: number;
-  originalHeight: number;
-  width: number;
-  height: number;
+  width?: number;
 }
 
 export interface TextItem<Ruby extends ParsedRuby = RubyLayout> {
@@ -79,13 +72,3 @@ export interface TextItem<Ruby extends ParsedRuby = RubyLayout> {
 
 export type BreakUnit = TextItem[];
 export type HardBreakSegment = BreakUnit[];
-
-export interface AnnotationLayout {
-  ruby: RubyLayout;
-  rt: MeasuredAnnotation;
-  rubyNode: IText | IGroup;
-  rtNode: IText;
-  paddingLeft: number;
-  paddingRight: number;
-  rubyWidth: number;
-}
