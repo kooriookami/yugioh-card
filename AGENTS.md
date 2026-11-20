@@ -2,7 +2,7 @@
 
 ## 代码与目录
 
-- 遵循 [eslint.config.js](eslint.config.js)：ES modules、分号、单引号、LF 换行和现有 import 分组。
+- 遵循 [eslint.config.js](eslint.config.js)：ES modules、分号、单引号和 LF 换行。
 - 修改范围围绕当前任务。`docs/` 是 VitePress 文档源码，`docs/.vitepress/dist/` 与 `dist/` 分别是文档站和发布库的构建产物。
 - TypeScript 发布库位于 [packages/src/](packages/src/)，文档 Playground 使用 [src/components/](src/components/) 中的编辑器，排版调试页位于 [play/](play/)。
 - 五种卡片继承 [Card 基类](packages/src/card/index.ts)。共享资源、排版与环境适配逻辑集中在公共模块，避免在卡片类之间重复实现。
