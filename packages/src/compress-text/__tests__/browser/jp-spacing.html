@@ -20,8 +20,7 @@
         <p id="status" class="test-status" role="status">正在检查字体加载和排版…</p>
         <section class="test-panel">
           <label for="input"><strong>对照文本</strong></label>
-          <textarea id="input" class="test-input" rows="2">[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)] コーヒー スーパー 々〆゛゜ゝゞー ０１２３４５６７８９ AV。</textarea>
-          <button id="update" class="test-button test-button-primary" type="button" disabled>更新对照</button>
+          <div id="spacing-controls"></div>
         </section>
         <div class="test-compare">
           <section class="test-panel">
@@ -50,10 +49,43 @@
       </div>
     </main>
 <script type="module">
+import { ElButton, ElInput } from 'element-plus';
+import 'element-plus/es/components/button/style/css';
+import 'element-plus/es/components/input/style/css';
+import { createApp, h, ref } from 'vue';
+
 const mode = new URLSearchParams(location.search).has('package') ? 'package' : 'source';
 const results = [], temporary = [], views = [], cards = [], unhandled = [];
 const status = document.querySelector('#status');
 const report = document.querySelector('#report');
+const samples = [];
+const samplesReady = ref(false);
+const comparisonText = ref('[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)] コーヒー スーパー 々〆゛゜ゝゞー ０１２３４５６７８９ AV。');
+const updateComparison = () => {
+  comparisonText.value = document.querySelector('#input').value;
+  for (const text of samples) text.set({ text: comparisonText.value });
+};
+
+createApp({
+  render: () => [
+    h(ElInput, {
+      id: 'input',
+      class: 'test-input',
+      type: 'textarea',
+      rows: 3,
+      resize: 'vertical',
+      modelValue: comparisonText.value,
+      'onUpdate:modelValue': value => { comparisonText.value = value; },
+    }),
+    h(ElButton, {
+      id: 'update',
+      type: 'primary',
+      disabled: !samplesReady.value,
+      onClick: updateComparison,
+    }, () => '更新对照'),
+  ],
+}).mount('#spacing-controls');
+
 const check = (condition, label) => {
   results.push(`${condition ? 'PASS' : 'FAIL'} ${label}`);
   report.textContent = results.join('\n');
@@ -108,15 +140,12 @@ try {
   check(small.isSmallSize && small.rubyList.filter(ruby => ruby.bodyRun).every(ruby => equal(ruby.width, ruby.bodyRun.width * ruby.rubyNode.scaleX)), '小字回退同时更新逻辑宽度和内部绘制位置');
   const other = make('日', 0.5, { fontFamily: 'ygo-sc' });
   check(getFontInfo(resource.fonts.get('ygo-sc')).unitsPerEm === 1000 && other.rubyList[0].bodyRun && other.bounds.width < make('日', 1, { fontFamily: 'ygo-sc' }).bounds.width, '另一字体、1000 单位字框同样可用，无固定字体配置');
-  const samples = [];
   for (const [host, ratio] of [['original', 1], ['trimmed', 0.5]]) {
     const view = new Leafer({ view: document.querySelector(`#${host}`), width: 620, height: 220 }); views.push(view);
     const text = new CompressText({ text: document.querySelector('#input').value, fontFamily: 'ygo-jp', fontSize: 32, rtFontSize: 13, rtOffsetY: -8, width: 596, height: 190, x: 12, y: 22, textAlign: 'left', sideBearingRatio: ratio });
     view.add(text); samples.push(text);
   }
-  const update = document.querySelector('#update');
-  update.onclick = () => samples.forEach(text => text.set({ text: document.querySelector('#input').value }));
-  update.disabled = false;
+  samplesReady.value = true;
   const mixed = make('[日AV。　あ(X)]', 0.5, { gradient: true, letterSpacing: 2 });
   const nodes = mixed.rubyList[0].rubyNode.children;
   check(nodes.map(node => node.text).join('|') === '日|AV。　|あ' && nodes.every(node => node.fill.type === 'linear'), '混合文字保留西文段、全角空格和渐变');

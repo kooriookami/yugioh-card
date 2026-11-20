@@ -1,12 +1,16 @@
 <template>
   <div class="playground">
     <div class="playground-toolbar">
-      <label>
-        {{ labels.cardType }}
-        <select :value="selectedExample.type" @change="changeCard($event.target.value)">
-          <option v-for="(name, type) in labels.cardTypes" :key="type" :value="type">{{ name }}</option>
-        </select>
-      </label>
+      <div class="card-type-field">
+        <span>{{ labels.cardType }}</span>
+        <ElSelect
+          :model-value="selectedExample.type"
+          :options="cardTypeOptions"
+          :aria-label="labels.cardType"
+          :teleported="false"
+          @change="changeCard"
+        />
+      </div>
       <a v-if="referenceBase" :href="`${referenceBase}${selectedExample.type}.html`">{{ labels.reference }} ↗</a>
     </div>
 
@@ -19,8 +23,22 @@
         </div>
         <div class="preview-toolbar">
           <div class="preview-options">
-            <button type="button" :aria-pressed="fitHeight" @click="fitHeight = true">{{ labels.fit }}</button>
-            <button type="button" :aria-pressed="!fitHeight" @click="fitHeight = false">{{ labels.actual }}</button>
+            <ElButton
+              :type="fitHeight ? 'primary' : ''"
+              :plain="fitHeight"
+              :aria-pressed="fitHeight"
+              @click="fitHeight = true"
+            >
+              {{ labels.fit }}
+            </ElButton>
+            <ElButton
+              :type="fitHeight ? '' : 'primary'"
+              :plain="!fitHeight"
+              :aria-pressed="!fitHeight"
+              @click="fitHeight = false"
+            >
+              {{ labels.actual }}
+            </ElButton>
           </div>
           <span class="render-status" :class="{ 'is-error': cardError }" role="status">
             {{ cardError ? `${labels.renderError} · ${cardError}` : cardPending ? labels.loading : labels.idle }}
@@ -44,16 +62,17 @@
         <p v-if="exportError" class="editor-status is-error" role="alert">{{ exportError }}</p>
         <p v-if="copyStatus" class="editor-status" role="status">{{ copyStatus }}</p>
         <div class="editor-toolbar">
-          <button type="button" @click="copyJson">{{ labels.copy }}</button>
-          <button type="button" @click="changeCard(selectedExample.id)">{{ labels.reset }}</button>
-          <button
-            type="button"
+          <ElButton @click="copyJson">{{ labels.copy }}</ElButton>
+          <ElButton @click="changeCard(selectedExample.id)">{{ labels.reset }}</ElButton>
+          <ElButton
             class="export-button"
+            type="primary"
+            :loading="exporting"
             :disabled="!cardInstance || !!jsonError || exporting"
             @click="exportImage"
           >
             {{ exporting ? labels.exporting : labels.export }}
-          </button>
+          </ElButton>
         </div>
       </section>
     </div>
@@ -61,6 +80,10 @@
 </template>
 
 <script setup>
+import { ElButton, ElSelect } from 'element-plus';
+import 'element-plus/es/components/button/style/css';
+import 'element-plus/es/components/select/style/css';
+import 'element-plus/theme-chalk/dark/css-vars.css';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef } from 'vue';
 import * as CardConstructors from 'yugioh-card';
 import JsonEditorVue from 'json-editor-vue';
@@ -75,6 +98,7 @@ const props = defineProps({
 });
 
 const labels = computed(() => cardPlaygroundLabels[props.locale]);
+const cardTypeOptions = computed(() => Object.entries(labels.value.cardTypes).map(([value, label]) => ({ value, label })));
 const selectedExample = shallowRef(findExample(props.initialExample));
 const jsonData = ref('');
 const jsonError = ref('');
@@ -231,6 +255,19 @@ onBeforeUnmount(() => {
   --workbench-muted: var(--vp-c-text-2, #62594f);
   --workbench-surface: var(--vp-c-bg, #fff);
   --workbench-accent: var(--vp-c-brand-1, #79532b);
+  --el-color-primary: var(--workbench-accent);
+  --el-color-primary-light-3: color-mix(in srgb, var(--workbench-accent) 78%, var(--workbench-surface));
+  --el-color-primary-light-5: color-mix(in srgb, var(--workbench-accent) 52%, var(--workbench-surface));
+  --el-color-primary-light-7: color-mix(in srgb, var(--workbench-accent) 32%, var(--workbench-surface));
+  --el-color-primary-light-8: color-mix(in srgb, var(--workbench-accent) 20%, var(--workbench-surface));
+  --el-color-primary-light-9: var(--vp-c-bg-soft, #f5eee5);
+  --el-color-primary-dark-2: var(--vp-c-brand-2, #684321);
+  --el-bg-color: var(--workbench-surface);
+  --el-bg-color-overlay: var(--vp-c-bg-elv, var(--workbench-surface));
+  --el-border-color: var(--workbench-border);
+  --el-border-color-light: var(--workbench-border);
+  --el-text-color-regular: var(--workbench-text);
+  --el-text-color-placeholder: var(--workbench-muted);
   color: var(--workbench-text);
 }
 
@@ -250,7 +287,7 @@ onBeforeUnmount(() => {
   margin: 16px 0;
 }
 
-.playground-toolbar label {
+.card-type-field {
   display: grid;
   gap: 5px;
   flex: 1 1 160px;
@@ -267,37 +304,9 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-.playground select,
-.playground button {
-  min-height: 38px;
-  padding: 6px 12px;
-  border: 1px solid var(--workbench-border);
-  border-radius: 7px;
-  background: var(--workbench-surface);
-  color: var(--workbench-text);
-  font-size: 14px;
-}
-
-.playground button {
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.playground button:hover,
-.playground select:hover {
-  border-color: var(--workbench-accent);
-}
-
-.playground button:focus-visible,
-.playground select:focus-visible,
 .playground a:focus-visible {
   outline: 2px solid var(--workbench-accent);
   outline-offset: 2px;
-}
-
-.playground button:disabled {
-  opacity: 0.55;
-  cursor: default;
 }
 
 .playground-body {
@@ -350,10 +359,9 @@ onBeforeUnmount(() => {
   gap: 4px;
 }
 
-.preview-options button[aria-pressed='true'] {
-  border-color: var(--workbench-accent);
-  background: var(--vp-c-brand-soft, #efe6d7);
-  color: var(--workbench-accent);
+.preview-options .el-button + .el-button,
+.editor-toolbar .el-button + .el-button {
+  margin-inline-start: 0;
 }
 
 .render-status,
@@ -413,15 +421,14 @@ onBeforeUnmount(() => {
   margin-top: auto;
 }
 
-.playground .export-button {
+.editor-toolbar .el-button.export-button {
   margin-inline-start: auto;
-  border-color: var(--vp-c-brand-2, #684321);
-  background: var(--vp-c-brand-2, #684321);
-  color: #fff;
 }
 
 :global(.dark .playground .export-button) {
-  color: #221910;
+  --el-button-text-color: #221910;
+  --el-button-hover-text-color: #221910;
+  --el-button-active-text-color: #221910;
 }
 
 @media (max-width: 800px) {
@@ -433,13 +440,13 @@ onBeforeUnmount(() => {
     height: clamp(19rem, 62vh, 35rem);
   }
 
-  .playground-toolbar label {
+  .card-type-field {
     max-width: none;
   }
 }
 
 @media (max-width: 420px) {
-  .playground-toolbar label {
+  .card-type-field {
     flex-basis: 100%;
   }
 }

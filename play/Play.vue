@@ -32,7 +32,7 @@
       <section class="test-panel">
         <div class="info-header">
           <h2>编辑参数</h2>
-          <el-button size="small" plain @click="resetCurrentCase">
+          <el-button plain @click="resetCurrentCase">
             恢复样例默认值
           </el-button>
         </div>
@@ -370,17 +370,6 @@ loadCaseConfig();
 </script>
 
 <style scoped>
-.play {
-  --el-color-primary: var(--test-accent);
-  --el-color-primary-light-3: #9c7e60;
-  --el-color-primary-light-5: #b9a38e;
-  --el-color-primary-light-7: #d7c7b9;
-  --el-color-primary-light-9: var(--test-soft);
-  --el-color-primary-dark-2: var(--test-accent-hover);
-  --el-border-color: var(--test-border);
-  --el-text-color-regular: var(--test-text);
-}
-
 .case-list {
   gap: .5rem;
   margin-top: .25rem;

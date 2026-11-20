@@ -19,9 +19,7 @@
       <div class="test-layout">
         <section class="test-panel test-layout" aria-label="测试控制">
           <p id="status" class="test-status" role="status">正在绘制备用字体预览…</p>
-          <div class="test-actions">
-            <button id="start" class="test-button test-button-primary" type="button" disabled>释放资源并验证</button>
-          </div>
+          <div id="ready-actions" class="test-actions"></div>
         </section>
         <div class="test-compare">
           <section class="test-panel">
@@ -44,12 +42,24 @@
       </div>
     </main>
 <script type="module">
+import { ElButton } from 'element-plus';
+import 'element-plus/es/components/button/style/css';
+import { createApp, h, ref } from 'vue';
 import { FieldCenterCard, YugiohCard } from '/packages/index.ts';
 import { CompressText } from '/packages/src/compress-text/compress-text.ts';
 import { Leafer } from 'leafer-unified';
 const report = document.querySelector('#report');
 const status = document.querySelector('#status');
-const start = document.querySelector('#start');
+const startDisabled = ref(true);
+createApp({
+  render: () => h(ElButton, {
+    id: 'start',
+    type: 'primary',
+    disabled: startDisabled.value,
+    onClick: start,
+  }, () => '释放资源并验证'),
+}).mount('#ready-actions');
+
 const results = [];
 const failures = [];
 window.addEventListener('unhandledrejection', event => { failures.push(String(event.reason)); });
@@ -99,9 +109,11 @@ await new Promise(requestAnimationFrame);
 check(state === 'pending' && a.nameNode.rubyList.length > 0 && initial.name > 0, '字体清单返回前有可用 fallback 文字，ready 保持 pending');
 document.body.dataset.testState = 'waiting';
 status.textContent = '字体清单等待中，两张卡片使用备用字体。';
-start.disabled = false;
-start.onclick = async () => {
-  start.disabled = true;
+startDisabled.value = false;
+
+async function start() {
+  if (startDisabled.value) return;
+  startDisabled.value = true;
   document.body.dataset.testState = 'running';
   status.textContent = '正在逐步释放资源并检查渲染结果…';
   try {
@@ -233,7 +245,7 @@ start.onclick = async () => {
     document.body.dataset.testState = 'failed';
     status.textContent = `验证失败：${error.message}`;
   }
-};
+}
 </script>
   </body>
 </html>

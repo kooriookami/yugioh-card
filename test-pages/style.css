@@ -14,6 +14,15 @@
   --test-stage: #eee9df;
   --test-grid-line: rgb(115 80 47 / 10%);
   --test-mono: ui-monospace, 'Consolas', monospace;
+  --el-color-primary: var(--test-accent);
+  --el-color-primary-light-3: #9c7e60;
+  --el-color-primary-light-5: #b9a38e;
+  --el-color-primary-light-7: #d7c7b9;
+  --el-color-primary-light-9: var(--test-soft);
+  --el-color-primary-dark-2: var(--test-accent-hover);
+  --el-border-color: var(--test-border);
+  --el-text-color-regular: var(--test-text);
+  --el-bg-color: var(--test-surface);
   margin: 0;
   min-height: 100vh;
   background: var(--test-bg);
@@ -123,35 +132,8 @@
   gap: .65rem 1rem;
 }
 
-.test-button {
-  min-height: 2.5rem;
-  padding: .4rem .9rem;
-  border: 1px solid var(--test-border);
-  border-radius: .5rem;
-  background: var(--test-surface);
-  color: var(--test-text);
-  font: inherit;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.test-button-primary {
-  border-color: var(--test-accent);
-  background: var(--test-accent);
-  color: #fff;
-}
-
-.test-button:hover:not(:disabled) {
-  border-color: var(--test-accent-hover);
-}
-
-.test-button-primary:hover:not(:disabled) {
-  background: var(--test-accent-hover);
-}
-
-.test-button:disabled {
-  opacity: .5;
-  cursor: default;
+.test-actions .el-button + .el-button {
+  margin-inline-start: 0;
 }
 
 .test-sample-note {
@@ -220,17 +202,7 @@
 }
 
 .test-input {
-  display: block;
-  width: 100%;
-  min-height: 4.75rem;
   margin-block: .4rem .75rem;
-  padding: .6rem .75rem;
-  resize: vertical;
-  border: 1px solid var(--test-border);
-  border-radius: .5rem;
-  background: var(--test-surface);
-  color: var(--test-text);
-  font: inherit;
 }
 
 .test-card {
