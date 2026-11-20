@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitepress';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import packageManifest from '../../packages/package.json' with { type: 'json' };
 
 const repository = 'https://github.com/kooriookami/yugioh-card';
 const base = '/yugioh-card/';
@@ -33,6 +34,7 @@ const buildLocale = (prefix, lang, label, labels) => {
         { text: labels.guide, link: url('guide/introduction'), activeMatch: url('(?:guide|migration)/') },
         { text: labels.reference, link: url('reference/'), activeMatch: url('reference/') },
         { text: 'Playground', link: url('playground/'), activeMatch: url('playground/') },
+        { text: `v${packageManifest.version}`, link: `https://www.npmjs.com/package/${packageManifest.name}?activeTab=versions` },
       ],
       sidebar: {
         [url('guide/')]: guideSidebar,

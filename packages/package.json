@@ -1,6 +1,6 @@
 {
   "name": "yugioh-card",
-  "version": "2.0.0",
+  "version": "2.0.0-beta.1",
   "type": "module",
   "main": "./index.ts",
   "module": "./index.ts",
@@ -29,6 +29,9 @@
   ],
   "author": "kooriookami",
   "license": "MIT",
+  "publishConfig": {
+    "tag": "beta"
+  },
   "dependencies": {
     "@leafer-ui/interface": "^2.3.4",
     "@leafer/node": "^2.3.4",

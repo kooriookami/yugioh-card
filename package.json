@@ -13,7 +13,7 @@
     "preview": "vitepress preview docs",
     "typecheck": "tsc --project packages/tsconfig.json --noEmit",
     "test": "node --experimental-strip-types --test",
-    "publish": "pnpm publish dist --registry https://registry.npmjs.org",
+    "publish": "pnpm publish dist --registry https://registry.npmjs.org --tag beta",
     "lint": "eslint",
     "lint-fix": "eslint --fix"
   },
