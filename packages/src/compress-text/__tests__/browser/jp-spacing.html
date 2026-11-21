@@ -154,11 +154,12 @@ try {
   check(equal(nodes[0].x + nodes[0].fill.from.x, nodes[1].x + nodes[1].fill.from.x), '子字形使用共同的渐变坐标');
   const exports = [];
   for (const card of cards) {
-    const name = make(data.name, 'legacy', { fontSize: card.nameNode.fontSize });
-    const effect = make('高', 'legacy', { fontSize: card.cardTextNode.fontSize });
+    const sideBearingMode = card instanceof YugiohCard ? 'legacy' : 'native';
+    const name = make(data.name, sideBearingMode, { fontSize: card.nameNode.fontSize });
+    const effect = make('高', sideBearingMode, { fontSize: card.cardTextNode.fontSize });
     check(card.nameNode.rubyList.length === name.rubyList.length
       && card.nameNode.rubyList.every((ruby, index) => equal(ruby.normalWidth, name.rubyList[index].normalWidth))
-      && equal(card.cardTextNode.rubyList[0].normalWidth, effect.rubyList[0].normalWidth), `${card.tag} 日文卡名和效果正文均使用旧版字距`);
+      && equal(card.cardTextNode.rubyList[0].normalWidth, effect.rubyList[0].normalWidth), `${card.tag} 日文卡名和效果正文使用 ${sideBearingMode} 字距`);
     const { ruby, rt } = card.nameNode.flatItemList[0];
     const spacing = (ruby.width * 0.9 - rt.width) / (rt.text.length - 1);
     check(spacing > 0 && equal(rt.rtNode.letterSpacing, spacing) && rt.rtNode.scaleX === 1
@@ -175,7 +176,7 @@ try {
   check(cards[0].pendulumEffectNode.rubyList.some(ruby => ruby.bodyRun), '切回日文并切换灵摆时正确更新留白');
   cards[1].setData({ cardLayout: 'monster', atk: 3000, def: 2500 });
   await cards[1].ready;
-  check(cards[1].battleStatsNode.children.every(text => text.rubyList.some(ruby => ruby.bodyRun)), '第二期攻守文字也使用日文内部比例');
+  check(cards[1].battleStatsNode.children.every(text => text.rubyList.every(ruby => !ruby.bodyRun)), '第二期攻守文字使用原生字距');
   check(unhandled.length === 0, '没有未处理 Promise 拒绝');
   status.classList.add('pass'); status.textContent = `${mode === 'package' ? '发布包' : '源码'}：全部 ${results.length} 项检查通过`;
   await fetch(`/jp-test-report?mode=${mode}`, { method: 'POST', body: JSON.stringify({ ok: true, checks: results.length, results, exports, userAgent: navigator.userAgent }) });

@@ -285,19 +285,20 @@ test('trimmed and native single-glyph renders have identical ink pixels', async 
   assert.deepEqual(await crop('legacy'), await crop('native'));
 });
 
-test('both Japanese card styles use legacy spacing for names and effect text', async t => {
+test('OCG applies legacy Japanese spacing while Series 2 uses native advances', async t => {
   for (const Card of [YugiohCard, YugiohSeries2Card]) {
+    const legacy = Card === YugiohCard;
+    const advance = legacy ? (834 + 861 + 907) / 1024 : 3;
     const card = new Card({ resourcePath, skia, data: { language: 'jp', renderScale: 0.15, name: '[日あー(にち)]', monsterTypeLine: 'ドラゴン族／通常', cardText: '[日あー(にち)] ０１２３４５６７８９', cardLayout: 'spell', artwork: path.resolve('src/assets/image/blue-eyes.jpg') } });
     t.after(() => card.leafer.destroy(true));
     await card.ready;
-    assert.ok(card.nameNode.rubyList.some(ruby => ruby.bodyRun));
-    assert.ok(card.cardTextNode.rubyList.some(ruby => ruby.bodyRun));
     for (const text of [card.nameNode, card.cardTextNode]) {
-      close(text.rubyList[0].normalWidth, (834 + 861 + 907) * text.fontSize / 1024);
+      assert.equal(text.rubyList.some(ruby => ruby.bodyRun), legacy);
+      close(text.rubyList[0].normalWidth, advance * text.fontSize);
     }
-    assert.ok(card.spellTrapLabelNode.children[2].rubyList.some(ruby => ruby.bodyRun));
+    assert.equal(card.spellTrapLabelNode.children[2].rubyList.some(ruby => ruby.bodyRun), legacy);
     assert.match((await card.leafer.export('png', { screenshot: true })).data, /^data:image\/png;base64,/);
-    if (Card === YugiohCard) {
+    if (legacy) {
       card.setData({ language: 'en', name: 'Normal English', cardText: 'Normal English' });
       await card.ready;
       assert.ok(card.nameNode.rubyList.every(ruby => !ruby.bodyRun));
@@ -309,14 +310,13 @@ test('both Japanese card styles use legacy spacing for names and effect text', a
     } else {
       card.setData({ cardLayout: 'monster', atk: 3000, def: 2500 });
       await card.ready;
-      assert.ok(card.monsterTypeLineNode.rubyList.some(ruby => ruby.bodyRun));
-      assert.ok(card.battleStatsNode.children.every(text => text.rubyList.some(ruby => ruby.bodyRun)));
-      assert.ok(card.battleStatsNode.children.every(text => text.rubyList.filter(ruby => /^\d+$/.test(ruby.text)).every(ruby => !ruby.bodyRun)));
+      assert.ok(card.monsterTypeLineNode.rubyList.every(ruby => !ruby.bodyRun));
+      assert.ok(card.battleStatsNode.children.every(text => text.rubyList.every(ruby => !ruby.bodyRun)));
     }
   }
 });
 
-test('Series 2 custom fonts preserve Japanese spacing for fixed-font attack and defense labels', async t => {
+test('Series 2 attack and defense labels use native Japanese advances across font presets', async t => {
   const card = new YugiohSeries2Card({ resourcePath, skia, data: { language: 'jp', cardLayout: 'monster', renderScale: 0.1, name: '日あー', cardText: '日あー', atk: 3000, def: 2500 } });
   t.after(() => card.leafer.destroy(true));
   await card.ready;
@@ -326,11 +326,11 @@ test('Series 2 custom fonts preserve Japanese spacing for fixed-font attack and 
     card.setData({ fontPreset: font });
     await card.ready;
     labels().forEach((ruby, index) => {
-      assert.ok(ruby.bodyRun, `fixed Japanese label remains trimmed with ${font || 'default'}`);
+      assert.equal(ruby.bodyRun, null);
       close(ruby.normalWidth, normalWidths[index]);
     });
     assert.equal(card.nameNode.fontFamily, font || 'ygo-jp');
-    assert.equal(card.nameNode.rubyList.some(ruby => ruby.bodyRun), !font);
+    assert.ok(card.nameNode.rubyList.every(ruby => !ruby.bodyRun));
     for (const text of card.battleStatsNode.children) {
       assert.equal(text.fontFamily, 'ygo-jp');
       assert.ok(text.rubyList.filter(ruby => /^\d+$/.test(ruby.text)).every(ruby => !ruby.bodyRun));
