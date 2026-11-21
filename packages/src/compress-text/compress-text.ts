@@ -22,7 +22,7 @@ import { fontFamilies, fontFamilyKey, subscribeFontChanges, type FontEntry } fro
 import { emergencyBreakOffsets, emergencyBreaks, parseBreakText } from './breaking/split-break-word.ts';
 import { textGraphemes } from './breaking/text-graphemes.ts';
 import { getTextLayoutContext } from './layout-context.ts';
-import { getGlyphMetrics, type GlyphResolver } from './glyph-metrics.ts';
+import { getGlyphMetrics, type GlyphResolver, type SideBearingMode } from './glyph-metrics.ts';
 import { createBodyRun } from './body-run.ts';
 import { getBodyScaleX, getRtPadding, lastSegmentUnscaledSymbols } from './layout/body-scale.ts';
 import { trialLayoutHeight } from './layout/trial-layout.ts';
@@ -34,7 +34,7 @@ import type {
 // 只由内部样式传递，不增加卡片数据字段或对外实例属性。
 type ParsedToken = [text: string, rt: string, bold: boolean, atomic: boolean];
 type TextBounds = { width: number; height: number };
-const sideBearingRatios = new WeakMap<CompressText, number>();
+const sideBearingModes = new WeakMap<CompressText, SideBearingMode>();
 const layoutFonts = new WeakMap<CompressText, ReadonlyMap<string, FontEntry>>();
 const glyphResolvers = new WeakMap<CompressText, GlyphResolver | null>();
 const parsedTexts = new WeakMap<CompressText, { text: string; tokens: ParsedToken[][] | null }>();
@@ -48,6 +48,7 @@ const normalizeSegmentNumbers = (value: unknown) => {
 };
 
 const defaultLineHeightRatio = 1.15; // 默认正文与注音行高倍率。
+const rtStretchTargetWidthRatio = 0.9; // 短注音通过字距铺到正文宽度的这一比例。
 const segmentScaleSteps = 1000; // 指定段倍率以千分之一为步长。
 const scaleXSearchPrecision = 0.01; // 高度压缩时二分搜索的停止精度。
 const scaleXSearchLimit = 32; // 每个字号档位的搜索预算，避免无解时持续到浮点下溢。
@@ -210,11 +211,10 @@ export class CompressText extends TextGroup {
     const defaults = this.defaultData as unknown as Record<string, unknown>;
     const properties = this as unknown as Record<string, unknown>;
     Object.keys(data).forEach(key => {
-      if (key === 'sideBearingRatio') {
-        const ratio = values[key];
-        const value = typeof ratio === 'number' && Number.isFinite(ratio) ? Math.max(0, Math.min(1, ratio)) : 1;
-        if (!Object.is(sideBearingRatios.get(this) ?? 1, value)) {
-          sideBearingRatios.set(this, value);
+      if (key === 'sideBearingMode') {
+        const mode = values[key] === 'legacy' ? 'legacy' : 'native';
+        if ((sideBearingModes.get(this) ?? 'native') !== mode) {
+          sideBearingModes.set(this, mode);
           needCompressText = true;
           changed = true;
         }
@@ -581,7 +581,7 @@ export class CompressText extends TextGroup {
    * 6. 将结果挂入当前 Group。
    */
   compressText() {
-    glyphResolvers.set(this, getGlyphMetrics(this.fontFamily, sideBearingRatios.get(this) ?? 1, layoutFonts.get(this)));
+    glyphResolvers.set(this, getGlyphMetrics(this.fontFamily, sideBearingModes.get(this), layoutFonts.get(this)));
     this.resetCompressionState();
     this.rebuildParseCache();
     this.resetGroup();
@@ -984,13 +984,27 @@ export class CompressText extends TextGroup {
     }
   }
 
-  /** 正文定位完成后，将注音居中放在对应正文上方。 */
+  /** 按最终的正文占宽拉开短注音的字距，再将注音居中。 */
   placeRt() {
     for (const { ruby, rt } of this.flatItemList) {
       const rtNode = rt.rtNode;
       if (!rtNode) continue;
 
-      rtNode.x = ruby.rubyNode.x! + ruby.width / 2;
+      let centerX = ruby.rubyNode.x! + ruby.width / 2;
+      const targetWidth = ruby.width * rtStretchTargetWidthRatio;
+      if (rt.width !== undefined && rt.width < targetWidth && this.rtLetterSpacing === 0 && this.getTextCharLength(ruby.text) > 1) {
+        const gapCount = this.getTextCharLength(rt.text) - 1;
+        if (gapCount > 0) {
+          const maxSpacing = (this.getCurrentFontSize() - this.rtFontSize / 2) * this.fontSizeScale;
+          const spacing = Math.min((targetWidth - rt.width) / gapCount, maxSpacing);
+          if (spacing > 0) {
+            rtNode.letterSpacing = spacing;
+            // Leafer 在末字之后也计入字距，补偿半个字距使可见文字居中。
+            centerX += spacing / 2;
+          }
+        }
+      }
+      rtNode.x = centerX;
       rtNode.y = ruby.rubyNode.y! + this.rtOffsetY * this.fontSizeScale;
     }
   }

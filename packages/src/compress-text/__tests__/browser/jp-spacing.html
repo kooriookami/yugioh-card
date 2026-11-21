@@ -14,7 +14,7 @@
     <main class="test-shell test-main">
       <header class="test-heading">
         <h1>日文留白</h1>
-        <p class="test-description">用实际日文字体对比原始字距与左右留白减半后的排版。</p>
+        <p class="test-description">用实际日文字体对比原始字距与旧版字距。</p>
       </header>
       <div class="test-layout">
         <p id="status" class="test-status" role="status">正在检查字体加载和排版…</p>
@@ -28,7 +28,7 @@
             <div class="test-stage"><div id="original"></div></div>
           </section>
           <section class="test-panel">
-            <h2>缩减左右留白</h2>
+            <h2>旧版字距</h2>
             <div class="test-stage"><div id="trimmed"></div></div>
           </section>
         </div>
@@ -99,15 +99,15 @@ try {
   const { Leafer, CompressText, YugiohCard, YugiohSeries2Card, getBrowserFontResource, getFontInfo } = await import(/* @vite-ignore */ entry);
   const resourcePath = '/jp-resources';
   const data = {
-    language: 'jp', renderScale: 0.2, name: '[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)]',
+    language: 'jp', renderScale: 0.2, name: '[青眼の白龍(ブルーアイズ・ホワイト・ドラゴン)]',
     monsterTypeLine: 'ドラゴン族／通常', cardText: '[高(たか)]い[攻撃力(こうげきりょく)]を[誇(ほこ)]るドラゴン。\nコーヒーとスーパー、０１２３４５６７８９。',
     artwork: '/src/assets/image/blue-eyes.jpg',
   };
   for (const [Card, id] of [[YugiohCard, 'ocg'], [YugiohSeries2Card, 'series2']]) {
     cards.push(new Card({ resourcePath, view: document.querySelector(`#${id}`), data }));
   }
-  const make = (content, ratio = 0.5, extra = {}) => {
-    const text = new CompressText({ text: content, fontFamily: 'ygo-jp', fontSize: 38, width: 1000, textAlign: 'left', sideBearingRatio: ratio, ...extra });
+  const make = (content, sideBearingMode = 'legacy', extra = {}) => {
+    const text = new CompressText({ text: content, fontFamily: 'ygo-jp', fontSize: 38, width: 1000, textAlign: 'left', sideBearingMode, ...extra });
     temporary.push(text); return text;
   };
   const before = make('日あー');
@@ -121,38 +121,48 @@ try {
   check(before.rubyList.some(ruby => ruby.bodyRun), '独立 CompressText 在二进制字体注册完成后自动重排');
   const font = getFontInfo(resource.fonts.get('ygo-jp'));
   check(font.unitsPerEm === 1024 && font.hasGlyphForCodePoint(0x65E5), '从实际 WOFF2 动态读取字体单位和字符覆盖');
-  check(equal(make('日').bounds.width, 774 * 38 / 1024), '日：占宽为 774/1024 em');
+  check(equal(make('日').bounds.width, 834 * 38 / 1024), '日：占宽为 834/1024 em');
   check(equal(make('あ').bounds.width, 861 * 38 / 1024), 'あ：占宽为 861/1024 em');
+  check(equal(make('三').bounds.width, 1027 * 38 / 1024)
+    && equal(make('ー').bounds.width, 907 * 38 / 1024), '旧版度量恢复汉字补白，长音符按文档参与缩减');
   check(equal(make('０').bounds.width, 702 * 38 / 1024), '全角数字保留供体 702 占宽');
-  check(equal(make('日', 1).bounds.width, 38) && equal(make('日', 0).bounds.width, 523 * 38 / 1024), '原始留白和零留白边界均正确');
+  check(equal(make('日', 'native').bounds.width, 38), '原生模式保留字体原始占宽');
   for (const content of ['コーヒー', 'スーパー', 'ーー', '々〆゛゜ゝゞ']) {
     const text = make(content);
-    check(text.bounds.width < make(content, 1).bounds.width && text.rubyList.some(ruby => ruby.bodyRun), `假名及额外字符参与缩减：${content}`);
+    check(text.bounds.width < make(content, 'native').bounds.width && text.rubyList.some(ruby => ruby.bodyRun), `假名及额外字符参与缩减：${content}`);
   }
   for (const content of ['０１２３', 'ＡＢＣ', 'AV', 'ΩЖ', '。、「」【】（）！？・', '𠮷']) {
     const text = make(content);
-    check(equal(text.bounds.width, make(content, 1).bounds.width) && text.rubyList.every(ruby => !ruby.bodyRun), `原生度量保留：${content}`);
+    check(equal(text.bounds.width, make(content, 'native').bounds.width) && text.rubyList.every(ruby => !ruby.bodyRun), `原生度量保留：${content}`);
   }
-  check(make('日日', 0.5, { width: 60 }).currentLine === 0 && make('日日', 1, { width: 60 }).currentLine === 1, '换行依据缩减后的逻辑占宽');
-  const cluster = make('葛\u{E0100}か\u3099A\u0301', 0.5, { width: 1 });
+  check(make('日日', 'legacy', { width: 65 }).currentLine === 0 && make('日日', 'native', { width: 65 }).currentLine === 1, '换行依据调整后的逻辑占宽');
+  const cluster = make('葛\u{E0100}か\u3099A\u0301', 'legacy', { width: 1 });
   check(cluster.rubyList.every(ruby => !ruby.bodyRun) && cluster.rubyList.map(ruby => ruby.text).join('') === '葛\u{E0100}か\u3099A\u0301', '字素簇与 IVS 保留完整');
-  const small = make('[日あー(X)]\n[日あー(X)]', 0.5, { height: 30, autoSmallSize: true, smallFontSize: 10, lineHeight: 1.1, letterSpacing: 2 });
+  const small = make('[日あー(X)]\n[日あー(X)]', 'legacy', { height: 30, autoSmallSize: true, smallFontSize: 10, lineHeight: 1.1, letterSpacing: 2 });
   check(small.isSmallSize && small.rubyList.filter(ruby => ruby.bodyRun).every(ruby => equal(ruby.width, ruby.bodyRun.width * ruby.rubyNode.scaleX)), '小字回退同时更新逻辑宽度和内部绘制位置');
-  const other = make('日', 0.5, { fontFamily: 'ygo-sc' });
-  check(getFontInfo(resource.fonts.get('ygo-sc')).unitsPerEm === 1000 && other.rubyList[0].bodyRun && other.bounds.width < make('日', 1, { fontFamily: 'ygo-sc' }).bounds.width, '另一字体、1000 单位字框同样可用，无固定字体配置');
-  for (const [host, ratio] of [['original', 1], ['trimmed', 0.5]]) {
+  const other = make('日', 'legacy', { fontFamily: 'ygo-sc' });
+  check(getFontInfo(resource.fonts.get('ygo-sc')).unitsPerEm === 1000 && other.rubyList[0].bodyRun && other.bounds.width < make('日', 'native', { fontFamily: 'ygo-sc' }).bounds.width, '另一字体、1000 单位字框同样可用，无固定字体配置');
+  for (const [host, sideBearingMode] of [['original', 'native'], ['trimmed', 'legacy']]) {
     const view = new Leafer({ view: document.querySelector(`#${host}`), width: 620, height: 220 }); views.push(view);
-    const text = new CompressText({ text: document.querySelector('#input').value, fontFamily: 'ygo-jp', fontSize: 32, rtFontSize: 13, rtOffsetY: -8, width: 596, height: 190, x: 12, y: 22, textAlign: 'left', sideBearingRatio: ratio });
+    const text = new CompressText({ text: document.querySelector('#input').value, fontFamily: 'ygo-jp', fontSize: 32, rtFontSize: 13, rtOffsetY: -8, width: 596, height: 190, x: 12, y: 22, textAlign: 'left', sideBearingMode });
     view.add(text); samples.push(text);
   }
   samplesReady.value = true;
-  const mixed = make('[日AV。　あ(X)]', 0.5, { gradient: true, letterSpacing: 2 });
+  const mixed = make('[日AV。　あ(X)]', 'legacy', { gradient: true, letterSpacing: 2 });
   const nodes = mixed.rubyList[0].rubyNode.children;
   check(nodes.map(node => node.text).join('|') === '日|AV。　|あ' && nodes.every(node => node.fill.type === 'linear'), '混合文字保留西文段、全角空格和渐变');
   check(equal(nodes[0].x + nodes[0].fill.from.x, nodes[1].x + nodes[1].fill.from.x), '子字形使用共同的渐变坐标');
   const exports = [];
   for (const card of cards) {
-    check(card.nameNode.rubyList.some(ruby => ruby.bodyRun) && card.cardTextNode.rubyList.some(ruby => ruby.bodyRun), `${card.tag} 日文样式传递比例并完成 ready`);
+    const name = make(data.name, 'legacy', { fontSize: card.nameNode.fontSize });
+    const effect = make('高', 'legacy', { fontSize: card.cardTextNode.fontSize });
+    check(card.nameNode.rubyList.length === name.rubyList.length
+      && card.nameNode.rubyList.every((ruby, index) => equal(ruby.normalWidth, name.rubyList[index].normalWidth))
+      && equal(card.cardTextNode.rubyList[0].normalWidth, effect.rubyList[0].normalWidth), `${card.tag} 日文卡名和效果正文均使用旧版字距`);
+    const { ruby, rt } = card.nameNode.flatItemList[0];
+    const spacing = (ruby.width * 0.9 - rt.width) / (rt.text.length - 1);
+    check(spacing > 0 && equal(rt.rtNode.letterSpacing, spacing) && rt.rtNode.scaleX === 1
+      && equal(rt.rtNode.x, ruby.rubyNode.x + (ruby.width + spacing) / 2), `${card.tag} 卡名的短注音按正文占宽展开字距并居中`);
     const png = (await card.leafer.export('png', { screenshot: true })).data;
     check(png.startsWith('data:image/png;base64,') && png.length > 10000, `${card.tag} 实际 PNG 导出成功`);
     exports.push(png.length);

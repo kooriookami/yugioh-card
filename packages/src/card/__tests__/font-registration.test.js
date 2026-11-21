@@ -48,7 +48,7 @@ const makeCard = (t, fonts, family = 'ygo-jp') => {
       card.native = new Text({ text: '０', fontSize: 38 });
       card.leafer.children.push(card.label, card.native);
     }
-    card.label.set({ text: card.data.text, fontFamily: card.data.family, fontSize: 38, width: 1000, textAlign: 'left', sideBearingRatio: 0.5 });
+    card.label.set({ text: card.data.text, fontFamily: card.data.family, fontSize: 38, width: 1000, textAlign: 'left', sideBearingMode: 'legacy' });
     card.native.set({ fontFamily: card.data.family });
     card.position = card.label.bounds.width;
     card.nativePosition = card.native.getBounds('content', 'inner').width;
@@ -127,14 +127,14 @@ test('a settled card follows another directory replacing its font, including unc
   assert.equal(readiness.loadedFonts.get('ygo-jp'), b.fonts.get('ygo-jp'));
   assert.notEqual(card.label.group, group);
   assert.notEqual(card.position, position);
-  close(card.position, getGlyphMetrics('ygo-jp', 0.5)('日').width * 38);
+  close(card.position, getGlyphMetrics('ygo-jp', 'legacy')('日').width * 38);
   await settle(card);
   card.setData({});
   assert.equal(readiness.loadedFonts.get('ygo-jp'), b.fonts.get('ygo-jp'), 'unchanged updates retain the actual font');
-  close(card.position, getGlyphMetrics('ygo-jp', 0.5)('日').width * 38);
+  close(card.position, getGlyphMetrics('ygo-jp', 'legacy')('日').width * 38);
   await settle(card);
   card.setData({ text: '日日' });
-  close(card.position, getGlyphMetrics('ygo-jp', 0.5)('日').width * 38 * 2);
+  close(card.position, getGlyphMetrics('ygo-jp', 'legacy')('日').width * 38 * 2);
   await settle(card);
   assert.equal(destroyed.ready, destroyedReady);
   assert.equal(destroyed.draws, destroyedDraws, 'disposed cards do not respond to global font changes');
@@ -163,7 +163,7 @@ for (const order of [[0, 1], [1, 0]]) {
     for (const [index, { card, readiness }] of fixtures.entries()) {
       assert.equal(card.ready, promises[index], 'pending updates retain the same promise');
       assert.equal(readiness.loadedFonts.get('ygo-jp'), entry);
-      close(card.position, getGlyphMetrics('ygo-jp', 0.5)('日').width * 38);
+      close(card.position, getGlyphMetrics('ygo-jp', 'legacy')('日').width * 38);
       await settle(card);
     }
   });
@@ -180,7 +180,7 @@ test('a pending local font uses the registered face for preview but its own fail
   await flush();
   // 清单已返回后的一次同步更新也必须跟随全局实际字体，而非等待本目录字体。
   card.setData({ text: '日日' });
-  close(card.position, getGlyphMetrics('ygo-jp', 0.5)('日').width * 38 * 2);
+  close(card.position, getGlyphMetrics('ygo-jp', 'legacy')('日').width * 38 * 2);
   assert.equal(readiness.pending, true);
   env.faces[1].loading.reject(new Error('Expected local font failure'));
   await a.promise;
@@ -212,6 +212,6 @@ test('Node cards follow actual FontLibrary registration and cache hits retain th
   assert.equal(getNodeFontResource(`${directory}/a`, skia), a);
   assert.equal(getLoadedFontEntry(family, skia.FontLibrary), b.fonts.get(family), 'cached A did not register a face again');
   card.setData({ text: '日日' });
-  close(card.position, getGlyphMetrics(family, 0.5)('日').width * 38 * 2);
+  close(card.position, getGlyphMetrics(family, 'legacy')('日').width * 38 * 2);
   await settle(card);
 });

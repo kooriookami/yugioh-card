@@ -1,5 +1,6 @@
 import type { IGroup, IFill, IFontWeight, IGroupInputData, IStroke, ITextInputData, IText } from '@leafer-ui/interface';
 import type { BodyRun } from '../body-run.ts';
+import type { SideBearingMode } from '../glyph-metrics.ts';
 
 export interface TextSettings {
   text: string | number;
@@ -36,7 +37,9 @@ export interface TextSettings {
   zIndex: number;
 }
 
-export type CompressTextOptions = IGroupInputData & Partial<TextSettings> & { sideBearingRatio?: number };
+export type CompressTextOptions = IGroupInputData & Partial<TextSettings> & {
+  sideBearingMode?: SideBearingMode;
+};
 export type TextPaint = Omit<ITextInputData, 'stroke'> & { stroke?: IStroke | null };
 export type TextLeafStyle = TextPaint & { text: string; fontSize: number; lineHeight: number; letterSpacing: number };
 

@@ -3,7 +3,7 @@ import type { Series2Style } from '../../card/style-types.ts';
 
 export default inheritProp<Series2Style>({
   fontFamily: 'ygo-jp',
-  sideBearingRatio: 0.5,
+  sideBearingMode: 'legacy',
   name: {
     top: 136,
     fontSize: 114,

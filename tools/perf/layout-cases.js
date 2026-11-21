@@ -18,7 +18,7 @@ export const textCases = [
   { text: japaneseText.repeat(4), height: 270 },
   { text: '[日(にちにちにちにち)]　[明日(あした)] '.repeat(12), width: 300, height: 100 },
   ...['left', 'center', 'right', 'justify'].map(textAlign => ({ text: japaneseText, width: 400, textAlign, textJustifyLast: true })),
-  ...[0, 0.5, 1].map(sideBearingRatio => ({ text: '[日あー(X)] ０１２ AV。', sideBearingRatio, gradient: true })),
+  ...['legacy', 'native'].map(sideBearingMode => ({ text: '[日あー(X)] ０１２ AV。', sideBearingMode, gradient: true })),
   ...[8, 15, 30, 42, 64.8].map(height => ({ text: 'ABC DEF GHI\nJKL MNO', fontFamily: 'ygo-en', fontSize: 20, lineHeight: 1.05, width: 100, height, autoSmallSize: true, smallFontSize: 10 })),
   { text: '[Beast-Warrior / Pendulum / Tuner / Effect]', fontFamily: 'ygo-en-race', fontSize: 56, letterSpacing: 1, lineHeight: 1.02, width: 1175, height: 57.12 },
   { text: japaneseText, compressFirstSegment: true, width: 250, height: 80, autoSmallSize: true, smallFontSize: 18 },
@@ -139,7 +139,11 @@ export const classData = (name, defaults, index, images) => {
 };
 
 /** 仅在对照工具中适配冻结版本的配置名称。 */
-export const textOptionsFor = (CompressText, options) => {
+export const textOptionsFor = (CompressText, options, historical = false) => {
+  if (historical && Object.hasOwn(options, 'sideBearingMode')) {
+    const { sideBearingMode, ...rest } = options;
+    options = { ...rest, sideBearingRatio: sideBearingMode === 'legacy' ? 0.5 : 1 };
+  }
   if ('calculateSegmentScaleX' in CompressText.prototype) {
     const { compressFirstSegment, ...current } = options;
     if (compressFirstSegment !== undefined) current.compressSegments = compressFirstSegment ? [1] : [];

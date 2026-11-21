@@ -16,7 +16,7 @@ const { Leafer, useCanvas } = runtime || await import('leafer-unified');
 const skia = runtime?.skia || (await import('skia-canvas')).default;
 const moduleAt = moduleLoader(entry);
 const { CompressText } = await moduleAt('src/compress-text/compress-text');
-const createText = options => new CompressText(textOptionsFor(CompressText, options));
+const createText = options => new CompressText(textOptionsFor(CompressText, options, Boolean(args.root)));
 const scaleKey = 'calculateSegmentScaleX' in CompressText.prototype ? 'renderScale' : 'scale';
 const cards = await moduleAt('index');
 const { getNodeFontResource } = await moduleAt('src/utils/font-loader');
@@ -40,14 +40,14 @@ const capture = async (text, view, withPixels) => ({ layout: textSnapshot(text),
 const skipText = args['resume-classes'] || args['batch-only'];
 for (const [index, data] of (skipText ? [] : cases).entries()) {
   const view = new Leafer({ width: 1400, height: 650 });
-  const text = createText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtOffsetY: -6, width: 1175, sideBearingRatio: 0.5, ...data });
+  const text = createText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtOffsetY: -6, width: 1175, sideBearingMode: 'legacy', ...data });
   view.add(text);
   try { output.text.push(await capture(text, view, args.pixels === '1')); }
   finally { view.destroy(true); }
 }
-for (const extra of (skipText ? [] : [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingRatio: 1 }, { height: 35, autoSmallSize: true, smallFontSize: 12 }])) {
+for (const extra of (skipText ? [] : [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingMode: 'native' }, { height: 35, autoSmallSize: true, smallFontSize: 12 }])) {
   const view = new Leafer({ width: 1400, height: 650 });
-  const text = createText({ text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingRatio: 0.5, ...extra });
+  const text = createText({ text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingMode: 'legacy', ...extra });
   view.add(text);
   try {
     const steps = [await capture(text, view, args.pixels === '1')];

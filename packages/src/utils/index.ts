@@ -19,7 +19,7 @@ export const numberToFull = (value: number | string) => {
 // 继承css样式
 export const inheritProp = <T extends object>(obj: T, parentObj: Record<string, unknown> = {}): T => {
   const props = obj as Record<string, unknown>;
-  const inheritPropList = ['fontFamily', 'fontSize', 'fontStyle', 'fontWeight', 'lineHeight', 'letterSpacing', 'wordSpacing', 'sideBearingRatio'];
+  const inheritPropList = ['fontFamily', 'fontSize', 'fontStyle', 'fontWeight', 'lineHeight', 'letterSpacing', 'wordSpacing', 'sideBearingMode'];
   inheritPropList.forEach(inherit => {
     if (!Object.hasOwn(obj, inherit) && Object.hasOwn(parentObj, inherit)) {
       props[inherit] = parentObj[inherit];

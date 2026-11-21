@@ -2,20 +2,21 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
-import { japaneseText } from './layout-cases.js';
+import { japaneseText, textOptionsFor } from './layout-cases.js';
 import { moduleLoader } from './runtime-entry.js';
 
 const args = Object.fromEntries(process.argv.slice(2).map(arg => arg.replace(/^--/, '').split('=')));
 const entry = path.resolve(args.root || '.', args.entry || 'packages');
 const moduleAt = moduleLoader(entry);
 const { CompressText } = await moduleAt('src/compress-text/compress-text');
+const createText = options => new CompressText(textOptionsFor(CompressText, options, Boolean(args.root)));
 const { getNodeFontResource } = await moduleAt('src/utils/font-loader');
 useCanvas('skia', skia);
 getNodeFontResource(path.resolve('src/assets/yugioh-card/yugioh/font'), skia);
-const data = { text: japaneseText.repeat(4), fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, width: 1175, sideBearingRatio: 0.5 };
+const data = { text: japaneseText.repeat(4), fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, width: 1175, sideBearingMode: 'legacy' };
 const result = {};
 for (const key of ['x', 'color']) {
-  const text = new CompressText(data);
+  const text = createText(data);
   let rebuilt = 0;
   try {
     for (let index = 0; index < 10; index++) {
@@ -27,7 +28,7 @@ for (const key of ['x', 'color']) {
   } finally { text.destroy(); }
 }
 {
-  const text = new CompressText({ ...data, text: '日'.repeat(1600) });
+  const text = createText({ ...data, text: '日'.repeat(1600) });
   let reads = 0;
   text.rubyList = new Proxy(text.rubyList, { get(target, key, receiver) {
     if (typeof key === 'string' && /^\d+$/.test(key)) reads++;
@@ -38,7 +39,7 @@ for (const key of ['x', 'color']) {
   finally { text.destroy(); }
 }
 {
-  const text = new CompressText(data);
+  const text = createText(data);
   let writes = 0;
   const rubyNodeKey = 'createRubyNode' in text ? 'rubyNode' : 'rubyLeaf';
   for (const ruby of text.rubyList) ruby[rubyNodeKey] = new Proxy(ruby[rubyNodeKey], {

@@ -13,10 +13,13 @@ export interface GlyphMetric {
 }
 
 export type GlyphResolver = (character: string) => GlyphMetric | null;
+export type SideBearingMode = 'native' | 'legacy';
 
 const scripts = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]$/u;
 const letter = /^\p{Letter}$/u;
+const ideographs = /^[\p{Unified_Ideograph}\uF900-\uFAFF\u{2F800}-\u{2FA1F}]$/u;
 const extras = new Set(Array.from('々〆゛゜ゝゞー'));
+const fullWidthSamples = ['日', 'あ'];
 const caches = new WeakMap<FontEntry, Map<string, GlyphMeasurement | null>>();
 
 export const isSpacingCharacter = (character: string) => {
@@ -35,9 +38,9 @@ const measure = (codePoint: number, font: NonNullable<ReturnType<typeof getFontI
   return width > 0 && ink > 0 ? { advance: width, left, right, ink } : null;
 };
 
-/** 每个字体加载实例共享一份原始度量；字号、比例、后端和卡片版本不重复解析。 */
-export const getGlyphMetrics = (fontFamily: string, ratio: number, fonts?: ReadonlyMap<string, FontEntry>): GlyphResolver | null => {
-  if (!Number.isFinite(ratio) || ratio >= 1) return null;
+/** 每个字体加载实例共享一份原始度量；字号、留白模式、后端和卡片版本不重复解析。 */
+export const getGlyphMetrics = (fontFamily: string, mode: SideBearingMode = 'native', fonts?: ReadonlyMap<string, FontEntry>): GlyphResolver | null => {
+  if (mode !== 'legacy') return null;
   const family = fontFamilies(fontFamily)[0];
   const entry = fonts === undefined ? getLoadedFontEntry(family) : [...fonts].find(([name]) => fontFamilyKey(name) === fontFamilyKey(family))?.[1];
   if (!entry || entry.status !== 'loaded') return null;
@@ -49,9 +52,7 @@ export const getGlyphMetrics = (fontFamily: string, ratio: number, fonts?: Reado
     cache = new Map();
     caches.set(entry, cache);
   }
-  const r = Math.max(0, ratio);
-  return character => {
-    if (!isSpacingCharacter(character)) return null;
+  const getMeasurement = (character: string) => {
     if (!cache.has(character)) {
       let metric: GlyphMeasurement | null = null;
       try {
@@ -60,13 +61,25 @@ export const getGlyphMetrics = (fontFamily: string, ratio: number, fonts?: Reado
       } catch { /* 无法确认字形覆盖时保留原生路径。 */ }
       cache.set(character, metric);
     }
-    const metric = cache.get(character);
+    return cache.get(character);
+  };
+  // 旧资源本身已有比例度量。按加载实例检查基准字，避免重复处理。
+  if (fullWidthSamples.some(character => {
+    const metric = getMeasurement(character);
+    return metric && metric.advance !== units;
+  })) return null;
+
+  const hanPadding = 30 * units / 1024;
+  return character => {
+    if (!isSpacingCharacter(character)) return null;
+    const metric = getMeasurement(character);
     if (!metric) return null;
     const { advance, left, right } = metric;
-    const newLeft = left > 0 ? Math.min(left, Math.ceil(left * r)) : left;
-    const newRight = right > 0 ? Math.min(right, Math.ceil(right * r)) : right;
+    const padding = ideographs.test(character) ? hanPadding : 0;
+    const newLeft = Math.ceil(left * 0.5 + padding);
+    const newRight = Math.ceil(right * 0.5 + padding);
     const width = advance + newLeft - left + newRight - right;
-    if (width <= 0 || width > advance) return null;
+    if (width <= 0) return null;
     return { width: width / units, offset: (newLeft - left) / units };
   };
 };

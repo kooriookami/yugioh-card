@@ -16,6 +16,6 @@ export const breakingCases = [
   ['combining and IVS', 'か\u3099葛\u{E0100}𠮷[日(にち)]。', 60],
   ['ruby with fixed marker', '[①甲(いち)]乙', 200],
   ['bold boundary', 'hel<b>lo</b> world', 100, 'ygo-en'],
-].map(([label, text, width, fontFamily = 'ygo-jp']) => ({ label, data: { text, width, fontFamily, fontSize: 20, rtFontSize: 6, textAlign: 'left', sideBearingRatio: 1 } }));
+].map(([label, text, width, fontFamily = 'ygo-jp']) => ({ label, data: { text, width, fontFamily, fontSize: 20, rtFontSize: 6, textAlign: 'left', sideBearingMode: 'native' } }));
 
 export const textCases = [...existingCases, ...breakingCases.map(item => item.data)];

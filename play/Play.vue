@@ -165,7 +165,7 @@ const selectedCaseId = ref('ruby-basic');
 const previewBaseConfig = {
   text: '',
   fontFamily: 'ygo-sc',
-  sideBearingRatio: 1,
+  sideBearingMode: 'native',
   width: 0,
   height: 0,
   y: 14,
@@ -192,12 +192,12 @@ const removeKanjiKana = (text = '') => {
 const cases = [
   {
     id: 'jp-spacing',
-    label: '日文留白',
+    label: '日文旧版字距',
     description: '检查汉字、假名、长音符与混合数字的留白、注音及换行。',
     config: {
       text: '[青眼(ブルーアイズ)]の[白龍(ホワイト・ドラゴン)]\nコーヒー スーパー 々〆゛゜ゝゞー\n０１２３４５６７８９ AV。',
       fontFamily: 'ygo-jp',
-      sideBearingRatio: 0.5,
+      sideBearingMode: 'legacy',
       width: 540,
     },
   },
@@ -274,7 +274,7 @@ const splitResult = computed(() => {
 });
 
 const currentConfigText = computed(() => {
-  const { text, sideBearingRatio, ...rest } = editableConfig;
+  const { text, sideBearingMode, ...rest } = editableConfig;
   return JSON.stringify(rest, null, 2);
 });
 

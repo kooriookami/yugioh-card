@@ -14,7 +14,7 @@ getNodeFontResource(path.resolve('src/assets/yugioh-card/yugioh/font'), skia);
 
 test('numeric trial height exactly matches committed layout without changing scene state', () => {
   for (const data of textCases) {
-    const text = new CompressText({ fontFamily: 'ygo-jp', fontSize: 38, width: 1175, sideBearingRatio: 0.5, ...data });
+    const text = new CompressText({ fontFamily: 'ygo-jp', fontSize: 38, width: 1175, sideBearingMode: 'legacy', ...data });
     try {
       for (const scaleX of [1, 0.75, 0.333333333333, 0.01, Number.EPSILON]) {
         const before = textSnapshot(text);

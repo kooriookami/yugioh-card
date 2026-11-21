@@ -3,7 +3,7 @@ import type { YugiohStyle } from '../../card/style-types.ts';
 
 export default inheritProp<YugiohStyle>({
   fontFamily: 'ygo-jp',
-  sideBearingRatio: 0.5,
+  sideBearingMode: 'legacy',
   name: {
     top: 98,
     fontSize: 108,
@@ -31,7 +31,7 @@ export default inheritProp<YugiohStyle>({
   monsterTypeLine: {
     top: 1528,
     fontSize: 46,
-    sideBearingRatio: 1,
+    sideBearingMode: 'native',
     lineHeight: 1.17,
     textIndent: -0.2 * 46,
     minHeight: 16,

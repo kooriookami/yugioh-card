@@ -1,4 +1,5 @@
 import type { IFontWeight } from '@leafer-ui/interface';
+import type { SideBearingMode } from '../compress-text/glyph-metrics.ts';
 
 interface TextStyle {
   fontSize: number;
@@ -7,7 +8,7 @@ interface TextStyle {
   lineHeight?: number;
   letterSpacing?: number;
   wordSpacing?: number;
-  sideBearingRatio?: number;
+  sideBearingMode?: SideBearingMode;
   rtFontSize?: number;
   rtOffsetY?: number;
 }
@@ -22,7 +23,7 @@ interface SpellTrapLabelStyle extends PositionedTextStyle {
 
 interface CardStyle {
   fontFamily: string;
-  sideBearingRatio?: number;
+  sideBearingMode?: SideBearingMode;
   name: PositionedTextStyle;
   spellTrapLabel: SpellTrapLabelStyle;
   monsterTypeLine: PositionedTextStyle & { minHeight?: number; textIndent?: number };

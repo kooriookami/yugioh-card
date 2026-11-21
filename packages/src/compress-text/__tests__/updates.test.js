@@ -11,9 +11,9 @@ import { CompressText } from '../compress-text.ts';
 useCanvas('skia', skia);
 const fonts = getNodeFontResource(path.resolve('src/assets/yugioh-card/yugioh/font'), skia);
 
-for (const extra of [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingRatio: 1 }, { width: 150, height: 35, autoSmallSize: true, smallFontSize: 12 }]) {
+for (const extra of [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingMode: 'native' }, { width: 150, height: 35, autoSmallSize: true, smallFontSize: 12 }]) {
   test(`incremental text updates match fresh layout and paint: ${JSON.stringify(extra)}`, () => {
-    const data = { text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingRatio: 0.5, ...extra };
+    const data = { text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingMode: 'legacy', ...extra };
     const text = new CompressText(data);
     try {
       for (const update of updateCases) {
@@ -28,7 +28,7 @@ for (const extra of [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 
 }
 
 test('container and plain color updates preserve measured nodes; complex paint still matches fresh output', () => {
-  const data = { text: '[日(にち)] AV', fontFamily: 'ygo-jp', width: 400, sideBearingRatio: 0.5, strokeWidth: 1, rtStrokeWidth: 1 };
+  const data = { text: '[日(にち)] AV', fontFamily: 'ygo-jp', width: 400, sideBearingMode: 'legacy', strokeWidth: 1, rtStrokeWidth: 1 };
   const text = new CompressText(data);
   try {
     const nodes = text.rubyList.map(ruby => ruby.rubyNode);
@@ -46,7 +46,7 @@ test('container and plain color updates preserve measured nodes; complex paint s
 });
 
 test('font context changes invalidate layout even when only container or color fields are supplied', () => {
-  const data = { text: '[日(にち)]', fontFamily: 'ygo-jp', width: 200, sideBearingRatio: 0.5 };
+  const data = { text: '[日(にち)]', fontFamily: 'ygo-jp', width: 200, sideBearingMode: 'legacy' };
   const context = { fontVersion: 0, loadedFonts: fonts.fonts };
   const text = withTextLayoutContext(context, () => new CompressText(data));
   try {
@@ -60,7 +60,7 @@ test('font context changes invalidate layout even when only container or color f
 });
 
 test('reused parsing never retains mutable layout or caller changes', () => {
-  const data = { text: '<b>[日(にち)]</b> AV  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingRatio: 0.5 };
+  const data = { text: '<b>[日(にち)]</b> AV  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingMode: 'legacy' };
   const text = new CompressText(data);
   try {
     const parsed = text.getParseList();

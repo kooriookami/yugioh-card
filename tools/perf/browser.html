@@ -76,14 +76,14 @@ try {
   // 缓存目录中的 runtime 本身也受 node_modules 的 immutable HTTP 缓存影响。
   const api = await import(/* @vite-ignore */ `${runtime}?t=${Date.now()}`);
   const { Leafer, CompressText, getBrowserFontResource } = api;
-  const createText = options => new CompressText(textOptionsFor(CompressText, options));
+  const createText = options => new CompressText(textOptionsFor(CompressText, options, mode.startsWith('baseline')));
   const scaleKey = 'calculateSegmentScaleX' in CompressText.prototype ? 'renderScale' : 'scale';
   await getBrowserFontResource('/src/assets/yugioh-card/yugioh/font').promise;
   const capture = async (text, view) => ({ layout: textSnapshot(text), pixels: await pixels(view) });
   for (const [index, data] of cases.entries()) {
     progress(`文本 ${index + 1}/${cases.length}`);
     const view = new Leafer({ view: host, width: 1400, height: 650 });
-    const text = createText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtOffsetY: -6, width: 1175, sideBearingRatio: 0.5, ...data });
+    const text = createText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtOffsetY: -6, width: 1175, sideBearingMode: 'legacy', ...data });
     view.add(text);
     try { output.text.push(await capture(text, view)); }
     finally { view.destroy(true); }
@@ -98,9 +98,9 @@ try {
       if (first.text.includes('[') || !output.text[index].layout.items.some(item => item.rt.text || index === 108)) throw new Error('ruby 解析失败');
     }
   }
-  for (const extra of [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingRatio: 1 }, { height: 35, autoSmallSize: true, smallFontSize: 12 }]) {
+  for (const extra of [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingMode: 'native' }, { height: 35, autoSmallSize: true, smallFontSize: 12 }]) {
     const view = new Leafer({ view: host, width: 1400, height: 650 });
-    const text = createText({ text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingRatio: 0.5, ...extra });
+    const text = createText({ text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingMode: 'legacy', ...extra });
     view.add(text);
     try {
       const steps = [await capture(text, view)];

@@ -178,7 +178,7 @@ export class YugiohCard extends Card<YugiohCardData> {
     this.nameNode.set({
       text: this.data.name,
       fontFamily: name.fontFamily,
-      sideBearingRatio: name.sideBearingRatio ?? 1,
+      sideBearingMode: name.sideBearingMode,
       fontSize: name.fontSize,
       letterSpacing: name.letterSpacing || 0,
       wordSpacing: name.wordSpacing || 0,
@@ -299,7 +299,7 @@ export class YugiohCard extends Card<YugiohCardData> {
     rightText.set({
       text: rightBracket,
       fontFamily: spellTrapLabel.fontFamily,
-      sideBearingRatio: spellTrapLabel.sideBearingRatio ?? 1,
+      sideBearingMode: spellTrapLabel.sideBearingMode,
       fontSize: spellTrapLabel.fontSize,
       letterSpacing,
       wordSpacing,
@@ -318,7 +318,7 @@ export class YugiohCard extends Card<YugiohCardData> {
     leftText.set({
       text: leftBracket + this.spellTrapName,
       fontFamily: spellTrapLabel.fontFamily,
-      sideBearingRatio: spellTrapLabel.sideBearingRatio ?? 1,
+      sideBearingMode: spellTrapLabel.sideBearingMode,
       fontSize: spellTrapLabel.fontSize,
       letterSpacing,
       wordSpacing,
@@ -429,7 +429,7 @@ export class YugiohCard extends Card<YugiohCardData> {
     this.pendulumEffectNode.set({
       text: this.data.pendulumEffect,
       fontFamily: pendulumEffect.fontFamily,
-      sideBearingRatio: pendulumEffect.sideBearingRatio ?? 1,
+      sideBearingMode: pendulumEffect.sideBearingMode,
       fontSize: pendulumEffect.fontSize,
       fontSizeScale: this.data.cardTextFontSizeScale,
       strokeWidth: this.data.bodyTextStrokeWidth,
@@ -533,7 +533,7 @@ export class YugiohCard extends Card<YugiohCardData> {
     this.monsterTypeLineNode.set({
       text: leftBracket + this.data.monsterTypeLine + rightBracket,
       fontFamily: monsterTypeLine.fontFamily,
-      sideBearingRatio: monsterTypeLine.sideBearingRatio ?? 1,
+      sideBearingMode: monsterTypeLine.sideBearingMode,
       fontSize: monsterTypeLine.fontSize,
       strokeWidth: this.data.bodyTextStrokeWidth,
       lineHeight: monsterTypeLine.lineHeight,
@@ -583,7 +583,7 @@ export class YugiohCard extends Card<YugiohCardData> {
     this.cardTextNode.set({
       text: this.data.cardText,
       fontFamily,
-      sideBearingRatio: cardText.sideBearingRatio ?? 1,
+      sideBearingMode: cardText.sideBearingMode,
       fontSize: cardText.fontSize,
       fontSizeScale: this.data.cardTextFontSizeScale,
       textAlign: this.data.cardTextAlign,
