@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { splitBreakWord, splitBreakWordWithBracket } from '../split-break-word.js';
+import { parseBreakText, splitBreakWord, splitBreakWordWithBracket } from '../breaking/split-break-word.ts';
+import { graphemeBoundaries, mergeGraphemeTokens } from '../breaking/text-graphemes.ts';
 
 const separatorCharList = [
   ' ',
@@ -8,8 +9,8 @@ const separatorCharList = [
   String.fromCodePoint(0x1361),
   String.fromCodePoint(0x10100),
   String.fromCodePoint(0x10101),
-  String.fromCodePoint(0x1039),
-  String.fromCodePoint(0x1091),
+  String.fromCodePoint(0x1039F),
+  String.fromCodePoint(0x1091F),
 ];
 
 const curatedBracketCaseList = [
@@ -62,7 +63,7 @@ test('splitBreakWord preserves configured separator characters and round-trips t
     const result = splitBreakWord(text);
 
     assert.equal(result.join(''), text);
-    assert.ok(result.includes(separator));
+    assert.ok(parseBreakText(text).flat().some(item => item.text === separator));
   });
 });
 
@@ -94,12 +95,12 @@ test('splitBreakWordWithBracket preserves adjacent ruby tokens as independent it
 test('splitBreakWordWithBracket keeps plain text around ruby tokens in order', () => {
   assert.deepEqual(
     splitBreakWordWithBracket('abc[自(じ)][分(ぶん)]def'),
-    ['abc[自(じ)]', '[分(ぶん)]def'],
+    ['abc', '[自(じ)]', '[分(ぶん)]', 'def'],
   );
 
   assert.deepEqual(
     splitBreakWordWithBracket('●[相(あい)][手(て)]フィールドのカード１枚'),
-    ['●[相(あい)]', '[手(て)]', 'フィー', 'ル', 'ド', 'の', 'カー', 'ド', '１', '枚'],
+    ['●', '[相(あい)]', '[手(て)]', 'フィー', 'ル', 'ド', 'の', 'カー', 'ド', '１', '枚'],
   );
 });
 
@@ -139,4 +140,72 @@ test('splitBreakWordWithBracket round-trips malformed bracket edge cases', () =>
   malformedBracketCaseList.forEach(text => {
     assert.equal(splitBreakWordWithBracket(text).join(''), text);
   });
+});
+
+test('ruby parsing preserves literal former placeholders and original zero width spaces', () => {
+  for (const text of ['__RB0__ [日(にち)]', '[日(にち)] __RB1__ [月(つき)]', '甲\u200B乙[日(にち)]']) {
+    assert.equal(splitBreakWordWithBracket(text).join(''), text);
+  }
+});
+
+test('breaks follow visible text while keeping ruby atomic', () => {
+  assert.deepEqual(splitBreakWordWithBracket('A[日(x)]B'), ['A', '[日(x)]', 'B']);
+  assert.deepEqual(splitBreakWordWithBracket('[A(a)][B(b)]C'), ['[A(a)][B(b)]C']);
+  assert.deepEqual(splitBreakWordWithBracket('[長い長い長い正文(ruby)]。'), ['[長い長い長い正文(ruby)]。']);
+  assert.deepEqual(splitBreakWordWithBracket('[長い正文()]。'), ['[長い正文()]。']);
+  const ruby = parseBreakText('[①甲(いち)]', '①').flat();
+  assert.equal(ruby.length, 1);
+  assert.equal(ruby[0].text, '①甲');
+  assert.equal(ruby[0].atomic, true);
+});
+
+test('spacing units do not introduce forbidden punctuation or NBSP breaks', () => {
+  assert.deepEqual(splitBreakWord('前甲 ，乙'), ['前', '甲 ，', '乙']);
+  assert.deepEqual(splitBreakWord('X 100\u00A0ATK'), ['X', ' ', '100\u00A0ATK']);
+  assert.deepEqual(splitBreakWord('甲（乙）丙'), ['甲', '（乙）', '丙']);
+  assert.deepEqual(splitBreakWordWithBracket('[甲(こう)]。乙'), ['[甲(こう)]。', '乙']);
+});
+
+test('hard break forms normalize only at the layout parsing boundary', () => {
+  for (const separator of ['\n', '\r\n', '\r', '\u0085', '\u2028', '\u2029']) {
+    const source = `甲${separator}乙`;
+    assert.equal(splitBreakWordWithBracket(source).join(''), source);
+    assert.deepEqual(parseBreakText(source).map(group => group.map(item => item.text).join('')), ['甲', '\n', '乙']);
+  }
+});
+
+test('grapheme protection preserves IVS, newer emoji and combining characters', () => {
+  for (const cluster of ['か\u3099', '葛\u{E0100}', '🫶🏽', '👨‍👩‍👧‍👦', '甲\u1039']) {
+    assert.deepEqual(splitBreakWord(cluster), [cluster]);
+    assert.deepEqual(mergeGraphemeTokens(cluster, Array.from(cluster)), [cluster]);
+    assert.deepEqual(splitBreakWordWithBracket(`[${cluster}(x)]`), [`[${cluster}(x)]`]);
+  }
+  assert.deepEqual(splitBreakWord('A𱍐𱍑B'), ['A', '𱍐', '𱍑', 'B']);
+});
+
+test('bold tags change style without inserting word boundaries', () => {
+  const groups = parseBreakText('hel<b>lo</b> world');
+  assert.deepEqual(groups.map(group => group.map(item => item.text).join('')), ['hello', ' ', 'world']);
+  assert.deepEqual(groups[0].map(item => item.bold), [false, true]);
+});
+
+test('mixed markup round-trips and every emitted break falls on a visible grapheme boundary', () => {
+  const parts = ['甲', 'A', '__RB0__', '[日(にち)]', '[長い正文()]', '<b>', '</b>', 'か\u3099', '葛\u{E0100}', '🫶🏽', '𱍐', '。', '（', ' ', '\u00A0', '\u200B', '\r\n', '[未完('];
+  let seed = 0x3236;
+  for (let sample = 0; sample < 300; sample++) {
+    let source = '';
+    for (let index = 0; index < 10; index++) {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      source += parts[seed % parts.length];
+    }
+    assert.equal(splitBreakWordWithBracket(source).join(''), source);
+    const groups = parseBreakText(source);
+    const visible = groups.flat().map(item => item.text).join('');
+    const boundaries = graphemeBoundaries(visible);
+    let offset = 0;
+    for (const group of groups) {
+      offset += group.reduce((sum, item) => sum + item.text.length, 0);
+      assert.ok(boundaries.has(offset), source);
+    }
+  }
 });

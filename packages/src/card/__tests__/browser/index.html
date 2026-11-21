@@ -1,34 +1,81 @@
 <!doctype html>
 <html lang="zh-CN">
-<meta charset="UTF-8">
-<title>Card ready 浏览器验证</title>
-<style>
-body { font: 16px system-ui; background:#17212f; color:#e5eefb; margin:24px; }
-h1 {font-size:24px} button {font:inherit;padding:10px 16px;cursor:pointer} .cards{display:flex;gap:20px;margin:20px 0} .card{width:279px} pre{white-space:pre-wrap;background:#0c1420;padding:16px;max-width:1000px} #export{width:220px} .pass{color:#80e7a1}
-</style>
-<h1>统一 card.ready · Edge 验证</h1>
-<p>字体清单暂未返回：预览使用 fallback 字体。两个卡片共用加载任务。</p>
-<button id="start">释放资源并验证</button>
-<div class="cards"><div id="a" class="card"></div><div id="b" class="card"></div></div>
-<pre id="report">初始化中</pre><img id="export" alt="等待导出">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>资源加载与就绪状态 · Yugioh Card</title>
+    <link rel="icon" href="/docs/public/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/test-pages/style.css">
+  </head>
+  <body class="test-site" data-test-page="card-ready" data-test-state="loading">
+    <header class="test-nav">
+      <div class="test-shell"><a href="/test-pages/">← 全部测试</a></div>
+    </header>
+    <main class="test-shell test-main">
+      <header class="test-heading">
+        <h1>资源加载与就绪状态</h1>
+        <p class="test-description">比较两张卡片的备用字体和最终排版，检查资源共享、失败重试与 PNG 导出。</p>
+      </header>
+      <div class="test-layout">
+        <section class="test-panel test-layout" aria-label="测试控制">
+          <p id="status" class="test-status" role="status">正在绘制备用字体预览…</p>
+          <div id="ready-actions" class="test-actions"></div>
+        </section>
+        <div class="test-compare">
+          <section class="test-panel">
+            <h2>卡片 A</h2>
+            <div class="test-stage"><div id="a" class="test-card"></div></div>
+          </section>
+          <section class="test-panel">
+            <h2>卡片 B</h2>
+            <div class="test-stage"><div id="b" class="test-card"></div></div>
+          </section>
+        </div>
+        <section class="test-panel">
+          <h2>检查结果</h2>
+          <pre id="report" class="test-report">等待测试启动。</pre>
+        </section>
+        <section class="test-panel" id="export-sample" hidden>
+          <h2>导出样例</h2>
+          <div class="test-stage"><img id="export" class="test-export-preview" alt="导出的卡片"></div>
+        </section>
+      </div>
+    </main>
 <script type="module">
-import { FieldCenterCard, YugiohCard } from '/packages/index.js';
-import { CompressText } from '/packages/src/compress-text/compress-text.js';
+import { ElButton } from 'element-plus';
+import 'element-plus/es/components/button/style/css';
+import { createApp, h, ref } from 'vue';
+import { FieldCenterCard, YugiohCard } from '/packages/index.ts';
+import { CompressText } from '/packages/src/compress-text/compress-text.ts';
 import { Leafer } from 'leafer-unified';
 const report = document.querySelector('#report');
+const status = document.querySelector('#status');
+const startDisabled = ref(true);
+createApp({
+  render: () => h(ElButton, {
+    id: 'start',
+    type: 'primary',
+    disabled: startDisabled.value,
+    onClick: start,
+  }, () => '释放资源并验证'),
+}).mount('#ready-actions');
+
 const results = [];
 const failures = [];
 window.addEventListener('unhandledrejection', event => { failures.push(String(event.reason)); });
 const check = (condition, label) => {
   results.push(`${condition ? 'PASS' : 'FAIL'} ${label}`);
   report.textContent = results.join('\n');
-  if (!condition) throw new Error(label);
+  if (!condition) {
+    document.body.dataset.testState = 'failed';
+    status.textContent = `验证失败：${label}`;
+    throw new Error(label);
+  }
 };
 // 控制请求使用另一个主机名，避免被故意挂起的资源占满同源连接。
 const controlOrigin = `${location.protocol}//${location.hostname === 'localhost' ? '127.0.0.1' : 'localhost'}:${location.port}`;
 const release = name => fetch(`${controlOrigin}/ready-test/release/${name}`, { method: 'POST' });
 await fetch(`${controlOrigin}/ready-test/reset`, { method: 'POST' });
-const baseline = {};
 const waitFor = async predicate => {
   const deadline = performance.now() + 20000;
   while (!predicate()) {
@@ -42,26 +89,33 @@ class ObservedCard extends YugiohCard {
 const options = {
   resourcePath: '/ready-resources',
   readyTimeout: 120000,
-  data: { name: 'Blue-Eyes White Dragon', language: 'en', monsterType: 'Beast-Warrior / Pendulum / Tuner / Effect', description: 'A visible fallback preview while fonts and images are loading.', image: '/ready-resources/photo.jpg', package: 'READY-EN001', password: '89631139', scale: 0.2 },
+  data: { name: 'Blue-Eyes White Dragon', language: 'en', monsterTypeLine: 'Beast-Warrior / Pendulum / Tuner / Effect', cardText: 'A visible fallback preview while fonts and images are loading.', artwork: '/ready-resources/photo.jpg', cardNumber: 'READY-EN001', password: '89631139', renderScale: 0.2 },
 };
 const a = new ObservedCard({ ...options, view: 'a' });
 const b = new ObservedCard({ ...options, view: 'b' });
 class FailedMaskCard extends FieldCenterCard {
-  drawMask() { super.drawMask(); this.maskLeaf.url = '/ready-resources/missing-mask.png'; }
+  drawArtworkMask() { super.drawArtworkMask(); this.artworkMaskNode.url = '/ready-resources/missing-mask.png'; }
 }
-const fontProbe = new ObservedCard({ ...options, data: { ...options.data, image: '/ready-resources/retry.jpg' } });
-const imageProbe = new FailedMaskCard({ ...options, data: { scale: 0.1, image: '/ready-resources/photo.jpg' } });
+const fontProbe = new ObservedCard({ ...options, data: { ...options.data, artwork: '/ready-resources/retry.jpg' } });
+const imageProbe = new FailedMaskCard({ ...options, data: { renderScale: 0.1, artwork: '/ready-resources/photo.jpg' } });
 let fontProbeError, imageProbeError;
 fontProbe.ready.catch(error => { fontProbeError = error; });
 imageProbe.ready.catch(error => { imageProbeError = error; });
 let state = 'pending';
 a.ready.then(() => { state = 'ready'; }, error => { state = error.code; });
-const initial = { name: a.nameLeaf.bounds.width, race: a.monsterTypeLeaf.textScale, packageX: a.packageLeaf.x };
+const initial = { name: a.nameNode.bounds.width, race: a.monsterTypeLineNode.lastSegmentScaleX, packageX: a.cardNumberNode.x };
 window.readyTest = { a, b, initial, results, failures };
 await new Promise(requestAnimationFrame);
-check(state === 'pending' && a.nameLeaf.rubyList.length > 0 && initial.name > 0, '字体清单返回前有可用 fallback 文字，ready 保持 pending');
-document.querySelector('#start').onclick = async event => {
-  event.target.disabled = true;
+check(state === 'pending' && a.nameNode.rubyList.length > 0 && initial.name > 0, '字体清单返回前有可用 fallback 文字，ready 保持 pending');
+document.body.dataset.testState = 'waiting';
+status.textContent = '字体清单等待中，两张卡片使用备用字体。';
+startDisabled.value = false;
+
+async function start() {
+  if (startDisabled.value) return;
+  startDisabled.value = true;
+  document.body.dataset.testState = 'running';
+  status.textContent = '正在逐步释放资源并检查渲染结果…';
   try {
     try {
       await waitFor(() => fontProbeError && imageProbeError);
@@ -72,22 +126,23 @@ document.querySelector('#start').onclick = async event => {
       imageProbe.leafer.destroy(true);
     }
     await release('manifest');
-    await waitFor(() => document.fonts.size > 0);
-    check(state === 'pending', 'FontFace 已注册但未加载时不提前完成');
+    await waitFor(() => a._readiness.fonts.fonts.size > 0);
+    check(state === 'pending', '字体清单已返回、字体字节仍在等待时不提前完成');
     await release('fonts');
     await waitFor(() => a.drawCount === 2 && b.drawCount === 2);
     check(state === 'pending', '字体最终排版完成，仍等待卡图');
-    check(a.nameLeaf.bounds.width !== initial.name && a.packageLeaf.x !== initial.packageX, '相同文字参数使用真实字体重测量，并更新依赖位置');
-    await waitFor(() => a._readiness.fonts.fonts.get('ygo-kr').status === 'failed');
-    check(a._readiness.fonts.fonts.get('ygo-kr').status === 'failed', '未使用的韩文字体失败被记录');
+    check(a.nameNode.bounds.width !== initial.name && a.cardNumberNode.x !== initial.packageX, '相同文字参数使用真实字体重测量，并更新依赖位置');
+    check(a._readiness.fonts.fonts.get('ygo-kr').status === 'idle', '英文卡片未加载韩文字体');
     await release('photo');
     await Promise.all([a.ready, b.ready]);
     check(state === 'ready' && a.leafer.imageReady && b.leafer.imageReady, '两张卡片的资源、排版和实际渲染全部完成');
     const counts = await (await fetch(`${controlOrigin}/ready-test/counts`)).json();
-    check(counts['yugioh/font/font-list.json'] - (baseline['yugioh/font/font-list.json'] || 0) === 1 && counts['yugioh/font/ygo-en.woff2'] - (baseline['yugioh/font/ygo-en.woff2'] || 0) === 1, '并发卡片共用一次真实字体请求');
+    window.readyTest.coldFontFiles = Object.keys(counts).filter(file => file.endsWith('.woff2'));
+    check(counts['yugioh/font/font-list.json'] === 1 && counts['yugioh/font/ygo-en-italic.woff2'] === 1 && window.readyTest.coldFontFiles.every(file => counts[file] === 1), '并发卡片共用真实字体请求');
+    check(!counts['yugioh/font/ygo-kr.woff2'] && !counts['yugioh/font/ygo-jp.woff2'] && !counts['yugioh/font/ygo-sc.woff2'], '英文首屏只请求当前卡片使用的字体');
     const old = a.ready, draws = a.drawCount;
     a.setData({ name: 'Cached synchronous update' });
-    check(a.nameLeaf.text === 'Cached synchronous update' && a.drawCount === draws + 1 && a.ready !== old, '缓存后的 setData 同步更新节点并建立新 Promise');
+    check(a.nameNode.text === 'Cached synchronous update' && a.drawCount === draws + 1 && a.ready !== old, '缓存后的 setData 同步更新节点并建立新 Promise');
     await a.ready;
     check(a.drawCount === draws + 1, '缓存更新没有额外完整排版');
     for (const [label, data] of [['空对象', {}], ['完全相同的数据', { ...a.data }]]) {
@@ -117,20 +172,29 @@ document.querySelector('#start').onclick = async event => {
     catch (error) { check(error === updateError && !a._readiness.disposed && !view.destroyed, '后续更新失败保留实例和原始异常'); }
     a.setData({ language: 'en' });
     await a.ready;
-    check(a.leafer === view && a.nameLeaf.text === 'Cached synchronous update', '修正数据后原实例可以继续使用');
-    a.setData({ image: '/ready-resources/retry.jpg' });
+    check(a.leafer === view && a.nameNode.text === 'Cached synchronous update', '修正数据后原实例可以继续使用');
+    a.setData({ artwork: '/ready-resources/retry.jpg' });
     try { await a.ready; check(false, '必需图片失败应拒绝'); }
     catch (error) { check(error.code === 'RESOURCE_FAILED' && error.resourceType === 'image', '必需图片失败严格拒绝 ready'); }
-    a.setData({ image: '' });
+    a.setData({ artwork: '' });
     await a.ready;
-    check(!a.imageStatusLeaf.visible, '移除失败的卡图后不残留错误占位');
+    check(!a.artworkStatusNode.visible, '移除失败的卡图后不残留错误占位');
     await release('retry');
-    a.setData({ image: '/ready-resources/retry.jpg' });
+    a.setData({ artwork: '/ready-resources/retry.jpg' });
     await a.ready;
-    check(!a.imageStatusLeaf.visible, '同一图片地址重试成功，错误占位已清除');
-    a.setData({ language: 'jp', type: 'spell', name: '[青眼(ブルーアイズ)]', description: '[魔法(まほう)]カードのテスト。', icon: 'continuous' });
+    check(!a.artworkStatusNode.visible, '同一图片地址重试成功，错误占位已清除');
+    for (const data of [{ language: 'kr' }, {}]) {
+      a.setData(data);
+      const error = await a.ready.then(() => null, error => error);
+      check(error?.resourceType === 'font' && error.resource.endsWith('/ygo-kr.woff2') && error.cause, '切换到需要韩文字体时报告加载失败及其原因');
+    }
+    const afterRetry = await (await fetch(`${controlOrigin}/ready-test/counts`)).json();
+    check(afterRetry['yugioh/font/ygo-kr.woff2'] === 2, '显式更新只重试必需的失败字体');
+    a.setData({ language: 'jp', cardLayout: 'spell', name: '[青眼(ブルーアイズ)]', cardText: '[魔法(まほう)]カードのテスト。', spellTrapIcon: 'continuous' });
     await a.ready;
-    check(a.spellTrapLeaf.visible && a.nameLeaf.rubyList.length > 0, '切换语言、注音和魔陷布局后等待最终画面');
+    check(a.spellTrapLabelNode.visible && a.nameNode.rubyList.length > 0, '切换语言、注音和魔陷布局后等待最终画面');
+    const afterSwitch = await (await fetch(`${controlOrigin}/ready-test/counts`)).json();
+    check(afterSwitch['yugioh/font/ygo-jp.woff2'] === 1 && b.leafer.imageReady, '切换到日文时按需加载，英文卡片保持可用');
     for (const [label, data, family, part] of [
       ['正文大小写', { text: 'WWWWWWiiiiii', fontFamily: 'READY-Body' }, 'ready-body', 'ruby'],
       ['注音大小写', { text: '[A(WWWWWWiiiiii)]', fontFamily: 'serif', rtFontFamily: 'READY-Ruby' }, 'ready-ruby', 'rt'],
@@ -160,7 +224,7 @@ document.querySelector('#start').onclick = async event => {
         check(layouts === 1 && measured() !== before, `${label}：初次 fonts.ready 后加载真实字体仍会正确重排`);
       } finally { standaloneView.destroy(true); }
     }
-    const doomed = new ObservedCard({ ...options, data: { ...options.data, image: '/ready-resources/destroy.jpg' } });
+    const doomed = new ObservedCard({ ...options, data: { ...options.data, artwork: '/ready-resources/destroy.jpg' } });
     const promise = doomed.ready;
     doomed.leafer.destroy(true);
     try { await promise; check(false, '销毁应拒绝'); }
@@ -169,14 +233,19 @@ document.querySelector('#start').onclick = async event => {
     check(exported.data.startsWith('data:image/png;base64,'), 'ready 后真实 PNG 导出成功');
     document.querySelector('#export').src = exported.data;
     check(failures.length === 0, '没有未处理的 Promise rejection');
-    report.className = 'pass';
-    document.querySelector('p').textContent = '验证完成：fallback 预览、共享资源、最终排版、失败重试及导出均通过。';
+    report.classList.add('pass');
+    document.querySelector('#export-sample').hidden = false;
+    document.body.dataset.testState = 'passed';
+    status.textContent = `全部 ${results.length} 项检查通过。`;
     window.readyTest.complete = true;
   } catch (error) {
     results.push(error.stack);
     report.textContent = results.join('\n');
     window.readyTest.error = String(error);
+    document.body.dataset.testState = 'failed';
+    status.textContent = `验证失败：${error.message}`;
   }
-};
+}
 </script>
+  </body>
 </html>

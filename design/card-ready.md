@@ -1,6 +1,6 @@
 # 统一资源加载与卡片就绪接口设计
 
-- 状态：v0.2，已在 `codex/unified-card-ready` 实现，待合并。
+- 初版已随 [PR #33](https://github.com/kooriookami/yugioh-card/pull/33) 合并。本文也记录 2.0 的浏览器按需字体加载。
 - 日期：2026-11-14。
 - 背景：[PR #28](https://github.com/kooriookami/yugioh-card/pull/28)、[需求与流程草案](https://github.com/kooriookami/yugioh-card/pull/28#issuecomment-6875407317)。
 - 适用范围：浏览器与 Node.js，以及当前全部五种卡片。
@@ -18,7 +18,7 @@
 4. 资源已经就绪时，普通 `setData()` 调用继续同步更新绘图节点。
 5. 复用浏览器字体 API、现有加载函数和 Leafer 的资源及渲染机制。
 
-本稿提出的 API 返回类型、更新期间的 Promise 行为、失败策略与多卡等待范围属于推荐方案，仍需在实现前确认。第 12 节列出待决事项。
+API 返回类型、更新期间的 Promise 行为、失败策略与多卡等待范围的实现决策见第 12 节。
 
 本次不涉及卡片数据结构、排版算法、固定布局高度、PR #27 的重命名，也不引入新的 Canvas 引擎。第一版不增加导出快照、资源进度条或通用任务管理框架。
 
@@ -26,12 +26,12 @@
 
 以下记录实现前的流程（基于 master `82ea698`），用于说明本次调整的原因：
 
-| 位置 | 当前职责 |
+| 位置 | 当时的职责 |
 | --- | --- |
-| [Card 基类](../packages/src/card/index.js) | 启动字体加载；`setData()` 立即调用 `draw()`；字体加载结束后再次调用 `draw()` |
-| [字体工具](../packages/src/utils/index.js) | 浏览器获取字体列表、创建 `FontFace` 并等待加载；Node 同步注册字体 |
-| [CompressText](../packages/src/compress-text/compress-text.js) | 初始化、参数变化时排版；浏览器中还会等待 `document.fonts.ready`，再延迟 250ms 重排 |
-| [演示组件](../src/components/YugiohCard.vue) | 更新数据、切换卡片并调用 Leafer 导出 |
+| [Card 基类](https://github.com/kooriookami/yugioh-card/blob/82ea69806d6937c485009a5e7c53cea41917f60d/packages/src/card/index.js) | 启动字体加载；`setData()` 立即调用 `draw()`；字体加载结束后再次调用 `draw()` |
+| [字体工具](https://github.com/kooriookami/yugioh-card/blob/82ea69806d6937c485009a5e7c53cea41917f60d/packages/src/utils/index.js) | 浏览器获取字体列表、创建 `FontFace` 并等待加载；Node 同步注册字体 |
+| [CompressText](https://github.com/kooriookami/yugioh-card/blob/82ea69806d6937c485009a5e7c53cea41917f60d/packages/src/compress-text/compress-text.js) | 初始化、参数变化时排版；浏览器中还会等待 `document.fonts.ready`，再延迟 250ms 重排 |
+| [演示组件](https://github.com/kooriookami/yugioh-card/blob/82ea69806d6937c485009a5e7c53cea41917f60d/src/components/YugiohCard.vue) | 更新数据、切换卡片并调用 Leafer 导出 |
 
 浏览器中的实际顺序是：
 
@@ -72,7 +72,7 @@ await card.ready;
 // 此后读取该次更新的最终文字边界，或再次导出。
 ```
 
-配置方式沿用 [README](../README.md)，本文件中的示例描述拟议行为，不代表当前版本已经支持。
+构造选项见 [CardOptions](../packages/src/card/index.ts#L22)，完整的渲染和导出调用见 [Node 示例](../src/server.js)。
 
 ### 3.1 完成条件
 
@@ -84,7 +84,7 @@ await card.ready;
 4. 上述结果已经完成 Leafer 的布局和渲染，不只是执行完 `draw()`。
 5. 检查期间没有更新的数据版本使上述结果过期，卡片也没有被销毁。
 
-“当前所需”指当前卡片实际使用的资源。空图片地址、未启用的可选效果不构成加载任务；字体目录中的未使用字体可以预加载，但不应被误当成本卡必需资源。第一版若仍按字体目录整体加载，应明确其等待范围与性能影响。
+“当前所需”指当前卡片实际使用的资源，包括可见节点引用的字体和图片。空图片地址、未启用的可选效果和未使用的字体不属于本卡的必需依赖。
 
 成功就绪不表示动画永久停止，也不保证未来的 `setData()` 已经完成。调用方自行修改 `card.leafer` 或子节点、启动未登记的异步任务，不在该接口的自动跟踪范围内。
 
@@ -103,6 +103,8 @@ await card.ready;
 例如，在字体加载期间连续提交 A、B、C 三份数据，等待者在 C 的最终画面完成后统一继续，不承诺中间的 A、B 各自完成一次最终排版。
 
 已经完成的 Promise 不会因为未来更新重新变为 pending。每次 `setData()` 后，调用方应重新读取 `card.ready`，不能长期保存第一次的 Promise 用于所有更新。
+
+字体注册变化也属于更新：浏览器按 FontFaceSet、Node 按 FontLibrary 共享同名字体，资源目录不能隔离同一字体族的绘制。加载器在另一个目录成功注册了本卡正在使用的同名字体后，本卡按实际注册身份重新测量、排版并等待一次绘制；pending 周期复用 Promise，已完成的周期建立新 Promise。资源加载失败仍按本卡自己的依赖判断，不能由其他目录的成功字体掩盖。缓存命中不代表再次注册，也不改变当前绘制字体身份。
 
 `ready` 是完成通知，不是数据锁。若等待完成后还有其他代码修改同一卡片，导出结果可能包含后续更新；要求固定数据快照的调用方，应在操作期间停止更新或使用独立卡片实例。导出快照接口另行设计。
 
@@ -125,7 +127,7 @@ flowchart TD
     J -->|有新更新| C
 ```
 
-`setData()` 仍同步写入数据并更新当前可用预览。字体未就绪时，这次预览可能使用 fallback；用户编辑时的预览不应因为等待资源而被冻结。
+`setData()` 跳过值为 `undefined` 的字段，同步应用其余值并更新可用预览。字体未就绪时，预览会使用当前可用的字体。
 
 合并的是“资源完成后的最终校正”和等待回调，不是取消用户明确发起的所有预览更新。资源已缓存时，不应为了经过同一个 Promise 链，再完整排版第二遍；Leafer 自身仍可按帧合并绘制。
 
@@ -148,7 +150,7 @@ Card 基类可以先建立协调器并启动加载，但不能在子类初始化
 
 - 浏览器复用 `FontFace.load()` 的 Promise；`document.fonts.ready`、`loadingdone` 用于补充通知，不能替代获取字体列表这一阶段的等待。
 - Node 继续同步调用字体注册函数。成功结果提供已完成的 Promise 参与统一协调，不把原有同步加载人为延迟到微任务。
-- 缓存记录至少区分 `loading`、`loaded`、`failed`；路径存在于缓存中，不等于加载成功。
+- 清单状态分为 `loading`、`loaded` 和 `failed`。浏览器的字体记录还有 `idle` 状态，表示尚未请求该文件。
 - 同一资源的并发调用共享真实加载 Promise。失败记录不能永久阻止重试，也不能触发无限自动重试。
 - 缓存键需包含规范化资源路径和字体标识；Node 还应考虑字体库作用域，避免跨字体库误用已注册状态。
 - 无文字的卡背、场地中心卡不需要等待不存在的字体任务。
@@ -156,13 +158,13 @@ Card 基类可以先建立协调器并启动加载，但不能在子类初始化
 
 识别字体需求时，应覆盖样式中的字体、注音字体，以及数字、卡包编号等绘制方法内直接指定的字体，不能只按 `data.language` 判断。复用现有清单与实际绘图配置，避免维护一份容易与绘制代码脱节的语言映射。
 
-第一版可以保留现有按卡片家族加载字体清单的方式；按语言、样式进一步按需加载应独立评估，避免在同一次改动中重写字体分配规则。
+2.0 在浏览器中按卡片家族请求字体清单，再根据首次预览中可见文字节点引用的字体加载文件。同一字体资源的并发请求会共享加载任务。切换语言或样式后按新画面的字体依赖继续等待。
 
 ### 5.2 图片加载
 
 继续使用 Leafer 的图片资源与缓存。协调器需要能够知道当前卡片所需图片的加载结果，而不只是知道队列已结束。
 
-当前 `listenImageStatus()` 主要服务卡图占位提示，并不能直接证明所有卡框、属性和效果图片成功加载。实现时须验证 Image、Rect 的图片填充及其他当前使用的图片路径，统一覆盖成功和失败通知。
+当前 `listenArtworkStatus()` 主要服务卡图占位提示，并不能直接证明所有卡框、属性和效果图片成功加载。实现时须验证 Image、Rect 的图片填充及其他当前使用的图片路径，统一覆盖成功和失败通知。
 
 卡图地址改变后，旧地址的完成或失败事件只能更新旧记录，不能改变新卡图的状态。旧任务可以继续供其他使用者共享，但不得再影响本卡的完成判断。
 
@@ -175,7 +177,7 @@ Card 基类可以先建立协调器并启动加载，但不能在子类初始化
 - `export()` 内部已经调用视图完成等待，并检查 `Resource.isComplete`。
 - `Resource.tasker` 支持登记自定义异步资源任务，导出会等待这些任务。
 
-建议复用这些能力，不在项目里重新实现图片加载器、Canvas 渲染循环或独立的全局资源队列。需要让现有直接调用 `card.leafer.export()` 的路径也等待项目字体时，可以登记字体加载任务；登记必须早于可能发生的导出。
+卡片按需加载的字体由 `card.ready` 等待。显式调用 `loadFontBrowser()` 预加载字体时，任务会登记到 `Resource.tasker`。导出使用最终字体的画面时，先等待 `card.ready`，再调用 `card.leafer.export()`。
 
 ### 6.1 防止等待环
 
@@ -193,7 +195,7 @@ Card 基类可以先建立协调器并启动加载，但不能在子类初始化
 
 Leafer 2.3.4 的 `imageReady` 实际依赖 `viewReady && Resource.isComplete`，其中 `Resource` 是同一运行时中的全局对象。因此直接复用 `waitViewCompleted()`，可能让卡片 A 等待卡片 B 的资源。
 
-第一版建议先复用现有等待机制，并明确这一限制；不能宣称已经实现多卡互不等待。单卡协调器仍只接受自身当前版本的结果，其他卡片失败也不能直接变成本卡的资源失败。
+协调器等待 Leafer 的视图完成事件，并按本卡当前版本的依赖判断资源是否成功。其他卡片的加载可能延迟视图完成，本卡的资源失败由自身依赖决定。
 
 若要求严格的实例隔离，应另行验证“当前卡片资源全部结束后，再等待该实例下一次完整渲染”的适配方式。不能仅换用一次 `RenderEvent.END` 就省略图片加载确认。多卡等待范围是实现前必须确认的技术边界。
 
@@ -225,7 +227,7 @@ Leafer 2.3.4 的 `imageReady` 实际依赖 `viewReady && Resource.isComplete`，
 
 ### 8.2 推荐失败策略
 
-本稿建议第一版采用严格的成功语义：预览可以使用 fallback 或错误占位图，但必需资源失败时，`ready` 拒绝，调用方决定是否仍导出该预览。
+预览可以使用 fallback 或错误占位图。必需资源失败时，`ready` 拒绝，调用方决定是否仍导出该预览。
 
 | 情况 | 推荐行为 |
 | --- | --- |
@@ -259,15 +261,15 @@ Leafer 2.3.4 的 `imageReady` 实际依赖 `viewReady && Resource.isComplete`，
 - `card.leafer.export()` 的现有入口保持可用。项目示例逐步增加 `await card.ready`，先明确本卡资源与排版成功，再交给引擎导出。
 - `ready` 不保证导出编码成功；跨域画布限制、文件写入失败等仍由 `export()` 的结果或错误处理。
 - Node 服务示例应处理等待与导出失败，并在请求结束后释放卡片；错误响应格式沿用服务自身约定。
-- 中英文 README、示例和生成的类型声明已同步提供 `ready` 与 `readyTimeout` 的使用方式。
+- 发布包的类型声明覆盖 `ready` 和构造选项 `readyTimeout`。
 
 ## 10. 建议实现步骤
 
 1. **验证引擎边界。** 在浏览器和 Node 验证图片成功、失败、视图完成、全局资源影响及销毁事件顺序，确认第 6 节的接入方式。
 2. **整理资源记录。** 修复字体缓存的并发等待和失败重试；保留同步 Node 字体加载，收集必需资源的成功、失败结果。
-3. **增加内部协调器。** 实现 Promise 周期、更新版本检查和两端一致的 `ready` 完成条件。可新增 `packages/src/card/readiness.js`，保持内部使用。
+3. **增加内部协调器。** 在 [readiness.ts](../packages/src/card/readiness.ts) 中实现 Promise 周期、更新版本检查和两端一致的 `ready` 完成条件。
 4. **统一最终文字重排。** 引入测量失效标记，更新依赖文字边界的位置，处理普通 Text 与独立 `CompressText`，移除重复等待及固定延时。
-5. **接入示例和声明。** 更新浏览器、Node 示例及中英文文档。若新增公开辅助函数或类型，同步维护 `packages/index.js`；内部协调器不单独公开。
+5. **接入示例和声明。** 更新浏览器、Node 示例及中英文文档。若新增公开辅助函数或类型，同步维护 `packages/index.ts`；内部协调器不单独公开。
 6. **验证并发布。** 完成下表中的行为测试、构建和兼容性检查后，再决定发布说明与版本。
 
 资源修复、统一接口和排版调度可以分步提交，但每一步应具有完整的失败清理与回归验证，不发布仅等待字体就宣称整卡就绪的过渡 API。
@@ -278,6 +280,7 @@ Leafer 2.3.4 的 `imageReady` 实际依赖 `viewReady && Resource.isComplete`，
 | --- | --- |
 | 浏览器冷缓存、字体请求延迟 | fallback 预览可见；`ready` 在最终字体排版和渲染完成前不成功 |
 | 字体清单尚未返回 | 提前完成的 `document.fonts.ready` 不导致本卡提前就绪 |
+| 浏览器未使用的字体 | 保持 `idle`，切换到使用该字体的卡片配置后才发起请求 |
 | 同一路径并发创建卡片 | 共享实际加载任务，第二个实例不会被当成缓存已完成 |
 | 字体加载完成，文本参数未变化 | 真实字体测量生效，文字边界及依赖位置正确 |
 | 字体已缓存 | 普通 `setData()` 保持同步节点更新，不额外完整重排一次 |
@@ -304,7 +307,7 @@ Leafer 2.3.4 的 `imageReady` 实际依赖 `viewReady && Resource.isComplete`，
 
 ## 12. 本次实现的决策与落点
 
-采用第 3.2 节的 Promise 周期、严格拒绝的成功语义，以及 Leafer 全局资源队列的已知限制。`readyTimeout` 默认 30 秒；字体清单及单个 FontFace 加载也有 30 秒的资源超时，避免共享字体任务永久占用全局队列。全局其他任务过慢仍可能使本卡等待超时，本次不承诺实例级资源隔离。
+实现采用第 3.2 节的 Promise 周期和第 8.2 节的失败语义。`readyTimeout` 默认 30 秒，字体清单和单个 FontFace 加载也各有 30 秒的资源超时。Leafer 全局队列中的其他任务仍可能延迟视图完成。
 
 资源失败提供 `CardReadyError` 的 `code: 'RESOURCE_FAILED'`，并附带 `resourceType`、`resource`、`cause`；整卡等待超时使用 `READY_TIMEOUT`，销毁使用 `CARD_DESTROYED`。字体资源超时记录在资源错误的 `cause.code: 'RESOURCE_TIMEOUT'`。同步 Node 字体注册和同步绘制的原有异常继续同步抛出。
 
@@ -316,10 +319,10 @@ Leafer 2.3.4 的 `imageReady` 实际依赖 `viewReady && Resource.isComplete`，
 
 | 实现位置 | 职责 |
 | --- | --- |
-| [字体适配](../packages/src/utils/font-loader.js) | 按 FontFaceSet / FontLibrary 缓存实际资源记录，区分清单与字体完成状态，复用进行中的任务并允许新周期重试 |
-| [就绪协调器](../packages/src/card/readiness.js) | 合并 pending 更新，按当前字体依赖统一重排，等待本卡图片和新一帧渲染，并处理超时、失败和销毁 |
-| [图片适配](../packages/src/card/resources.js) | 收集可见节点的图片填充与描边，复用 ImageManager，清理自己的引用与回调，忽略失效地址 |
-| [文字上下文](../packages/src/compress-text/layout-context.js) | 将字体测量版本传给内置 CompressText，相同参数也能重测量；保留独立组件的字体通知 |
+| [字体适配](../packages/src/utils/font-loader.ts) | 按 FontFaceSet / FontLibrary 缓存实际资源记录，区分清单与字体完成状态，复用进行中的任务并允许新周期重试 |
+| [就绪协调器](../packages/src/card/readiness.ts) | 合并 pending 更新，按当前字体依赖统一重排，等待本卡图片和新一帧渲染，并处理超时、失败和销毁 |
+| [图片适配](../packages/src/card/resources.ts) | 收集可见节点的图片填充与描边，复用 ImageManager，清理自己的引用与回调，忽略失效地址 |
+| [文字上下文](../packages/src/compress-text/layout-context.ts) | 将字体测量版本传给内置 CompressText，相同参数也能重测量；保留独立组件的字体通知 |
 
 字体加载后的普通 Text 会一并标记测量失效，包括暂时隐藏的节点，防止后续显示时保留 fallback 测量。图片状态图不属于必需资源；移除卡图或重试成功后清理其状态显示。测试同时发现 Rush Duel 注音曾继承 `ygo-tip`，现明确使用该卡片资源包内的 `rd-tip`。
 
@@ -333,7 +336,7 @@ Leafer 2.3.4 的 `imageReady` 实际依赖 `viewReady && Resource.isComplete`，
 
 ## 13. 参考资料
 
-- [项目使用方式与 Data 属性](../README.md)
+- [项目简介](../README.md)
 - [CSS Font Loading API](https://developer.mozilla.org/en-US/docs/Web/API/CSS_Font_Loading_API)
 - [FontFaceSet.ready](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready)
 - [Leafer 状态与等待方法](https://www.leaferjs.com/ui/reference/display/Leafer.html)

@@ -1,51 +1,84 @@
 <!doctype html>
 <html lang="zh-CN">
-<meta charset="UTF-8">
-<title>导出取消 · Edge 验证</title>
-<style>
-#controls { padding: 12px; background: #eef4fb; font: 15px system-ui; display: flex; gap: 16px; align-items: center; }
-#controls button { padding: 6px 12px; cursor: pointer; }
-</style>
-<div id="controls">
-  <button id="release">释放字体清单</button>
-  <button id="unmount">卸载组件</button>
-  <output id="report">初始化中</output>
-  <span>累计错误提示：<b id="errors">0</b></span>
-</div>
-<div id="app"></div>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>导出取消 · Yugioh Card</title>
+    <link rel="icon" href="/docs/public/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/test-pages/style.css">
+  </head>
+  <body class="test-site" data-test-page="export-cancel" data-test-state="loading">
+    <header class="test-nav">
+      <div class="test-shell"><a href="/test-pages/">← 全部测试</a></div>
+    </header>
+    <main class="test-shell test-main">
+      <header class="test-heading">
+        <h1>导出取消</h1>
+        <p class="test-description">字体清单等待期间点击「导出 PNG」，切换卡片类型或卸载组件，再释放清单并查看错误提示计数。</p>
+      </header>
+      <div class="test-layout">
+        <section id="controls" class="test-panel test-layout" aria-label="测试控制">
+          <output id="report" class="test-status" role="status">正在挂载组件…</output>
+          <div id="export-actions" class="test-actions"></div>
+        </section>
+        <div id="app"></div>
+      </div>
+    </main>
 <script type="module">
-import { createApp } from 'vue';
-import ElementPlus from 'element-plus';
-import 'element-plus/dist/index.css';
-import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import { ElButton } from 'element-plus';
+import 'element-plus/es/components/button/style/css';
+import { createApp, h, ref } from 'vue';
 import YugiohCard from '/src/components/YugiohCard.vue';
 import 'normalize.css';
-import '/src/styles/main.scss';
 
 // 测试真实组件，延迟清单以便在 ready 等待期间切换卡片或卸载。
-await fetch('/ready-test/reset', { method: 'POST' });
-const app = createApp(YugiohCard).use(ElementPlus, { locale: zhCn });
+await fetch('/ready-test/reset?fixture=export', { method: 'POST' });
+const app = createApp(YugiohCard, { resourcePath: '/export-resources' });
 app.mount('#app');
 const report = document.querySelector('#report');
-report.textContent = '组件已挂载，字体清单等待中';
-let errors = 0;
+const released = ref(false);
+const unmounted = ref(false);
+const errors = ref(0);
 const seen = new WeakSet();
 new MutationObserver(() => {
-  for (const message of document.querySelectorAll('.el-message--error')) {
+  for (const message of document.querySelectorAll('.editor-status[role=alert]')) {
     if (seen.has(message)) continue;
     seen.add(message);
-    document.querySelector('#errors').textContent = String(++errors);
+    errors.value++;
   }
 }).observe(document.body, { childList: true, subtree: true });
-document.querySelector('#release').onclick = async event => {
-  event.target.disabled = true;
-  await fetch('/ready-test/release/manifest', { method: 'POST' });
+const release = async () => {
+  if (released.value) return;
+  released.value = true;
+  await fetch('/ready-test/release/manifest?fixture=export', { method: 'POST' });
+  document.body.dataset.testState = 'released';
   report.textContent = '字体清单已释放';
 };
-document.querySelector('#unmount').onclick = event => {
+const unmount = () => {
+  if (unmounted.value) return;
+  unmounted.value = true;
   app.unmount();
-  event.target.disabled = true;
   report.textContent = '组件已卸载，旧导出等待已取消';
 };
+
+createApp({
+  render: () => [
+    h(ElButton, {
+      id: 'release',
+      type: 'primary',
+      disabled: released.value,
+      onClick: release,
+    }, () => '释放字体清单'),
+    h(ElButton, {
+      id: 'unmount',
+      disabled: unmounted.value,
+      onClick: unmount,
+    }, () => '卸载组件'),
+    h('span', { class: 'test-note' }, ['累计错误提示 ', h('b', { id: 'errors' }, String(errors.value))]),
+  ],
+}).mount('#export-actions');
+document.body.dataset.testState = 'waiting';
+report.textContent = '组件已挂载，字体清单等待中';
 </script>
+  </body>
 </html>

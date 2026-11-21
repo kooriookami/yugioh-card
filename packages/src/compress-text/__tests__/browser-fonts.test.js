@@ -13,7 +13,7 @@ const fonts = {
 };
 globalThis.document = { fonts };
 globalThis.window = { document };
-const { CompressText } = await import('../compress-text.js');
+const { CompressText } = await import('../compress-text.ts');
 const flush = () => new Promise(resolve => setImmediate(resolve));
 const notify = family => listeners.forEach(callback => callback({ fontfaces: [{ family }] }));
 

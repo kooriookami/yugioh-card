@@ -1,0 +1,67 @@
+:root {
+  --vp-c-brand-1: #79532b;
+  --vp-c-brand-2: #684321;
+  --vp-c-brand-3: #79532b;
+  --vp-c-brand-soft: rgb(163 118 62 / 14%);
+  --card-preview-background: #eeeae1;
+  --card-preview-grid: rgb(112 92 64 / 10%);
+}
+
+.dark {
+  --vp-c-brand-1: #e6b981;
+  --vp-c-brand-2: #f0cd9f;
+  --vp-c-brand-3: #ab7848;
+  --vp-c-brand-soft: rgb(230 185 129 / 14%);
+  --card-preview-background: #24231f;
+  --card-preview-grid: rgb(212 198 171 / 9%);
+}
+
+.VPHero.has-image .image {
+  order: 3;
+  margin: 1.75rem 0 0;
+}
+
+.VPHero.has-image .image-container {
+  width: 100%;
+  max-width: 36rem;
+  height: auto;
+  transform: none;
+}
+
+.VPHero.has-image .image-bg {
+  display: none;
+}
+
+.VPHero.has-image .image-src {
+  position: static;
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  border-radius: 8px;
+  transform: none;
+}
+
+@media (min-width: 60rem) {
+  .VPHero.has-image .container {
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .VPHero.has-image .main {
+    flex: 0 1 47%;
+    min-width: 0;
+  }
+
+  .VPHero.has-image .image {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+  }
+}
+
+.vp-doc table :not(pre) > code {
+  white-space: nowrap;
+}

@@ -18,7 +18,7 @@ const deferred = () => {
 };
 const fixture = () => {
   const ready = deferred(), encoding = deferred(), started = deferred();
-  const calls = [], messages = [];
+  const calls = [];
   let destroyed = 0, disconnected = 0;
   const card = {
     ready: ready.promise,
@@ -28,21 +28,24 @@ const fixture = () => {
       export(...args) { calls.push(args); started.resolve(); return encoding.promise; },
     },
   };
-  const cardLeaf = { value: card };
+  const cardInstance = { value: card };
   const context = {
-    cardLeaf,
+    cardInstance,
     cardPending: { value: false },
     cardError: { value: '' },
     exporting: { value: false },
     observedReady: null,
     exportRequest: null,
     devicePixelRatio: 2,
-    ElMessage: { error: message => messages.push(message) },
+    jsonError: { value: '' },
+    exportError: { value: '' },
+    selectedExample: { value: { id: 'yugioh' } },
+    labels: { value: { exportError: '导出失败' } },
     resizeObserver: { disconnect() { disconnected++; } },
   };
   context.cancelExport = vm.runInNewContext(sourceFor(setupFunction('cancelExport')), context);
   return {
-    card, cardLeaf, ready, encoding, started, calls, messages,
+    card, cardInstance, ready, encoding, started, calls,
     ...context,
     trackReady: vm.runInNewContext(sourceFor(setupFunction('trackReady')), context),
     exportImage: vm.runInNewContext(sourceFor(declaration.init), context),
@@ -56,12 +59,12 @@ for (const invalidation of ['replaced', 'destroyed']) {
   test(`a ${invalidation} card is not exported after readiness succeeds`, async () => {
     const state = fixture();
     const task = state.exportImage();
-    if (invalidation === 'replaced') state.cardLeaf.value = {};
+    if (invalidation === 'replaced') state.cardInstance.value = {};
     else state.card.leafer.destroyed = true;
     state.ready.resolve();
     await task;
     assert.equal(state.calls.length, 0);
-    assert.deepEqual(state.messages, []);
+    assert.equal(state.exportError.value, '');
   });
 
   for (const stage of ['ready', 'encoding']) {
@@ -72,12 +75,12 @@ for (const invalidation of ['replaced', 'destroyed']) {
         state.ready.resolve();
         await state.started.promise;
       }
-      if (invalidation === 'replaced') state.cardLeaf.value = {};
+      if (invalidation === 'replaced') state.cardInstance.value = {};
       else state.card.leafer.destroyed = true;
       state[stage].reject(new Error('Old card was stopped'));
       await task;
       assert.equal(state.calls.length, stage === 'encoding' ? 1 : 0);
-      assert.deepEqual(state.messages, []);
+      assert.equal(state.exportError.value, '');
     });
   }
 }
@@ -88,12 +91,12 @@ test('unmount invalidates the card immediately while asynchronous destruction is
   state.unmount();
   assert.equal(state.destroyed, 1);
   assert.equal(state.disconnected, 1);
-  assert.equal(state.cardLeaf.value, null);
+  assert.equal(state.cardInstance.value, null);
   assert.equal(state.card.leafer.destroyed, false);
   state.ready.reject(new Error('Loading failed during navigation'));
   await task;
   assert.equal(state.calls.length, 0);
-  assert.deepEqual(state.messages, []);
+  assert.equal(state.exportError.value, '');
 });
 
 for (const stage of ['ready', 'encoding']) {
@@ -106,7 +109,7 @@ for (const stage of ['ready', 'encoding']) {
     }
     state[stage].reject(new Error('Required resource or export failed'));
     await task;
-    assert.deepEqual(state.messages, ['导出失败：Required resource or export failed']);
+    assert.equal(state.exportError.value, '导出失败 · Required resource or export failed');
   });
 }
 
@@ -118,18 +121,18 @@ test('an active card exports with the expected screenshot options', async () => 
   state.encoding.resolve();
   await task;
   assert.equal(state.calls.length, 1);
-  assert.equal(state.calls[0][0], '卡片.png');
+  assert.equal(state.calls[0][0], 'yugioh.png');
   assert.equal(state.calls[0][1].screenshot, true);
   assert.equal(state.calls[0][1].pixelRatio, 2);
-  assert.deepEqual(state.messages, []);
+  assert.equal(state.exportError.value, '');
 });
 
 test('an export request without a current card is ignored', async () => {
   const state = fixture();
-  state.cardLeaf.value = null;
+  state.cardInstance.value = null;
   await state.exportImage();
   assert.equal(state.calls.length, 0);
-  assert.deepEqual(state.messages, []);
+  assert.equal(state.exportError.value, '');
 });
 
 test('repeated export requests share the active UI operation and restore the button after completion', async () => {
@@ -151,12 +154,12 @@ test('an old export cannot clear the loading state of a replacement card export'
   const first = state.exportImage();
   state.cancelExport();
   const next = deferred();
-  state.cardLeaf.value = { ready: next.promise, leafer: { destroyed: false, export: async () => {} } };
+  state.cardInstance.value = { ready: next.promise, leafer: { destroyed: false, export: async () => {} } };
   const second = state.exportImage();
   state.ready.reject(new Error('Old card stopped'));
   await first;
   assert.equal(state.exporting.value, true);
-  assert.deepEqual(state.messages, []);
+  assert.equal(state.exportError.value, '');
   next.resolve();
   await second;
   assert.equal(state.exporting.value, false);
@@ -186,7 +189,7 @@ for (const invalidation of ['replacement card', 'new update cycle']) {
     const state = fixture();
     const first = state.trackReady();
     const next = deferred();
-    if (invalidation === 'replacement card') state.cardLeaf.value = { ready: next.promise, leafer: { destroyed: false } };
+    if (invalidation === 'replacement card') state.cardInstance.value = { ready: next.promise, leafer: { destroyed: false } };
     else state.card.ready = next.promise;
     const second = state.trackReady();
     state.ready.reject(new Error('Obsolete resource failed'));
@@ -219,5 +222,5 @@ test('unmount clears loading and export states and ignores late resource errors'
   state.ready.reject(new Error('Late resource error'));
   await Promise.all([loading, exporting]);
   assert.equal(state.cardError.value, '');
-  assert.deepEqual(state.messages, []);
+  assert.equal(state.exportError.value, '');
 });

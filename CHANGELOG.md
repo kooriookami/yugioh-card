@@ -1,5 +1,16 @@
 ## Changelog
 
+### 2.0.0-beta.1
+
+- **破坏性更新**。统一五种卡片的数据字段命名，升级时需更新构造参数中的 `data`、`setData()` 调用和已保存的 JSON。 [1.x → 2.0 迁移指南](docs/migration/index.md)
+- 新增 `card.ready`，在浏览器和 Node.js 中等待当前卡片的字体、图片和渲染完成，便于单张和批量导出
+- 正文支持左对齐和右对齐，并可通过 `compressCardTextSegments` 指定多个段落各自压成一行
+- 游戏王使用 `linkArrows` 中有效且不重复的箭头数量计算 LINK 数值
+- 改进长文本分词、换行和压缩，修复空格、文本高度及小字回退的边界问题，减少重复排版
+- 更新 `ygo-jp.woff2` 和日文注音排版。OCG 卡名和正文按旧版字距排版，第 2 期及 OCG 种族类型行使用字体原生字距。升级时请同步更新 `resourcePath` 下的静态资源。 [静态资源指南](docs/guide/resources.md)
+- 库源码迁移至 TypeScript，并从源码生成发布包的类型声明
+- 新增中英日三语文档站和 Playground，支持编辑卡片数据、实时预览和导出 PNG
+
 ### 1.9.2
 
 _2026-03-22_

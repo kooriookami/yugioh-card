@@ -4,9 +4,9 @@ import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { Group, Text, ImageManager, LeaferEvent, useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
-import { CompressText } from '../../compress-text/compress-text.js';
-import { resourceError } from '../../utils/resource-error.js';
-import { CardReadiness } from '../readiness.js';
+import { CompressText } from '../../compress-text/compress-text.ts';
+import { resourceError } from '../../utils/resource-error.ts';
+import { CardReadiness } from '../readiness.ts';
 
 useCanvas('skia', skia);
 const flush = async () => { await new Promise(resolve => setImmediate(resolve)); };

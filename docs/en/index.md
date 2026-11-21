@@ -1,0 +1,32 @@
+---
+layout: home
+hero:
+  name: Yugioh Card
+  text: Yu-Gi-Oh! card rendering
+  tagline: Render five card layouts with LeaferJS. Preview in the browser and export batches in Node.js.
+  image:
+    src: /banner.jpg
+    alt: Yu-Gi-Oh! cards in several language styles
+    width: 1920
+    height: 698
+  actions:
+    - theme: brand
+      text: Get started
+      link: /en/guide/
+    - theme: alt
+      text: Try Playground
+      link: /en/playground/
+features:
+  - title: Browser
+    details: Mount a card in a web page, update its data, and download a PNG.
+    link: /en/guide/browser
+    linkText: Browser guide
+  - title: Node.js
+    details: Render with Skia and write a series of cards to PNG files.
+    link: /en/guide/node
+    linkText: Node.js guide
+  - title: Card parameters
+    details: See which fields each card supports and how they affect the result.
+    link: /en/reference/
+    linkText: API reference
+---

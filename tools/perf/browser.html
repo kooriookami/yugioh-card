@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>排版回归与批量导出 · Yugioh Card</title>
+    <link rel="icon" href="/docs/public/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/test-pages/style.css">
+  </head>
+  <body class="test-site" data-test-page="layout-batch" data-test-state="running">
+    <header class="test-nav">
+      <div class="test-shell"><a href="/test-pages/">← 全部测试</a></div>
+    </header>
+    <main class="test-shell test-main">
+      <header class="test-heading">
+        <h1>排版回归与批量导出</h1>
+        <p class="test-description">检查文本样例和卡片更新，连续导出 100 张 PNG，再验证五种卡片的渲染结果可复现。</p>
+      </header>
+      <div class="test-layout">
+        <p id="status" class="test-status" role="status">正在加载测试运行时…</p>
+        <div id="results" class="test-layout">
+          <section class="test-panel" id="render">
+            <h2 id="render-title">正在验证的画布</h2>
+            <div class="test-stage">
+              <div id="host" style="width:1400px;height:650px"></div>
+              <img id="preview" class="test-export-preview" alt="批量导出的首张卡片" hidden>
+            </div>
+          </section>
+          <section class="test-panel">
+            <h2>检查结果</h2>
+            <pre id="summary" class="test-report">等待检查完成。</pre>
+          </section>
+        </div>
+      </div>
+    </main>
+<script type="module">
+import { textCases, updateCases, batchData, classData, textOptionsFor, textSnapshot, nodeSnapshot } from './layout-cases.js';
+import { textCases as breakingCases } from './breaking-cases.js';
+const mode = new URLSearchParams(location.search).get('mode') || 'source';
+const preview = mode === 'preview';
+const modeLabel = preview ? '源码预览' : mode;
+const run = new URLSearchParams(location.search).get('run');
+const baselineRoots = {
+  breaking: '/node_modules/.cache/text-breaking/baseline-dd15fac',
+  refactor: '/node_modules/.cache/text-refactor/baseline-d7f362f',
+};
+const checksBreakingCases = run === 'breaking' || run === 'refactor';
+const cases = checksBreakingCases ? breakingCases : textCases;
+const runQuery = checksBreakingCases ? `&run=${run}` : '';
+const debugImages = new URLSearchParams(location.search).has('images');
+const output = { text: [], updates: [], batch: [], classes: [] };
+const status = document.querySelector('#status');
+const summary = document.querySelector('#summary');
+const host = document.querySelector('#host');
+const unhandled = [];
+window.addEventListener('unhandledrejection', event => unhandled.push(String(event.reason)));
+const progress = text => { status.textContent = `${modeLabel}：${text}`; };
+const digest = async data => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', data))).map(byte => byte.toString(16).padStart(2, '0')).join('');
+const pixels = async (view, label) => {
+  // 固定 CPU 2D 导出与像素倍率，减少图片缩放后端对像素对照的干扰。
+  const result = await view.export('png', { screenshot: true, pixelRatio: devicePixelRatio, contextSettings: { willReadFrequently: true } });
+  if (preview && label === 'batch-0') document.querySelector('#preview').src = result.data;
+  if (debugImages && label) await fetch(`/layout-image?mode=${mode}&label=${label}${runQuery}`, { method: 'POST', body: result.data });
+  const image = new window.Image(); image.src = result.data; await image.decode();
+  const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+  const context = canvas.getContext('2d', { willReadFrequently: true }); context.drawImage(image, 0, 0);
+  const rgba = await digest(context.getImageData(0, 0, image.width, image.height).data);
+  canvas.width = canvas.height = 0;
+  return { width: image.width, height: image.height, rgba };
+};
+try {
+  const baselineRoot = checksBreakingCases ? baselineRoots[run] : '/node_modules/.cache/layout-perf/baseline-3cc42eb';
+  const packageCache = run === 'refactor' ? 'text-refactor' : 'layout-perf';
+  const runtime = mode.startsWith('baseline') ? `${baselineRoot}/runtime.js`
+    : mode === 'package' ? `/node_modules/.cache/${packageCache}/package-consumer/runtime.js` : './browser-runtime.js';
+  // 缓存目录中的 runtime 本身也受 node_modules 的 immutable HTTP 缓存影响。
+  const api = await import(/* @vite-ignore */ `${runtime}?t=${Date.now()}`);
+  const { Leafer, CompressText, getBrowserFontResource } = api;
+  const createText = options => new CompressText(textOptionsFor(CompressText, options, mode.startsWith('baseline')));
+  const scaleKey = 'calculateSegmentScaleX' in CompressText.prototype ? 'renderScale' : 'scale';
+  await getBrowserFontResource('/src/assets/yugioh-card/yugioh/font').promise;
+  const capture = async (text, view) => ({ layout: textSnapshot(text), pixels: await pixels(view) });
+  for (const [index, data] of cases.entries()) {
+    progress(`文本 ${index + 1}/${cases.length}`);
+    const view = new Leafer({ view: host, width: 1400, height: 650 });
+    const text = createText({ fontFamily: 'ygo-jp', fontSize: 38, rtFontSize: 13, rtOffsetY: -6, width: 1175, sideBearingMode: 'legacy', ...data });
+    view.add(text);
+    try { output.text.push(await capture(text, view)); }
+    finally { view.destroy(true); }
+  }
+  if (checksBreakingCases && !mode.startsWith('baseline')) {
+    const visible = result => result.layout.items.map(item => item.ruby.text).filter(text => text !== '\n').join('');
+    if (!visible(output.text[99]).includes('__RB0__')) throw new Error('原文占位符发生碰撞');
+    if (!visible(output.text[100]).includes('\u200B')) throw new Error('原文零宽空格丢失');
+    for (const index of [109, 110]) if (visible(output.text[index]) !== '甲乙' || output.text[index].layout.currentLine !== 1) throw new Error('硬换行未正确解析');
+    for (const index of [106, 107, 108]) {
+      const first = output.text[index].layout.items[0].ruby;
+      if (first.text.includes('[') || !output.text[index].layout.items.some(item => item.rt.text || index === 108)) throw new Error('ruby 解析失败');
+    }
+  }
+  for (const extra of [{}, { gradient: true }, { strokeWidth: 1, rtStrokeWidth: 1 }, { sideBearingMode: 'native' }, { height: 35, autoSmallSize: true, smallFontSize: 12 }]) {
+    const view = new Leafer({ view: host, width: 1400, height: 650 });
+    const text = createText({ text: '[日あー(X)] AV。\n日  日', fontFamily: 'ygo-jp', fontSize: 38, width: 400, sideBearingMode: 'legacy', ...extra });
+    view.add(text);
+    try {
+      const steps = [await capture(text, view)];
+      for (const update of updateCases) {
+        progress(`更新序列 ${output.updates.length + 1}/5，步骤 ${steps.length}/${updateCases.length}`);
+        text.set(textOptionsFor(CompressText, update)); steps.push(await capture(text, view));
+      }
+      output.updates.push(steps);
+    } finally { view.destroy(true); }
+  }
+  const images = preview
+    ? ['blue-eyes', 'leviathan-dragon', 'blue-eyes-old'].map(name => `/src/assets/image/${name}.jpg`)
+    : [0, 1, 2].map(index => `/node_modules/.cache/layout-perf/browser-images/${index}.png`);
+  const card = new api.YugiohCard({ view: host, resourcePath: '/src/assets/yugioh-card', data: { [scaleKey]: 1 } });
+  const defaults = structuredClone(card.data);
+  try {
+    for (let index = 0; index < 100; index++) {
+      progress(`批量 ${index + 1}/100`);
+      const data = batchData(defaults, index, images); card.setData(data); await card.ready;
+      output.batch.push({ name: data.name, pixels: await pixels(card.leafer, index < 4 ? `batch-${index}` : null), nodes: JSON.parse(JSON.stringify(nodeSnapshot(card.leafer))) });
+    }
+  } finally { card.leafer.destroy(true); }
+  for (const name of ['YugiohCard', 'YugiohSeries2Card', 'RushDuelCard', 'FieldCenterCard', 'YugiohBackCard']) {
+    progress(`卡片类 ${name}`);
+    const card = new api[name]({ view: host, resourcePath: '/src/assets/yugioh-card', data: { [scaleKey]: 0.15 } });
+    const defaults = structuredClone(card.data), samples = [], layouts = [];
+    try {
+      for (let index = 0; index < 4; index++) { card.setData(classData(name, defaults, index, images)); await card.ready; samples.push(await pixels(card.leafer, `${name}-${index}`)); layouts.push(JSON.parse(JSON.stringify(nodeSnapshot(card.leafer)))); }
+      if (JSON.stringify(samples[0]) !== JSON.stringify(samples[3]) || JSON.stringify(layouts[0]) !== JSON.stringify(layouts[3])) throw new Error(`${name}: A → B → A 未恢复原输出`);
+      output.classes.push({ name, samples, layouts });
+    } finally { card.leafer.destroy(true); }
+  }
+  if (unhandled.length) throw new Error(unhandled.join('\n'));
+  const response = await fetch(`/layout-report?mode=${mode}${runQuery}`, { method: 'POST', body: JSON.stringify(output) });
+  const result = await response.json();
+  if (!result.ok) throw new Error(result.error);
+  status.classList.add('pass');
+  progress(`验证通过，已导出 ${result.batch} 张 PNG`);
+  summary.textContent = JSON.stringify(result, null, 2);
+  host.hidden = true;
+  document.querySelector('#render').hidden = !preview;
+  document.querySelector('#render-title').textContent = '导出样例';
+  document.querySelector('#preview').hidden = !preview;
+  document.querySelector('#results').classList.toggle('test-compare', preview);
+  document.body.dataset.testState = 'passed';
+} catch (error) {
+  status.classList.add('fail');
+  progress(`验证失败：${error.message}`);
+  document.querySelector('#render').hidden = true;
+  document.body.dataset.testState = 'failed';
+  summary.textContent = error.stack;
+  await fetch(`/layout-error?mode=${mode}${runQuery}`, { method: 'POST', body: JSON.stringify({ error: error.stack, unhandled }) });
+}
+</script>
+  </body>
+</html>

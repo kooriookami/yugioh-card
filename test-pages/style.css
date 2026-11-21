@@ -1,0 +1,271 @@
+.test-site {
+  --test-bg: #f4f1eb;
+  --test-surface: #fffefa;
+  --test-text: #302a23;
+  --test-muted: #655b50;
+  --test-border: #ddd5c9;
+  --test-accent: #73502f;
+  --test-accent-hover: #52371f;
+  --test-soft: #f1e7da;
+  --test-pass: #206347;
+  --test-pass-bg: #eaf4ed;
+  --test-fail: #9a352e;
+  --test-fail-bg: #f9ebe8;
+  --test-stage: #eee9df;
+  --test-grid-line: rgb(115 80 47 / 10%);
+  --test-mono: ui-monospace, 'Consolas', monospace;
+  --el-color-primary: var(--test-accent);
+  --el-color-primary-light-3: #9c7e60;
+  --el-color-primary-light-5: #b9a38e;
+  --el-color-primary-light-7: #d7c7b9;
+  --el-color-primary-light-9: var(--test-soft);
+  --el-color-primary-dark-2: var(--test-accent-hover);
+  --el-border-color: var(--test-border);
+  --el-text-color-regular: var(--test-text);
+  --el-bg-color: var(--test-surface);
+  margin: 0;
+  min-height: 100vh;
+  background: var(--test-bg);
+  color: var(--test-text);
+  font: 15px/1.6 system-ui, 'Microsoft YaHei UI', sans-serif;
+}
+
+.test-site *,
+.test-site *::before,
+.test-site *::after {
+  box-sizing: border-box;
+}
+
+.test-site :focus-visible {
+  outline: 2px solid var(--test-accent);
+  outline-offset: 3px;
+}
+
+.test-shell {
+  width: min(86rem, 100% - clamp(1.75rem, 6vw, 5rem));
+  margin-inline: auto;
+}
+
+.test-nav {
+  background: var(--test-surface);
+  border-bottom: 1px solid var(--test-border);
+}
+
+.test-nav .test-shell {
+  display: flex;
+  align-items: center;
+  min-height: 3.5rem;
+}
+
+.test-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  color: var(--test-accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.test-nav a:hover {
+  text-decoration: underline;
+}
+
+.test-main {
+  padding-block: clamp(1.8rem, 4vw, 3.75rem) 3rem;
+}
+
+.test-heading {
+  display: grid;
+  gap: .5rem;
+  margin-block-end: 1.65rem;
+}
+
+.test-heading h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.6rem);
+  line-height: 1.2;
+  letter-spacing: -.035em;
+}
+
+.test-description,
+.test-note {
+  margin: 0;
+  color: var(--test-muted);
+}
+
+.test-layout {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 1rem;
+}
+
+.test-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.test-panel {
+  min-width: 0;
+  padding: clamp(.875rem, 2.2vw, 1.375rem);
+  border: 1px solid var(--test-border);
+  border-radius: .85rem;
+  background: var(--test-surface);
+}
+
+.test-panel h2,
+.test-heading-secondary {
+  margin: 0 0 .75rem;
+  font-size: 1.06rem;
+  line-height: 1.35;
+}
+
+.test-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .65rem 1rem;
+}
+
+.test-actions .el-button + .el-button {
+  margin-inline-start: 0;
+}
+
+.test-sample-note {
+  margin-top: .6rem;
+  font-size: .9rem;
+}
+
+.test-status {
+  display: block;
+  margin: 0;
+  padding: .62rem .85rem;
+  border-radius: .5rem;
+  background: var(--test-soft);
+  color: var(--test-accent-hover);
+  overflow-wrap: anywhere;
+}
+
+[data-test-state='passed'] .test-status,
+.test-report.pass {
+  background: var(--test-pass-bg);
+  color: var(--test-pass);
+}
+
+[data-test-state='failed'] .test-status,
+.test-report.fail {
+  background: var(--test-fail-bg);
+  color: var(--test-fail);
+}
+
+[data-test-page='export-cancel'] #app {
+  --vp-c-bg: var(--test-surface);
+  --vp-c-bg-soft: var(--test-bg);
+  --vp-c-divider: var(--test-border);
+  --vp-c-text-1: var(--test-text);
+  --vp-c-text-2: var(--test-muted);
+  --vp-c-brand-1: var(--test-accent);
+  --vp-c-brand-2: var(--test-accent);
+  --vp-c-brand-soft: var(--test-soft);
+  --vp-c-danger-1: var(--test-fail);
+  --card-preview-background: var(--test-stage);
+  --card-preview-grid: var(--test-grid-line);
+}
+
+.test-stage {
+  min-width: 0;
+  padding: .55rem;
+  overflow: auto;
+  border: 1px solid var(--test-border);
+  border-radius: .55rem;
+  background:
+    linear-gradient(var(--test-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--test-grid-line) 1px, transparent 1px) var(--test-stage);
+  background-size: 20px 20px;
+}
+
+.test-report {
+  max-height: 27rem;
+  margin: 0;
+  padding: .875rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border-radius: .5rem;
+  background: var(--test-bg);
+  font: 13px/1.65 var(--test-mono);
+}
+
+.test-input {
+  margin-block: .4rem .75rem;
+}
+
+.test-card {
+  width: 280px;
+  margin-inline: auto;
+}
+
+.test-export-preview:not([hidden]) {
+  display: block;
+  width: min(100%, 16rem);
+  margin-inline: auto;
+  border-radius: .45rem;
+}
+
+.test-catalog {
+  margin-block-end: 1.55rem;
+}
+
+.test-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .4rem .75rem;
+  align-content: start;
+  min-height: 7.1rem;
+  color: var(--test-text);
+  text-decoration: none;
+}
+
+.test-link:hover {
+  border-color: var(--test-accent);
+}
+
+.test-link strong {
+  font-size: 1.05rem;
+}
+
+.test-link .test-note {
+  grid-column: 1 / -1;
+  font-size: .9rem;
+}
+
+.test-link-arrow {
+  color: var(--test-accent);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.test-automation summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.test-automation code {
+  font-family: var(--test-mono);
+  overflow-wrap: anywhere;
+}
+
+.test-automation p {
+  margin: .65rem 0 0;
+}
+
+@media (max-width: 760px) {
+  .test-compare {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

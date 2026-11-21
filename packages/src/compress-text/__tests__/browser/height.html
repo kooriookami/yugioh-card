@@ -1,24 +1,34 @@
 <!doctype html>
 <html lang="zh-CN">
-<meta charset="UTF-8">
-<title>CompressText 高度回归验证</title>
-<style>
-body { margin:24px; max-width:1200px; font:15px system-ui; color:#22314b; background:#f3f6fb; }
-h1 { font-size:25px; } h2 { font-size:16px; margin:0 0 10px; }
-#samples { display:flex; flex-wrap:wrap; gap:16px; margin:20px 0; }
-article { padding:16px; border-radius:12px; background:white; border:1px solid #d8e1ed; }
-article p { margin:8px 0 0; color:#546782; } .canvas { width:240px; height:130px; }
-pre { white-space:pre-wrap; line-height:1.65; padding:18px; border-radius:12px; background:white; }
-.pass { color:#167044; } .fail { color:#b42d3c; }
-</style>
-<h1>CompressText · 高度边界验证</h1>
-<p id="status">正在加载真实字体…</p>
-<div id="samples"></div>
-<pre id="report">初始化中</pre>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>文本高度边界 · Yugioh Card</title>
+    <link rel="icon" href="/docs/public/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/test-pages/style.css">
+  </head>
+  <body class="test-site" data-test-page="text-height" data-test-state="running">
+    <header class="test-nav">
+      <div class="test-shell"><a href="/test-pages/">← 全部测试</a></div>
+    </header>
+    <main class="test-shell test-main">
+      <header class="test-heading">
+        <h1>文本高度边界</h1>
+        <p class="test-description">观察换行和小字回退，验证文字与容器边界及导出图中的行距。</p>
+      </header>
+      <div class="test-layout">
+        <p id="status" class="test-status" role="status">正在加载字体并生成样例…</p>
+        <div id="samples" class="test-grid"></div>
+        <section class="test-panel">
+          <h2>检查结果</h2>
+          <pre id="report" class="test-report">等待样例绘制。</pre>
+        </section>
+      </div>
+    </main>
 <script type="module">
 import { Leafer, Rect } from 'leafer-unified';
-import { CompressText } from '/packages/src/compress-text/compress-text.js';
-import { getBrowserFontResource } from '/packages/src/utils/font-loader.js';
+import { CompressText } from '/packages/src/compress-text/compress-text.ts';
+import { getBrowserFontResource } from '/packages/src/utils/font-loader.ts';
 
 const resourcePath = '/src/assets/yugioh-card';
 const results = [], failures = [], views = [];
@@ -33,7 +43,7 @@ const check = (condition, label) => {
 const equal = (a, b) => Math.abs(a - b) < 1e-9;
 const frame = () => new Promise(requestAnimationFrame);
 class MeasuredText extends CompressText {
-  updateTextScale() { this.calls = (this.calls || 0) + 1; return super.updateTextScale(); }
+  relayoutBody() { this.calls = (this.calls || 0) + 1; return super.relayoutBody(); }
 }
 try {
   if (resourcePath === '/ready-resources') for (const gate of ['manifest', 'fonts', 'photo']) await fetch(`/ready-test/release/${gate}`, { method:'POST' });
@@ -48,40 +58,43 @@ try {
     ['末尾换行沿用裁剪', { text:'ABC\n\n', height:21 }, 21, false],
   ]) {
     const article = document.createElement('article');
+    article.className = 'test-panel';
     const title = document.createElement('h2'); title.textContent = label;
+    const stage = document.createElement('div'); stage.className = 'test-stage';
     const host = document.createElement('div'); host.className = 'canvas';
-    const summary = document.createElement('p');
-    article.append(title, host, summary); document.querySelector('#samples').append(article);
+    const summary = document.createElement('p'); summary.className = 'test-note test-sample-note';
+    stage.append(host);
+    article.append(title, stage, summary); document.querySelector('#samples').append(article);
     const view = new Leafer({ view:host, width:240, height:130 }); views.push(view);
     view.add(new Rect({ x:9, y:9, width:202, height:data.height + 2, stroke:'#c68b2e', strokeWidth:1 }));
     const text = new MeasuredText({ fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:200, textAlign:'left', x:10, y:10, ...data });
     view.add(text); await frame(); await frame();
     check(equal(text.bounds.height, height) && text.isSmallSize === small, `${label}：行框高度 ${height}，小字状态正确`);
-    check(text.textScale === 1 && text.calls < 80, `${label}：文字保持可见，搜索及时结束`);
-    summary.textContent = `边界 ${text.bounds.height} / 容器 ${data.height}；横向缩放 ${text.textScale * 100}%`;
+    check(text.lastSegmentScaleX === 1 && text.calls < 80, `${label}：文字保持可见，搜索及时结束`);
+    summary.textContent = `边界 ${text.bounds.height} / 容器 ${data.height}；横向缩放 ${text.lastSegmentScaleX * 100}%`;
   }
   for (const align of ['left', 'center', 'right']) {
     const text = new MeasuredText({ text:'ABC\n\nDEF', fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:200, textAlign:align });
     try {
       await frame();
-      check(text.rubyList.filter(ruby => ruby.text !== '\n').every(ruby => equal(ruby.rubyLeaf.x, align === 'center' ? (200-ruby.width)/2 : align === 'right' ? 200-ruby.width : 0)), `显式换行的 ${align} 对齐使用正文宽度`);
+      check(text.rubyList.filter(ruby => ruby.text !== '\n').every(ruby => equal(ruby.rubyNode.x, align === 'center' ? (200-ruby.width)/2 : align === 'right' ? 200-ruby.width : 0)), `显式换行的 ${align} 对齐使用正文宽度`);
     } finally { text.destroy(); }
   }
   const raceOptions = { text:'[Beast-Warrior / Pendulum / Tuner / Effect]', fontFamily:'ygo-en-race', fontSize:56, lineHeight:1.02, letterSpacing:1, width:1175 };
   const normal = new MeasuredText({ ...raceOptions, height:100 }), exact = new MeasuredText({ ...raceOptions, height:57.12 });
   try {
     await frame();
-    check(equal(exact.textScale, normal.textScale) && exact.textScale > 0.8, '57.12 的浮点尾差不再把英文文字压到 50%');
+    check(equal(exact.lastSegmentScaleX, normal.lastSegmentScaleX) && exact.lastSegmentScaleX > 0.8, '57.12 的浮点尾差不再把英文文字压到 50%');
     exact.height = 57.1199;
     check(exact.doesOverflowHeight(exact.rubyList.at(-1)), '真实不足 0.0001 的高度仍会判为溢出');
   } finally { normal.destroy(); exact.destroy(); }
   const blocked = new MeasuredText({ text:'①'.repeat(40), fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:60, height:42 });
   try {
     await frame();
-    check(blocked.calls < 80 && blocked.textScale === 1 && blocked.bounds.height > blocked.height, '不可压缩的项目符号无解时有限退出并保留原宽');
+    check(blocked.calls < 80 && blocked.lastSegmentScaleX === 1 && blocked.bounds.height > blocked.height, '不可压缩的项目符号无解时有限退出并保留原宽');
   } finally { blocked.destroy(); }
-  const scaled = new MeasuredText({ text:'ABC\n\nDEF', fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:200, height:47.25, fontScale:0.75, scaleY:2 });
-  try { await frame(); check(equal(scaled.bounds.height,94.5), 'fontScale 与 Group 缩放分别且只应用一次'); }
+  const scaled = new MeasuredText({ text:'ABC\n\nDEF', fontFamily:'ygo-en', fontSize:20, lineHeight:1.05, width:200, height:47.25, fontSizeScale:0.75, scaleY:2 });
+  try { await frame(); check(equal(scaled.bounds.height,94.5), 'fontSizeScale 与 Group 缩放分别且只应用一次'); }
   finally { scaled.destroy(); }
 
   const view = new Leafer({ width:300, height:360, fill:'white' }); views.push(view);
@@ -105,12 +118,15 @@ try {
   }
   check(failures.length===0,'没有未处理的 Promise rejection');
   status.textContent=`全部 ${results.length} 项检查通过：正常行距保留，边界已合理化。`;
-  report.className='pass';
+  report.classList.add('pass');
+  document.body.dataset.testState = 'passed';
   if (resourcePath === '/ready-resources') await fetch('/height-results', { method:'POST', body:JSON.stringify({ complete:true, results, failures }) });
 } catch (error) {
-  status.textContent=`验证失败：${error.message}`; report.className='fail';
+  status.textContent=`验证失败：${error.message}`; report.classList.add('fail');
+  document.body.dataset.testState = 'failed';
   report.textContent=results.join('\n')+'\n'+error.stack;
   if (resourcePath === '/ready-resources') await fetch('/height-results', { method:'POST', body:JSON.stringify({ complete:false, results, failures, error:String(error) }) });
 }
 </script>
+  </body>
 </html>

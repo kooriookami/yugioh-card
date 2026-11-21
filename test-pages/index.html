@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>浏览器测试 · Yugioh Card</title>
+    <link rel="icon" href="/docs/public/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/test-pages/style.css">
+  </head>
+  <body class="test-site" data-test-page="index">
+    <header class="test-nav"><div class="test-shell">
+      <a href="/test-pages/"><img src="/docs/public/favicon.svg" alt="" width="22" height="22"> Yugioh Card</a>
+    </div></header>
+    <main class="test-shell test-main">
+      <header class="test-heading">
+        <h1>浏览器测试</h1>
+        <p class="test-description">打开样例查看排版和卡片渲染，或运行浏览器回归检查。</p>
+      </header>
+
+      <section>
+        <h2 class="test-heading-secondary">排版与预览</h2>
+        <div class="test-grid test-catalog">
+          <a class="test-panel test-link" href="/play/index.html">
+            <strong>文本排版调试</strong><span class="test-link-arrow" aria-hidden="true">→</span>
+            <span class="test-note">修改文本、字号和行高，查看注音、换行与分词结果。</span>
+          </a>
+          <a class="test-panel test-link" href="/packages/src/compress-text/__tests__/browser/jp-spacing.html">
+            <strong>日文留白</strong><span class="test-link-arrow" aria-hidden="true">→</span>
+            <span class="test-note">输入日文查看留白对照，并预览两种卡片版式。</span>
+          </a>
+          <a class="test-panel test-link" href="/packages/src/compress-text/__tests__/browser/height.html">
+            <strong>文本高度边界</strong><span class="test-link-arrow" aria-hidden="true">→</span>
+            <span class="test-note">检查换行、小字回退和带小数的行高。</span>
+          </a>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="test-heading-secondary">卡片渲染与导出</h2>
+        <div class="test-grid test-catalog">
+          <a class="test-panel test-link" href="/ready-fixture">
+            <strong>资源加载与就绪状态</strong><span class="test-link-arrow" aria-hidden="true">→</span>
+            <span class="test-note">先观察备用字体，再释放资源并验证 <code>card.ready</code>。</span>
+          </a>
+          <a class="test-panel test-link" href="/export-fixture">
+            <strong>导出取消</strong><span class="test-link-arrow" aria-hidden="true">→</span>
+            <span class="test-note">在字体等待期间导出，检查切换卡片或卸载的行为。</span>
+          </a>
+          <a class="test-panel test-link" href="/tools/perf/browser.html?mode=preview">
+            <strong>排版回归与批量导出</strong><span class="test-link-arrow" aria-hidden="true">→</span>
+            <span class="test-note">运行源码检查和 100 张卡片的批量导出，查看结果与 PNG 样例。</span>
+          </a>
+        </div>
+      </section>
+
+      <details class="test-panel test-automation">
+        <summary>自动化启动方式</summary>
+        <p><code>pnpm test:pages --no-open --port 5185 --strictPort</code></p>
+        <p class="test-note">通过上方链接访问测试页。自动检查完成时，页面的 <code>body[data-test-state]</code> 为 <code>passed</code> 或 <code>failed</code>。</p>
+      </details>
+    </main>
+  </body>
+</html>

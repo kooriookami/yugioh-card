@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { Platform, Resource, useCanvas } from 'leafer-unified';
 import skia from 'skia-canvas';
-import { YugiohCard, RushDuelCard, YugiohBackCard, FieldCenterCard, YugiohSeries2Card } from '../../../index.js';
-import { getNodeFontResource } from '../../utils/font-loader.js';
+import { YugiohCard, RushDuelCard, YugiohBackCard, FieldCenterCard, YugiohSeries2Card } from '../../../index.ts';
+import { getNodeFontResource } from '../../utils/font-loader.ts';
 
 const resourcePath = path.resolve('src/assets/yugioh-card');
 const photo = path.resolve('src/assets/image/blue-eyes.jpg');
@@ -17,7 +17,7 @@ const deferred = () => {
 const flush = async () => { await new Promise(resolve => setImmediate(resolve)); };
 
 const makeCard = (t, Card, data = {}, images) => {
-  const card = new Card({ resourcePath, skia, data: { scale: 0.12, ...data } });
+  const card = new Card({ resourcePath, skia, data: { renderScale: 0.12, ...data } });
   images?.install();
   t.after(() => card.leafer.destroy(true));
   return card;
@@ -47,7 +47,7 @@ const controlImages = t => {
 test('all five card classes complete unchanged updates and export real assets', async t => {
   for (const Card of [YugiohCard, RushDuelCard, YugiohBackCard, FieldCenterCard, YugiohSeries2Card]) {
     await t.test(Card.name, async t => {
-      const card = makeCard(t, Card, { name: '[青眼(ブルーアイズ)]', description: 'A real font measurement and image export.', image: photo });
+      const card = makeCard(t, Card, { name: '[青眼(ブルーアイズ)]', cardText: 'A real font measurement and image export.', artwork: photo });
       assert.equal(card.ready instanceof Promise, true);
       await card.ready;
       for (const data of [{}, { ...card.data }]) {
@@ -66,6 +66,66 @@ test('all five card classes complete unchanged updates and export real assets', 
   }
 });
 
+test('partial updates keep unset fields and accept explicit falsy values', async t => {
+  const card = makeCard(t, YugiohCard, { language: 'en', cardText: 'Previous text', atk: 2500, showStatsLine: true });
+  await card.ready;
+  card.setData({ language: undefined, renderScale: undefined, atk: 0, showStatsLine: false, cardText: '' });
+  await card.ready;
+  assert.equal(card.data.language, 'en');
+  assert.equal(card.data.renderScale, 0.12);
+  assert.equal(card.data.atk, 0);
+  assert.equal(card.data.showStatsLine, false);
+  assert.equal(card.cardTextNode.text, '');
+});
+
+test('the displayed link rating counts exactly the rendered arrows', async t => {
+  const card = makeCard(t, YugiohCard, { cardLayout: 'monster', monsterFrame: 'link', linkArrows: [1, 3, 5] });
+  const arrows = () => card.linkArrowsNode.children.filter(arrow => arrow.url.endsWith('-on.png'));
+  await card.ready;
+  assert.equal(arrows().length, 3);
+  assert.equal(Number(card.battleStatsNode.children[3].text), 3);
+
+  card.setData({ linkArrows: [1, 1, 9, 2.5, 0, '3'] });
+  await card.ready;
+  assert.equal(arrows().length, 1);
+  assert.match(arrows()[0].url, /arrow-up-on\.png$/);
+  assert.equal(Number(card.battleStatsNode.children[3].text), 1);
+});
+
+test('Astral cards render numeric stats and link ratings as full-width digits', async t => {
+  const card = makeCard(t, YugiohCard, { language: 'astral', atk: 3000, def: 2500 });
+  await card.ready;
+  assert.equal(card.battleStatsNode.children[1].text, '３０００');
+  assert.equal(card.battleStatsNode.children[2].text, '２５００');
+
+  card.setData({ monsterFrame: 'link', linkArrows: [1, 3, 5] });
+  await card.ready;
+  assert.equal(card.battleStatsNode.children[3].text, '３');
+});
+
+test('all three front card classes support the four main text alignments', async t => {
+  for (const Card of [YugiohCard, RushDuelCard, YugiohSeries2Card]) {
+    await t.test(Card.name, async t => {
+      const card = makeCard(t, Card, { language: 'jp', cardText: '[魔(ま)]法\n日' });
+      await card.ready;
+      assert.equal(card.cardTextNode.textAlign, 'justify');
+      const finalLineX = [];
+      for (const cardTextAlign of ['left', 'center', 'right']) {
+        card.setData({ cardTextAlign, compressCardTextSegments: [2] });
+        await card.ready;
+        assert.equal(card.cardTextNode.textAlign, cardTextAlign);
+        assert.deepEqual(card.cardTextNode.compressSegments, [2]);
+        finalLineX.push(card.cardTextNode.rubyList.at(-1).rubyNode.x);
+      }
+      assert.ok(finalLineX[0] < finalLineX[1] && finalLineX[1] < finalLineX[2]);
+      card.setData({ cardTextAlign: 'justify', compressCardTextSegments: [] });
+      await card.ready;
+      assert.equal(card.cardTextNode.textAlign, 'justify');
+      assert.deepEqual(card.cardTextNode.compressSegments, []);
+    });
+  }
+});
+
 test('initial draw failures release their font subscription and Leafer without affecting another card', async t => {
   const fonts = getNodeFontResource(`${resourcePath}/yugioh/font`, skia);
   const subscribe = fonts.subscribe;
@@ -75,7 +135,7 @@ test('initial draw failures release their font subscription and Leafer without a
     const unsubscribe = subscribe(callback);
     return () => { subscriptions--; unsubscribe(); };
   });
-  const sibling = makeCard(t, YugiohCard, { image: photo });
+  const sibling = makeCard(t, YugiohCard, { artwork: photo });
   await sibling.ready;
   assert.equal(subscriptions, 1);
   let partial;
@@ -97,7 +157,7 @@ test('initial draw failures release their font subscription and Leafer without a
   assert.equal(getNodeFontResource(`${resourcePath}/yugioh/font`, skia), fonts);
   sibling.setData({ name: 'Still usable' });
   await sibling.ready;
-  assert.equal(sibling.nameLeaf.text, 'Still usable');
+  assert.equal(sibling.nameNode.text, 'Still usable');
 });
 
 test('initial resource tracking failures release acquired image references even after draw succeeds', async t => {
@@ -120,7 +180,7 @@ test('initial resource tracking failures release acquired image references even 
     }
   }
   t.after(() => partial?.leafer.destroy(true));
-  assert.throws(() => new InvalidCard({ resourcePath, skia, data: { image: photo } }), error => error === originalError);
+  assert.throws(() => new InvalidCard({ resourcePath, skia, data: { artwork: photo } }), error => error === originalError);
   await assert.rejects(partial.ready, error => error === originalError);
   assert.equal(partial._readiness.hasDrawn, true);
   assert.equal(partial._readiness.disposed, true);
@@ -130,7 +190,7 @@ test('initial resource tracking failures release acquired image references even 
 });
 
 test('later draw failures keep the existing card and resources available for retry', async t => {
-  const card = makeCard(t, YugiohCard, { image: photo });
+  const card = makeCard(t, YugiohCard, { artwork: photo });
   await card.ready;
   const leafer = card.leafer;
   const image = card._readiness.images.records.get(photo);
@@ -148,21 +208,21 @@ test('later draw failures keep the existing card and resources available for ret
   assert.notEqual(card.ready, failed);
   await card.ready;
   assert.equal(card.leafer, leafer);
-  assert.equal(card.nameLeaf.text, 'Recovered after draw failure');
+  assert.equal(card.nameNode.text, 'Recovered after draw failure');
 });
 
 test('delayed images keep readiness pending and obsolete A cannot replace image B', async t => {
   const request = controlImages(t);
   const a = request('ready-test:obsolete-a');
   const b = request('ready-test:current-b');
-  const card = makeCard(t, FieldCenterCard, { image: 'ready-test:obsolete-a' }, request);
+  const card = makeCard(t, FieldCenterCard, { artwork: 'ready-test:obsolete-a' }, request);
   const ready = card.ready;
   await a.started.promise;
-  card.setData({ image: 'ready-test:current-b' });
+  card.setData({ artwork: 'ready-test:current-b' });
   // 引擎可能先结束唯一运行中的 A 才启动 B；A 此时已失效，其失败不能影响新画面。
   a.gate.reject(new Error('obsolete A failed'));
   await b.started.promise;
-  assert.equal(card.imageLeaf.fill.url, 'ready-test:current-b');
+  assert.equal(card.artworkNode.fill.url, 'ready-test:current-b');
   assert.equal(card.ready, ready);
   let completed = false;
   ready.then(() => { completed = true; });
@@ -170,7 +230,7 @@ test('delayed images keep readiness pending and obsolete A cannot replace image 
   assert.equal(completed, false);
   b.gate.resolve();
   await ready;
-  assert.equal(card.imageLeaf.fill.url, 'ready-test:current-b');
+  assert.equal(card.artworkNode.fill.url, 'ready-test:current-b');
   assert.equal(a.calls, 1);
   assert.equal(b.calls, 1);
   const result = await card.leafer.export('png', { screenshot: true });
@@ -180,7 +240,7 @@ test('delayed images keep readiness pending and obsolete A cannot replace image 
 test('required image errors reject readiness and the same URL can be retried by setData', async t => {
   const request = controlImages(t);
   const failed = request('ready-test:retry-image');
-  const card = makeCard(t, FieldCenterCard, { image: 'ready-test:retry-image' }, request);
+  const card = makeCard(t, FieldCenterCard, { artwork: 'ready-test:retry-image' }, request);
   const first = card.ready;
   await failed.started.promise;
   failed.gate.reject(new Error('first request failed'));
@@ -195,11 +255,11 @@ test('required image errors reject readiness and the same URL can be retried by 
   assert.ok(result.data.length > 1000);
 });
 
-test('destroying one card leaves shared loading alive for another and does not leak rejection', async t => {
+test('destroying one card nodes shared loading alive for another and does not leak rejection', async t => {
   const request = controlImages(t);
   const image = request('ready-test:shared-destroy');
-  const a = makeCard(t, FieldCenterCard, { image: 'ready-test:shared-destroy' }, request);
-  const b = makeCard(t, FieldCenterCard, { image: 'ready-test:shared-destroy' }, request);
+  const a = makeCard(t, FieldCenterCard, { artwork: 'ready-test:shared-destroy' }, request);
+  const b = makeCard(t, FieldCenterCard, { artwork: 'ready-test:shared-destroy' }, request);
   await image.started.promise;
   const destroyed = a.ready;
   a.leafer.destroy(true);
@@ -217,8 +277,8 @@ test('destroying one card leaves shared loading alive for another and does not l
 test('a different card failure in the global resource queue does not poison this card', async t => {
   const request = controlImages(t);
   const bad = request('ready-test:other-card-fails');
-  const a = makeCard(t, FieldCenterCard, { image: photo });
-  const b = makeCard(t, FieldCenterCard, { image: 'ready-test:other-card-fails' }, request);
+  const a = makeCard(t, FieldCenterCard, { artwork: photo });
+  const b = makeCard(t, FieldCenterCard, { artwork: 'ready-test:other-card-fails' }, request);
   await bad.started.promise;
   bad.gate.reject(new Error('other card failed'));
   await assert.rejects(b.ready, { code: 'RESOURCE_FAILED' });
@@ -229,13 +289,13 @@ test('a different card failure in the global resource queue does not poison this
 test('cleaning up a previously failed card cannot remove another card retry callback', async t => {
   const request = controlImages(t);
   const image = request('ready-test:shared-retry-cleanup');
-  const a = makeCard(t, FieldCenterCard, { image: 'ready-test:shared-retry-cleanup' }, request);
+  const a = makeCard(t, FieldCenterCard, { artwork: 'ready-test:shared-retry-cleanup' }, request);
   await image.started.promise;
   image.gate.reject(new Error('shared image failed'));
   await assert.rejects(a.ready, { code: 'RESOURCE_FAILED' });
   image.gate = deferred();
   image.started = deferred();
-  const b = makeCard(t, FieldCenterCard, { image: 'ready-test:shared-retry-cleanup' }, request);
+  const b = makeCard(t, FieldCenterCard, { artwork: 'ready-test:shared-retry-cleanup' }, request);
   await image.started.promise;
   a.leafer.destroy(true);
   image.gate.resolve();
