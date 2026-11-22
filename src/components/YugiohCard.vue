@@ -1,5 +1,11 @@
 <template>
   <div class="playground">
+    <dialog
+      ref="previewDialog"
+      class="preview-dialog"
+      :aria-label="labels.preview"
+      @close="closePreview"
+    />
     <div class="playground-toolbar">
       <div class="card-type-field">
         <span>{{ labels.cardType }}</span>
@@ -15,36 +21,51 @@
     </div>
 
     <div class="playground-body">
-      <section class="playground-panel" :aria-label="labels.preview">
-        <div ref="preview" class="preview-surface">
-          <div class="preview-content">
-            <div ref="card" class="preview-card" :style="{ zoom: previewScale }" />
-          </div>
-        </div>
-        <div class="preview-toolbar">
-          <div class="preview-options">
-            <ElButton
-              :type="fitHeight ? 'primary' : ''"
-              :plain="fitHeight"
-              :aria-pressed="fitHeight"
-              @click="fitHeight = true"
+      <div
+        ref="previewSlot"
+        class="preview-slot"
+        :style="{ minHeight: previewExpanded ? `${previewSlotHeight}px` : undefined }"
+      >
+        <Teleport :to="previewDialog || 'body'" :disabled="!previewExpanded">
+          <section class="playground-panel preview-panel" :aria-label="labels.preview">
+            <div class="preview-toolbar">
+              <div class="preview-options">
+                <ElButton
+                  v-for="mode in previewModes"
+                  :key="mode"
+                  :type="previewMode === mode ? 'primary' : ''"
+                  :plain="previewMode === mode"
+                  :aria-pressed="previewMode === mode"
+                  @click="changePreviewMode(mode)"
+                >
+                  {{ labels[mode] }}
+                </ElButton>
+              </div>
+              <span class="render-status" :class="{ 'is-error': cardError }" role="status">
+                {{ cardError ? `${labels.renderError} · ${cardError}` : cardPending ? labels.loading : labels.idle }}
+              </span>
+              <ElButton
+                ref="previewToggle"
+                class="preview-toggle"
+                :aria-expanded="previewExpanded"
+                @click="togglePreview"
+              >
+                {{ previewExpanded ? labels.exitPreview : labels.expandPreview }}
+              </ElButton>
+            </div>
+            <div
+              ref="preview"
+              class="preview-surface"
+              tabindex="0"
+              :aria-label="labels.preview"
             >
-              {{ labels.fit }}
-            </ElButton>
-            <ElButton
-              :type="fitHeight ? '' : 'primary'"
-              :plain="!fitHeight"
-              :aria-pressed="!fitHeight"
-              @click="fitHeight = false"
-            >
-              {{ labels.actual }}
-            </ElButton>
-          </div>
-          <span class="render-status" :class="{ 'is-error': cardError }" role="status">
-            {{ cardError ? `${labels.renderError} · ${cardError}` : cardPending ? labels.loading : labels.idle }}
-          </span>
-        </div>
-      </section>
+              <div class="preview-content">
+                <div ref="card" class="preview-card" :style="{ zoom: previewScale }" />
+              </div>
+            </div>
+          </section>
+        </Teleport>
+      </div>
 
       <section class="playground-panel data-panel" :aria-label="labels.json">
         <h2>{{ labels.json }}</h2>
@@ -84,7 +105,7 @@ import { ElButton, ElSelect } from 'element-plus';
 import 'element-plus/es/components/button/style/css';
 import 'element-plus/es/components/select/style/css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
-import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, shallowRef } from 'vue';
 import * as CardConstructors from 'yugioh-card';
 import JsonEditorVue from 'json-editor-vue';
 import { cardTypes, findExample } from '../assets/demo/examples.js';
@@ -108,12 +129,21 @@ const editorRevision = ref(0);
 
 const card = ref(null);
 const preview = ref(null);
-const fitHeight = ref(true);
+const previewSlot = ref(null);
+const previewDialog = ref(null);
+const previewToggle = ref(null);
+const previewMode = ref('fit');
+const previewModes = ['fit', 'fitWidth', 'actual'];
+const previewExpanded = ref(false);
+const previewSlotHeight = ref(0);
 const previewSize = reactive({ width: 0, height: 0 });
 const cardSize = reactive({ width: 0, height: 0 });
 const previewScale = computed(() => {
-  if (!fitHeight.value || !cardSize.width || !cardSize.height) return 1;
-  return Math.max(0.01, Math.min(1, (previewSize.height - 48) / cardSize.height, (previewSize.width - 48) / cardSize.width));
+  if (previewMode.value === 'actual' || !cardSize.width || !cardSize.height) return 1;
+  const fitWidth = (previewSize.width - 48) / cardSize.width;
+  const fitHeight = (previewSize.height - 48) / cardSize.height;
+  const scale = previewMode.value === 'fitWidth' ? fitWidth : Math.min(fitWidth, fitHeight);
+  return Math.max(0.01, Math.min(1, scale));
 });
 
 let resizeObserver;
@@ -123,6 +153,77 @@ const cardError = ref('');
 const exporting = ref(false);
 let observedReady;
 let exportRequest;
+let inlinePreviewCenter;
+
+const updatePreviewSize = () => {
+  const surface = preview.value;
+  if (!surface) return;
+  previewSize.width = surface.clientWidth;
+  previewSize.height = surface.clientHeight;
+};
+
+const getViewportCenter = surface => {
+  const { left, top } = surface.getBoundingClientRect();
+  return {
+    x: left + surface.clientLeft + surface.clientWidth / 2,
+    y: top + surface.clientTop + surface.clientHeight / 2,
+  };
+};
+
+const getPreviewCenter = () => {
+  const bounds = card.value.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) return null;
+  const center = getViewportCenter(preview.value);
+  return { x: (center.x - bounds.left) / bounds.width, y: (center.y - bounds.top) / bounds.height };
+};
+
+const restorePreviewCenter = position => {
+  const surface = preview.value;
+  if (!position || !surface || !card.value) return;
+  const bounds = card.value.getBoundingClientRect();
+  const center = getViewportCenter(surface);
+  surface.scrollLeft += bounds.left + bounds.width * position.x - center.x;
+  surface.scrollTop += bounds.top + bounds.height * position.y - center.y;
+};
+
+const changePreviewMode = async mode => {
+  if (previewMode.value === mode) return;
+  const position = getPreviewCenter();
+  previewMode.value = mode;
+  await nextTick();
+  restorePreviewCenter(position);
+};
+
+const togglePreview = async () => {
+  const dialog = previewDialog.value;
+  if (dialog.open) {
+    dialog.close();
+    return;
+  }
+  if (previewExpanded.value) return;
+
+  inlinePreviewCenter = getPreviewCenter();
+  previewSlotHeight.value = previewSlot.value.getBoundingClientRect().height;
+  previewExpanded.value = true;
+  await nextTick();
+  if (!dialog.isConnected) return;
+  dialog.showModal();
+  updatePreviewSize();
+  await nextTick();
+  restorePreviewCenter(inlinePreviewCenter);
+  previewToggle.value?.ref?.focus({ preventScroll: true });
+};
+
+const closePreview = async () => {
+  const position = inlinePreviewCenter;
+  inlinePreviewCenter = null;
+  previewExpanded.value = false;
+  await nextTick();
+  updatePreviewSize();
+  await nextTick();
+  restorePreviewCenter(position);
+  previewToggle.value?.ref?.focus({ preventScroll: true });
+};
 
 const trackReady = async () => {
   const current = cardInstance.value;
@@ -228,9 +329,11 @@ const exportImage = async () => {
 onMounted(() => {
   resizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
-      const size = entry.target === preview.value ? previewSize : cardSize;
-      size.width = entry.contentRect.width;
-      size.height = entry.contentRect.height;
+      if (entry.target === preview.value) updatePreviewSize();
+      else {
+        cardSize.width = entry.contentRect.width;
+        cardSize.height = entry.contentRect.height;
+      }
     }
   });
   resizeObserver.observe(preview.value);
@@ -325,9 +428,51 @@ onBeforeUnmount(() => {
   background: var(--workbench-surface);
 }
 
+.preview-slot {
+  display: flex;
+  min-width: 0;
+}
+
+.preview-panel {
+  flex: 1 1 auto;
+}
+
+:global(html:has(.preview-dialog[open])) {
+  overflow: hidden;
+}
+
+.preview-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  color: var(--workbench-text);
+  background: var(--workbench-surface);
+}
+
+.preview-dialog .preview-panel {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.preview-dialog .preview-surface {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
 .preview-surface {
   height: clamp(25rem, 65vh, 46rem);
   overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   background-color: var(--card-preview-background, #eeeae1);
   background-image:
     linear-gradient(var(--card-preview-grid, #ded7ca) 1px, transparent 1px),
@@ -350,7 +495,20 @@ onBeforeUnmount(() => {
   filter: drop-shadow(0 13px 24px rgb(35 23 9 / 20%));
 }
 
-.preview-toolbar,
+.preview-surface:focus-visible {
+  outline: 2px solid var(--workbench-accent);
+  outline-offset: -2px;
+}
+
+.preview-toolbar {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--workbench-border);
+}
+
+.preview-toggle {
+  margin-inline-start: auto;
+}
+
 .editor-toolbar {
   padding: 10px 14px;
 }
@@ -447,6 +605,20 @@ onBeforeUnmount(() => {
 
 @media (max-width: 420px) {
   .card-type-field {
+    flex-basis: 100%;
+  }
+
+  .preview-toolbar {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .preview-toolbar .el-button {
+    padding-inline: 8px;
+  }
+
+  .render-status {
+    order: 1;
     flex-basis: 100%;
   }
 }
