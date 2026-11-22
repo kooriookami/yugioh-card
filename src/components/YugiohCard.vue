@@ -56,6 +56,7 @@
             <div
               ref="preview"
               class="preview-surface"
+              :class="{ 'is-fit-window': previewMode === 'fit' }"
               tabindex="0"
               :aria-label="labels.preview"
             >
@@ -155,11 +156,11 @@ let observedReady;
 let exportRequest;
 let inlinePreviewCenter;
 
-const updatePreviewSize = () => {
+const updatePreviewSize = bounds => {
   const surface = preview.value;
   if (!surface) return;
-  previewSize.width = surface.clientWidth;
-  previewSize.height = surface.clientHeight;
+  previewSize.width = bounds?.width ?? surface.clientWidth;
+  previewSize.height = bounds?.height ?? surface.clientHeight;
 };
 
 const getViewportCenter = surface => {
@@ -190,6 +191,8 @@ const changePreviewMode = async mode => {
   if (previewMode.value === mode) return;
   const position = getPreviewCenter();
   previewMode.value = mode;
+  await nextTick();
+  updatePreviewSize();
   await nextTick();
   restorePreviewCenter(position);
 };
@@ -329,7 +332,7 @@ const exportImage = async () => {
 onMounted(() => {
   resizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
-      if (entry.target === preview.value) updatePreviewSize();
+      if (entry.target === preview.value) updatePreviewSize(entry.contentRect);
       else {
         cardSize.width = entry.contentRect.width;
         cardSize.height = entry.contentRect.height;
@@ -478,6 +481,11 @@ onBeforeUnmount(() => {
     linear-gradient(var(--card-preview-grid, #ded7ca) 1px, transparent 1px),
     linear-gradient(90deg, var(--card-preview-grid, #ded7ca) 1px, transparent 1px);
   background-size: 20px 20px;
+}
+
+.preview-surface.is-fit-window {
+  overflow: clip;
+  scrollbar-gutter: auto;
 }
 
 .preview-content {
