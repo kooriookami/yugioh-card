@@ -10,7 +10,7 @@ export default inheritProp<YugiohStyle>({
   spellTrapLabel: {
     top: 250,
     fontSize: 76,
-    right: 104,
+    right: 149,
     icon: {
       marginTop: 12,
       marginLeft: 10,
@@ -25,7 +25,6 @@ export default inheritProp<YugiohStyle>({
     top: 1525,
     fontSize: 44,
     lineHeight: 1.2,
-    textIndent: -0.4 * 44,
     minHeight: 10,
   },
   cardText: {

@@ -9,6 +9,7 @@ interface TextStyle {
   letterSpacing?: number;
   wordSpacing?: number;
   sideBearingMode?: SideBearingMode;
+  punctuationTrim?: boolean;
   rtFontSize?: number;
   rtOffsetY?: number;
 }
@@ -24,15 +25,16 @@ interface SpellTrapLabelStyle extends PositionedTextStyle {
 interface CardStyle {
   fontFamily: string;
   sideBearingMode?: SideBearingMode;
+  punctuationTrim?: boolean;
   name: PositionedTextStyle;
   spellTrapLabel: SpellTrapLabelStyle;
-  monsterTypeLine: PositionedTextStyle & { minHeight?: number; textIndent?: number };
+  monsterTypeLine: PositionedTextStyle & { minHeight?: number };
   cardText: TextStyle & { top?: number; smallFontSize?: number };
 }
 
 export interface Series2Style extends CardStyle {
   spellTrapLabel: SpellTrapLabelStyle & { right: number };
-  monsterTypeLine: CardStyle['monsterTypeLine'] & { minHeight: number; textIndent: number; lineHeight: number };
+  monsterTypeLine: CardStyle['monsterTypeLine'] & { minHeight: number; lineHeight: number };
 }
 
 export interface YugiohStyle extends CardStyle {

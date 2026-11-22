@@ -10,7 +10,7 @@ export default inheritProp<Series2Style>({
   spellTrapLabel: {
     top: 308,
     fontSize: 76,
-    right: 135,
+    right: 174,
     icon: {
       marginTop: 12,
       marginLeft: 10,
@@ -20,7 +20,6 @@ export default inheritProp<Series2Style>({
     top: 1682,
     fontSize: 50,
     lineHeight: 1.15,
-    textIndent: -0.4 * 50,
     minHeight: 10,
   },
   cardText: {

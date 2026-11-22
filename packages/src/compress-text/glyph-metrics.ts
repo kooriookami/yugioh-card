@@ -39,8 +39,7 @@ const measure = (codePoint: number, font: NonNullable<ReturnType<typeof getFontI
 };
 
 /** 每个字体加载实例共享一份原始度量；字号、留白模式、后端和卡片版本不重复解析。 */
-export const getGlyphMetrics = (fontFamily: string, mode: SideBearingMode = 'native', fonts?: ReadonlyMap<string, FontEntry>): GlyphResolver | null => {
-  if (mode !== 'legacy') return null;
+export const getGlyphMeasurements = (fontFamily: string, fonts?: ReadonlyMap<string, FontEntry>) => {
   const family = fontFamilies(fontFamily)[0];
   const entry = fonts === undefined ? getLoadedFontEntry(family) : [...fonts].find(([name]) => fontFamilyKey(name) === fontFamilyKey(family))?.[1];
   if (!entry || entry.status !== 'loaded') return null;
@@ -63,6 +62,14 @@ export const getGlyphMetrics = (fontFamily: string, mode: SideBearingMode = 'nat
     }
     return cache.get(character);
   };
+  return { units, getMeasurement };
+};
+
+export const getGlyphMetrics = (fontFamily: string, mode: SideBearingMode = 'native', fonts?: ReadonlyMap<string, FontEntry>): GlyphResolver | null => {
+  if (mode !== 'legacy') return null;
+  const measurements = getGlyphMeasurements(fontFamily, fonts);
+  if (!measurements) return null;
+  const { units, getMeasurement } = measurements;
   // 旧资源本身已有比例度量。按加载实例检查基准字，避免重复处理。
   if (fullWidthSamples.some(character => {
     const metric = getMeasurement(character);

@@ -3,6 +3,7 @@ import type { RushDuelStyle } from '../../card/style-types.ts';
 
 export default inheritProp<RushDuelStyle>({
   fontFamily: 'rd-jp',
+  punctuationTrim: true,
   name: {
     fontFamily: 'rd-jp-name',
     top: 76,

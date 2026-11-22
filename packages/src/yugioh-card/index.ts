@@ -52,6 +52,16 @@ export interface YugiohCardData {
   renderScale: number;
 }
 
+const usesHalfwidthBrackets = (language: YugiohCardData['language']) => language === 'en' || language === 'kr';
+const languageStyles = new Map<YugiohCardData['language'], YugiohStyle>([
+  ['sc', scStyle],
+  ['tc', tcStyle],
+  ['jp', jpStyle],
+  ['kr', krStyle],
+  ['en', enStyle],
+  ['astral', astralStyle],
+]);
+
 export class YugiohCard extends Card<YugiohCardData> {
   declare leafer: ILeafer;
   cardFrameNode: IImage | null = null;
@@ -289,8 +299,10 @@ export class YugiohCard extends Card<YugiohCardData> {
 
     const iconUrl = this.data.spellTrapIcon ? `${this.baseImage}/icon-${this.data.spellTrapIcon}.png` : '';
     const iconWidth = this.data.spellTrapIcon ? 72 : 0;
-    const leftBracket = ['en', 'kr'].includes(this.data.language) ? '[' : '【';
-    const rightBracket = ['en', 'kr'].includes(this.data.language) ? ']' : '】';
+    const trimPunctuation = this.#languageStyle?.spellTrapLabel.punctuationTrim;
+    const useHalfwidth = usesHalfwidthBrackets(this.data.language);
+    const leftBracket = useHalfwidth ? '[' : '【';
+    const rightBracket = useHalfwidth ? ']' : '】';
     const letterSpacing = spellTrapLabel.letterSpacing || 0;
     const wordSpacing = spellTrapLabel.wordSpacing || 0;
 
@@ -298,6 +310,7 @@ export class YugiohCard extends Card<YugiohCardData> {
 
     rightText.set({
       text: rightBracket,
+      punctuationTrim: trimPunctuation ? 'end' : undefined,
       fontFamily: spellTrapLabel.fontFamily,
       sideBearingMode: spellTrapLabel.sideBearingMode,
       fontSize: spellTrapLabel.fontSize,
@@ -317,6 +330,7 @@ export class YugiohCard extends Card<YugiohCardData> {
 
     leftText.set({
       text: leftBracket + this.spellTrapName,
+      punctuationTrim: trimPunctuation ? 'start' : undefined,
       fontFamily: spellTrapLabel.fontFamily,
       sideBearingMode: spellTrapLabel.sideBearingMode,
       fontSize: spellTrapLabel.fontSize,
@@ -428,6 +442,7 @@ export class YugiohCard extends Card<YugiohCardData> {
 
     this.pendulumEffectNode.set({
       text: this.data.pendulumEffect,
+      punctuationTrim: this.#languageStyle?.pendulumEffect.punctuationTrim ? 'both' : undefined,
       fontFamily: pendulumEffect.fontFamily,
       sideBearingMode: pendulumEffect.sideBearingMode,
       fontSize: pendulumEffect.fontSize,
@@ -526,12 +541,13 @@ export class YugiohCard extends Card<YugiohCardData> {
     }
 
     const { monsterTypeLine } = this.style;
-
-    const leftBracket = ['en', 'kr'].includes(this.data.language) ? '[' : '【';
-    const rightBracket = ['en', 'kr'].includes(this.data.language) ? ']' : '】';
+    const useHalfwidth = usesHalfwidthBrackets(this.data.language);
+    const leftBracket = useHalfwidth ? '[' : '【';
+    const rightBracket = useHalfwidth ? ']' : '】';
 
     this.monsterTypeLineNode.set({
       text: leftBracket + this.data.monsterTypeLine + rightBracket,
+      punctuationTrim: this.#languageStyle?.monsterTypeLine.punctuationTrim ? 'both' : undefined,
       fontFamily: monsterTypeLine.fontFamily,
       sideBearingMode: monsterTypeLine.sideBearingMode,
       fontSize: monsterTypeLine.fontSize,
@@ -544,7 +560,7 @@ export class YugiohCard extends Card<YugiohCardData> {
       rtOffsetY: monsterTypeLine.rtOffsetY,
       width: 1175,
       height: 100,
-      x: 109 + (monsterTypeLine.textIndent || 0),
+      x: 109,
       y: monsterTypeLine.top,
       visible: leaferVisibility(this.showMonsterTypeLine),
       zIndex: 30,
@@ -582,6 +598,7 @@ export class YugiohCard extends Card<YugiohCardData> {
 
     this.cardTextNode.set({
       text: this.data.cardText,
+      punctuationTrim: this.#languageStyle?.cardText.punctuationTrim ? 'both' : undefined,
       fontFamily,
       sideBearingMode: cardText.sideBearingMode,
       fontSize: cardText.fontSize,
@@ -799,30 +816,16 @@ export class YugiohCard extends Card<YugiohCardData> {
     return `${this.resourcePath}/yugioh/image`;
   }
 
+  get #languageStyle() {
+    return languageStyles.get(this.data.language);
+  }
+
   get style() {
-    let style = {} as YugiohStyle;
-    if (this.data.fontPreset) {
-      if (this.data.fontPreset === 'custom1') {
-        style = custom1Style;
-      } else if (this.data.fontPreset === 'custom2') {
-        style = custom2Style;
-      }
-    } else {
-      if (this.data.language === 'sc') {
-        style = scStyle;
-      } else if (this.data.language === 'tc') {
-        style = tcStyle;
-      } else if (this.data.language === 'jp') {
-        style = jpStyle;
-      } else if (this.data.language === 'kr') {
-        style = krStyle;
-      } else if (this.data.language === 'en') {
-        style = enStyle;
-      } else if (this.data.language === 'astral') {
-        style = astralStyle;
-      }
-    }
-    return style;
+    const { fontPreset } = this.data;
+    if (fontPreset === 'custom1') return custom1Style;
+    if (fontPreset === 'custom2') return custom2Style;
+    if (!fontPreset) return this.#languageStyle ?? ({} as YugiohStyle);
+    return {} as YugiohStyle;
   }
 
   get cardFrameUrl() {

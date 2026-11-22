@@ -4,6 +4,7 @@ import type { YugiohStyle } from '../../card/style-types.ts';
 export default inheritProp<YugiohStyle>({
   fontFamily: 'ygo-jp',
   sideBearingMode: 'legacy',
+  punctuationTrim: true,
   name: {
     top: 98,
     fontSize: 108,
@@ -13,7 +14,7 @@ export default inheritProp<YugiohStyle>({
   spellTrapLabel: {
     top: 253,
     fontSize: 80,
-    right: 130,
+    right: 149,
     icon: {
       marginTop: 10,
     },
@@ -33,7 +34,6 @@ export default inheritProp<YugiohStyle>({
     fontSize: 46,
     sideBearingMode: 'native',
     lineHeight: 1.17,
-    textIndent: -0.2 * 46,
     minHeight: 16,
     rtFontSize: 14,
     rtOffsetY: -6,

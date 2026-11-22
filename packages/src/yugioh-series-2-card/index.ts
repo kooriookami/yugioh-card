@@ -218,6 +218,7 @@ export class YugiohSeries2Card extends Card<YugiohSeries2CardData> {
     }
 
     const { spellTrapLabel } = this.style;
+    const trimPunctuation = jpStyle.spellTrapLabel.punctuationTrim;
     const { icon } = spellTrapLabel;
 
     const iconUrl = this.data.spellTrapIcon ? `${this.baseImage}/icon-${this.data.spellTrapIcon}.png` : '';
@@ -230,6 +231,7 @@ export class YugiohSeries2Card extends Card<YugiohSeries2CardData> {
 
     rightText.set({
       text: rightBracket,
+      punctuationTrim: trimPunctuation ? 'end' : undefined,
       fontFamily: spellTrapLabel.fontFamily,
       sideBearingMode: spellTrapLabel.sideBearingMode,
       fontSize: spellTrapLabel.fontSize,
@@ -247,6 +249,7 @@ export class YugiohSeries2Card extends Card<YugiohSeries2CardData> {
 
     leftText.set({
       text: leftBracket + this.spellTrapName,
+      punctuationTrim: trimPunctuation ? 'start' : undefined,
       fontFamily: spellTrapLabel.fontFamily,
       sideBearingMode: spellTrapLabel.sideBearingMode,
       fontSize: spellTrapLabel.fontSize,
@@ -334,6 +337,7 @@ export class YugiohSeries2Card extends Card<YugiohSeries2CardData> {
 
     this.monsterTypeLineNode.set({
       text: leftBracket + this.data.monsterTypeLine + rightBracket,
+      punctuationTrim: jpStyle.monsterTypeLine.punctuationTrim ? 'both' : undefined,
       fontFamily: monsterTypeLine.fontFamily,
       sideBearingMode: monsterTypeLine.sideBearingMode,
       fontSize: monsterTypeLine.fontSize,
@@ -345,7 +349,7 @@ export class YugiohSeries2Card extends Card<YugiohSeries2CardData> {
       rtOffsetY: monsterTypeLine.rtOffsetY,
       width: this.data.cardLayout === 'monster' ? 710 : 1095,
       height: 70,
-      x: 149 + (monsterTypeLine.textIndent || 0),
+      x: 149,
       y: monsterTypeLine.top,
       visible: leaferVisibility(this.showMonsterTypeLine),
       zIndex: 30,
@@ -367,6 +371,7 @@ export class YugiohSeries2Card extends Card<YugiohSeries2CardData> {
 
     this.cardTextNode.set({
       text: this.data.cardText,
+      punctuationTrim: jpStyle.cardText.punctuationTrim ? 'both' : undefined,
       fontFamily: cardText.fontFamily,
       sideBearingMode: cardText.sideBearingMode,
       fontSize: cardText.fontSize,

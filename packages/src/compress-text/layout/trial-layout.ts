@@ -1,11 +1,14 @@
 import { getBodyScaleX, getRtPadding } from './body-scale.ts';
+import { LinePunctuation, type PunctuationLayout } from './line-punctuation.ts';
 import type { HardBreakSegment } from './types.ts';
 
 /**
  * 只计算候选的行框高度。运算次序与逐项布局一致，不写入节点或 ruby 状态。
  * 行尾空格在 addLine 中被清理后 currentX 立即归零，因此高度试算无需修改空格。
  */
-export const trialLayoutHeight = (segments: readonly HardBreakSegment[], width: number, lineHeight: number, segmentScaleX: ReadonlyMap<number, number>, lastSegmentScaleX: number) => {
+export const trialLayoutHeight = (segments: readonly HardBreakSegment[], width: number, lineHeight: number, segmentScaleX: ReadonlyMap<number, number>, lastSegmentScaleX: number, layout?: PunctuationLayout) => {
+  const linePunctuation = layout && new LinePunctuation();
+  const itemPunctuation = layout && new LinePunctuation();
   let x = 0;
   let line = 0;
   let hasRuby = false;
@@ -20,22 +23,30 @@ export const trialLayoutHeight = (segments: readonly HardBreakSegment[], width: 
           hasRuby = true;
         }
         x = 0;
+        linePunctuation?.reset();
         line++;
         continue;
       }
       let itemWidth = 0;
-      for (const { ruby, rt } of items) {
+      itemPunctuation?.reset();
+      for (const item of items) {
+        const { ruby, rt } = item;
         const scaleX = getBodyScaleX(ruby.text, selectedScaleX, isLastSegment, lastSegmentScaleX);
         const bodyWidth = ruby.originalWidth * scaleX;
         const padding = rt.minWidth === undefined
           ? (ruby.paddingLeft || 0) + (ruby.paddingRight || 0)
           : getRtPadding(bodyWidth, rt.minWidth) * 2;
-        itemWidth += bodyWidth + padding;
+        const occupied = bodyWidth + padding;
+        itemWidth += occupied;
+        if (layout) itemPunctuation!.add(item, bodyWidth, occupied, scaleX, layout);
       }
-      if (width && x && x + itemWidth > width) {
+      const reduction = linePunctuation?.reduction(itemPunctuation) ?? 0;
+      if (width && x && x + (itemWidth - reduction) > width) {
         x = 0;
+        linePunctuation?.reset();
         line++;
       }
+      if (itemPunctuation) linePunctuation!.append(itemPunctuation);
       for (const { ruby, rt } of items) {
         const scaleX = getBodyScaleX(ruby.text, selectedScaleX, isLastSegment, lastSegmentScaleX);
         const bodyWidth = ruby.originalWidth * scaleX;

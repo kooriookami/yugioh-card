@@ -1,4 +1,5 @@
 export const lastSegmentUnscaledSymbols = '●①②③④⑤⑥⑦⑧⑨⑩';
+export const rtStretchTargetWidthRatio = 0.9;
 
 /** 注音缩窄后仍较宽时，正文两侧各留出一半的差值。 */
 export const getRtPadding = (bodyWidth: number, minRtWidth: number) => Math.max(0, (minRtWidth - bodyWidth) / 2);

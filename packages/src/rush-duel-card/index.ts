@@ -228,6 +228,7 @@ export class RushDuelCard extends Card<RushDuelCardData> {
 
     leftText.set({
       text: leftBracket + this.spellTrapName,
+      punctuationTrim: spellTrapLabel.punctuationTrim ? 'start' : undefined,
       fontFamily: spellTrapLabel.fontFamily,
       fontSize: spellTrapLabel.fontSize,
       fontWeight: spellTrapLabel.fontWeight,
@@ -247,6 +248,7 @@ export class RushDuelCard extends Card<RushDuelCardData> {
 
     rightText.set({
       text: rightBracket,
+      punctuationTrim: spellTrapLabel.punctuationTrim ? 'end' : undefined,
       fontFamily: spellTrapLabel.fontFamily,
       fontSize: spellTrapLabel.fontSize,
       fontWeight: spellTrapLabel.fontWeight,
@@ -330,6 +332,7 @@ export class RushDuelCard extends Card<RushDuelCardData> {
 
     this.monsterTypeLineNode.set({
       text: leftBracket + this.data.monsterTypeLine + rightBracket,
+      punctuationTrim: monsterTypeLine.punctuationTrim ? 'both' : undefined,
       fontFamily: monsterTypeLine.fontFamily,
       fontSize: monsterTypeLine.fontSize,
       fontWeight: monsterTypeLine.fontWeight,
@@ -340,7 +343,7 @@ export class RushDuelCard extends Card<RushDuelCardData> {
       rtOffsetY: monsterTypeLine.rtOffsetY,
       width: 1000,
       height: 80,
-      x: 99 + (monsterTypeLine.textIndent || 0),
+      x: 99,
       y: monsterTypeLine.top,
       visible: leaferVisibility(this.data.cardLayout === 'monster' && this.data.monsterTypeLine),
       zIndex: 30,
@@ -357,6 +360,7 @@ export class RushDuelCard extends Card<RushDuelCardData> {
 
     this.cardTextNode.set({
       text: this.data.cardText,
+      punctuationTrim: cardText.punctuationTrim ? 'both' : undefined,
       fontFamily: cardText.fontFamily,
       fontSize: cardText.fontSize,
       fontSizeScale: this.data.cardTextFontSizeScale,

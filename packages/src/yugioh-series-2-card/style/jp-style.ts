@@ -3,6 +3,7 @@ import type { Series2Style } from '../../card/style-types.ts';
 
 export default inheritProp<Series2Style>({
   fontFamily: 'ygo-jp',
+  punctuationTrim: true,
   name: {
     top: 136,
     fontSize: 114,
@@ -12,7 +13,7 @@ export default inheritProp<Series2Style>({
   spellTrapLabel: {
     top: 312,
     fontSize: 80,
-    right: 155,
+    right: 174,
     icon: {
       marginTop: 10,
     },
@@ -24,7 +25,6 @@ export default inheritProp<Series2Style>({
     top: 1685,
     fontSize: 50,
     lineHeight: 1.2,
-    textIndent: -0.2 * 50,
     minHeight: 10,
     rtFontSize: 16,
     rtOffsetY: -7,

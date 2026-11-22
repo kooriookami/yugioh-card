@@ -24,7 +24,8 @@ import { textGraphemes } from './breaking/text-graphemes.ts';
 import { getTextLayoutContext } from './layout-context.ts';
 import { getGlyphMetrics, type GlyphResolver, type SideBearingMode } from './glyph-metrics.ts';
 import { createBodyRun } from './body-run.ts';
-import { getBodyScaleX, getRtPadding, lastSegmentUnscaledSymbols } from './layout/body-scale.ts';
+import { getBodyScaleX, getRtPadding, lastSegmentUnscaledSymbols, rtStretchTargetWidthRatio } from './layout/body-scale.ts';
+import { getPunctuationSpacing, isInvisibleLayoutText, LinePunctuation, type PunctuationLayout, type PunctuationSpacing, type PunctuationTrim } from './layout/line-punctuation.ts';
 import { trialLayoutHeight } from './layout/trial-layout.ts';
 import type {
   Annotation, BreakUnit, CompressTextOptions, HardBreakSegment,
@@ -48,7 +49,6 @@ const normalizeSegmentNumbers = (value: unknown) => {
 };
 
 const defaultLineHeightRatio = 1.15; // 默认正文与注音行高倍率。
-const rtStretchTargetWidthRatio = 0.9; // 短注音通过字距铺到正文宽度的这一比例。
 const minRtScaleX = 0.6; // 常规注音横向压缩的下限。
 const segmentScaleSteps = 1000; // 指定段倍率以千分之一为步长。
 const scaleXSearchPrecision = 0.01; // 高度压缩时二分搜索的停止精度。
@@ -66,6 +66,12 @@ const TextGroup: new () => IGroup = Group;
 export class CompressText extends TextGroup {
   #lastPlacedIndex = -1;
   #orderedLayout = false;
+  #punctuationTrim?: PunctuationTrim;
+  #resolvePunctuation?: ReturnType<typeof getPunctuationSpacing>;
+  #punctuationLayout?: PunctuationLayout;
+  #linePunctuation?: LinePunctuation;
+  #itemPunctuation?: LinePunctuation;
+  #lineTrims?: Map<number, PunctuationSpacing>;
 
   // 这些实例选项由 set() 统一赋值，并用 Group 的属性保存位置和尺寸。
   declare text: TextSettings['text'];
@@ -212,6 +218,15 @@ export class CompressText extends TextGroup {
     const defaults = this.defaultData as unknown as Record<string, unknown>;
     const properties = this as unknown as Record<string, unknown>;
     Object.keys(data).forEach(key => {
+      if (key === 'punctuationTrim') {
+        const trim = values[key] as PunctuationTrim | undefined;
+        if (this.#punctuationTrim !== trim) {
+          this.#punctuationTrim = trim;
+          needCompressText = true;
+          changed = true;
+        }
+        return;
+      }
       if (key === 'sideBearingMode') {
         const mode = values[key] === 'legacy' ? 'legacy' : 'native';
         if ((sideBearingModes.get(this) ?? 'native') !== mode) {
@@ -513,12 +528,13 @@ export class CompressText extends TextGroup {
     const metrics = glyphResolvers.get(this);
     const bodyRun = createBodyRun(this.getRubyTextStyle(ruby), metrics);
     const rubyNode = bodyRun?.node ?? new Text(this.getRubyTextStyle(ruby) as ITextInputData);
-    const bounds = ['\n', '\u200B', '\u2060'].includes(ruby.text) ? { width: 0 } : bodyRun ? { width: bodyRun.width } : rubyNode.getBounds('content', 'inner');
+    const bounds = isInvisibleLayoutText(ruby.text) ? { width: 0 } : bodyRun ? { width: bodyRun.width } : rubyNode.getBounds('content', 'inner');
     const spacingWidth = ruby.text === ' ' ? this.wordSpacing : 0;
 
     const measured = ruby as RubyLayout;
     measured.rubyNode = rubyNode;
     measured.bodyRun = bodyRun;
+    measured.punctuationSpacing = this.#resolvePunctuation?.(ruby.text);
     measured.originalWidth = bounds.width + spacingWidth;
     measured.normalWidth = measured.originalWidth;
     measured.originalHeight = measured.text === '\n' ? 0 : this.getLineHeight();
@@ -556,7 +572,8 @@ export class CompressText extends TextGroup {
         const padding = rt.minWidth === undefined ? this.getPaddingWidth(ruby) : 0;
         return sum + ruby.originalWidth + padding;
       }, 0);
-      const availablePadding = Math.max(0, this.width - bodyWidth);
+      const edgeReduction = this.#measurePunctuation(items, true)?.reduction() ?? 0;
+      const availablePadding = Math.max(0, this.width - bodyWidth + edgeReduction);
       if (requiredPadding <= availablePadding) continue;
 
       const ratio = availablePadding / requiredPadding;
@@ -608,8 +625,12 @@ export class CompressText extends TextGroup {
    * 6. 将结果挂入当前 Group。
    */
   compressText() {
-    glyphResolvers.set(this, getGlyphMetrics(this.fontFamily, sideBearingModes.get(this), layoutFonts.get(this)));
+    const fonts = layoutFonts.get(this);
+    glyphResolvers.set(this, getGlyphMetrics(this.fontFamily, sideBearingModes.get(this), fonts));
+    this.#resolvePunctuation = this.#punctuationTrim && getPunctuationSpacing(this.fontFamily, this.#punctuationTrim, fonts);
     this.resetCompressionState();
+    this.#refreshPunctuationLayout();
+    this.#itemPunctuation = this.#punctuationLayout && new LinePunctuation();
     this.rebuildParseCache();
     this.resetGroup();
     this.createRuby();
@@ -629,11 +650,22 @@ export class CompressText extends TextGroup {
       this.createRubyNode(ruby);
     });
     this.applyOverflowFallback();
+    if (!this.rubyList.some(ruby => ruby.punctuationSpacing)) {
+      this.#punctuationLayout = undefined;
+      this.#itemPunctuation = undefined;
+    }
+    this.#linePunctuation = this.#punctuationLayout && new LinePunctuation();
+    this.#lineTrims = this.#punctuationLayout && new Map();
     this.rubyList.forEach(ruby => {
       this.group!.add(ruby.rubyNode);
     });
-    for (const { rt } of this.flatItemList) {
-      if (rt.text) this.createRtNode(rt);
+    for (const { ruby, rt } of this.flatItemList) {
+      if (!rt.text) continue;
+      this.createRtNode(rt);
+      if (ruby.punctuationSpacing && rt.width !== undefined && !this.rtLetterSpacing && this.getTextCharLength(ruby.text) > 1) {
+        const gaps = this.getTextCharLength(rt.text) - 1;
+        if (gaps > 0) rt.stretchGapRatio = (Array.from(rt.text).length - 1) / gaps;
+      }
     }
     this.fitAnnotationWidths();
     this.relayoutBody();
@@ -657,7 +689,8 @@ export class CompressText extends TextGroup {
       const mid = Math.ceil((low + high) / 2);
       const nextItem = this.createMeasuredPlainTextItem(textList.slice(start, mid).join(''), bold);
 
-      if (nextItem.ruby.width <= this.width) {
+      const edgeReduction = nextItem.ruby.punctuationSpacing ? this.#measurePunctuation([nextItem], true)?.reduction() ?? 0 : 0;
+      if (nextItem.ruby.width - edgeReduction <= this.width) {
         this.destroyRubyNode(bestItem?.ruby);
         bestItem = nextItem;
         bestEnd = mid;
@@ -748,7 +781,7 @@ export class CompressText extends TextGroup {
     const itemWidth = this.getItemWidth(itemList);
     const canSplit = itemList.some(item => this.isSplittablePlainTextItem(item));
 
-    if (itemWidth <= this.width || !canSplit) {
+    if (itemWidth <= this.width || !canSplit || itemWidth - (this.#measurePunctuation(itemList, true)?.reduction() ?? 0) <= this.width) {
       return [itemList];
     }
 
@@ -793,15 +826,30 @@ export class CompressText extends TextGroup {
 
     if (!segmentWidth) return 1;
 
-    const maxStep = Math.min(Math.floor(availableWidth / segmentWidth * segmentScaleSteps), segmentScaleSteps);
+    const layout = this.#punctuationLayout;
+    const edges = layout && segment.some(items => items.some(({ ruby }) => ruby.punctuationSpacing))
+      ? new LinePunctuation() : undefined;
+    const maxStep = edges ? segmentScaleSteps : Math.min(Math.floor(availableWidth / segmentWidth * segmentScaleSteps), segmentScaleSteps);
     if (!Number.isFinite(maxStep) || maxStep <= 0) return undefined;
-    if (!annotations.length) return maxStep / segmentScaleSteps;
+    if (!annotations.length && !edges) return maxStep / segmentScaleSteps;
 
     // 试算正文倍率时，按注音压缩下限预留两侧空间。
     const fits = (scaleX: number) => {
       let occupied = segmentWidth * scaleX;
       for (const { bodyWidth, minWidth } of annotations) {
         occupied += getRtPadding(bodyWidth * scaleX, minWidth) * 2;
+      }
+      if (edges && layout) {
+        edges.reset();
+        for (const items of segment) {
+          for (const item of items) {
+            const { ruby, rt } = item;
+            const bodyWidth = ruby.originalWidth * scaleX;
+            const padding = rt.minWidth === undefined ? this.getPaddingWidth(ruby) : getRtPadding(bodyWidth, rt.minWidth) * 2;
+            edges.add(item, bodyWidth, bodyWidth + padding, scaleX, layout);
+          }
+        }
+        occupied -= edges.reduction();
       }
       return occupied <= availableWidth;
     };
@@ -873,7 +921,7 @@ export class CompressText extends TextGroup {
       const overflow = numericTrial
         ? exceedsHeight(trialLayoutHeight(
           this.hardBreakSegments, this.width, this.getLineHeight(),
-          this.segmentScaleX, candidateScaleX,
+          this.segmentScaleX, candidateScaleX, this.#punctuationLayout,
         ), this.height)
         : this.doesOverflowHeight(lastRuby);
       if (overflow) {
@@ -935,12 +983,13 @@ export class CompressText extends TextGroup {
    * 获取某一行在当前布局后的剩余可用宽度。
    */
   getLineRemainWidth(lineList: RubyLayout[]) {
-    const lastRuby = lineList.findLast(ruby => ruby.text !== '\n');
+    const endTrim = this.#lineTrims?.get(lineList[0]?.line ?? -1)?.end ?? 0;
+    const lastRuby = lineList.findLast(ruby => endTrim ? !isInvisibleLayoutText(ruby.text) : ruby.text !== '\n');
     if (!lastRuby) return 0;
     const lastRubyNode = lastRuby.rubyNode;
     const lastPaddingRight = lastRuby.paddingRight || 0;
 
-    return this.width - lastRubyNode.x! - lastRuby.width - lastPaddingRight;
+    return this.width - lastRubyNode.x! - lastRuby.width - lastPaddingRight + endTrim;
   }
 
   /**
@@ -976,8 +1025,12 @@ export class CompressText extends TextGroup {
       return;
     }
 
-    const gap = remainWidth / (lineList.length - 1);
-    this.offsetRubyLine(lineList, index => index * gap);
+    const items = this.#lineTrims?.has(lineList[0].line)
+      ? lineList.filter(ruby => !isInvisibleLayoutText(ruby.text))
+      : lineList;
+    if (items.length <= 1) return;
+    const gap = remainWidth / (items.length - 1);
+    this.offsetRubyLine(items, index => index * gap);
   }
 
   /**
@@ -999,6 +1052,9 @@ export class CompressText extends TextGroup {
     * 该方法会根据当前对齐模式遍历每一行，并在存在剩余宽度时应用对应的对齐策略。
    */
   alignRuby() {
+    for (const [line, { start }] of this.#lineTrims ?? []) {
+      if (start) this.offsetRubyLine(this.rubyLineMap.get(line)!, () => -start);
+    }
     const alignLine = this.getAlignLineCount();
     for (let line = 0; line < alignLine; line++) {
       const lineList = this.rubyLineMap.get(line);
@@ -1064,6 +1120,41 @@ export class CompressText extends TextGroup {
     return itemWidth;
   }
 
+  #refreshPunctuationLayout() {
+    this.#punctuationLayout = undefined;
+    if (!this.#resolvePunctuation) return;
+    const currentFontSize = this.getCurrentFontSize();
+    const fontSize = currentFontSize * this.fontSizeScale;
+    this.#punctuationLayout = {
+      fontSize,
+      fontSizeRatio: currentFontSize / this.fontSize,
+      letterSpacing: Math.max(0, this.letterSpacing),
+      strokeOutset: this.gradient ? fontSize * (gradientStrokeWidthRatio + gradientShadowBlurRatio) : Math.max(0, this.strokeWidth) / 2,
+      rtStrokeOutset: Math.max(0, this.rtStrokeWidth) / 2,
+    };
+  }
+
+  #measurePunctuation(items: BreakUnit, natural = false) {
+    const layout = this.#punctuationLayout;
+    const edges = this.#itemPunctuation;
+    if (!layout || !edges) return;
+    edges.reset();
+    for (const item of items) {
+      const { ruby } = item;
+      const width = natural ? ruby.originalWidth : ruby.width;
+      edges.add(item, width, width + this.getPaddingWidth(ruby), natural ? 1 : ruby.rubyNode.scaleX!, layout);
+    }
+    return edges;
+  }
+
+  #recordLineTrims() {
+    const edges = this.#linePunctuation;
+    if (edges?.start || edges?.end) {
+      this.#lineTrims!.set(this.currentLine, { start: edges.start, end: edges.end });
+    }
+    edges?.reset();
+  }
+
   // 布局流程
 
   /**
@@ -1084,6 +1175,8 @@ export class CompressText extends TextGroup {
    */
   resetLayoutPosition() {
     this.#lastPlacedIndex = -1;
+    this.#linePunctuation?.reset();
+    this.#lineTrims?.clear();
     this.currentX = 0;
     this.currentY = 0;
     this.currentLine = 0;
@@ -1121,11 +1214,14 @@ export class CompressText extends TextGroup {
     }
     this.applyBodyScaleXToItems(itemList, segmentIndex, isLastSegment);
     const itemWidth = this.getItemWidth(itemList);
+    const edges = this.#measurePunctuation(itemList);
+    const reduction = this.#linePunctuation?.reduction(edges) ?? 0;
 
-    if (this.shouldWrapItemList(itemList, itemWidth)) {
+    if (this.shouldWrapItemList(itemList, itemWidth - reduction)) {
       this.addLine();
     }
 
+    if (edges) this.#linePunctuation?.append(edges);
     this.positionItemListRuby(itemList);
   }
 
@@ -1154,12 +1250,14 @@ export class CompressText extends TextGroup {
       // 试排中的行尾空格可能在下一轮回到行内，先恢复节点并清除旧行号。
       this.rubyList.forEach(ruby => {
         ruby.line = -1;
-        ruby.rubyNode.visible = !['\n', '\u200B', '\u2060'].includes(ruby.text);
+        ruby.rubyNode.visible = !isInvisibleLayoutText(ruby.text);
       });
 
       this.hardBreakSegments.forEach((segment, segmentIndex) => {
         this.layoutSegment(segment, segmentIndex);
       });
+      if (this.#linePunctuation?.end) this.removeLineLastSpace(this.currentLine);
+      this.#recordLineTrims();
       this.updateRubyLineMap();
     } finally { this.#orderedLayout = previous; }
   }
@@ -1173,6 +1271,7 @@ export class CompressText extends TextGroup {
     this.lastSegmentScaleX = 1;
     const fontSize = this.getCurrentFontSize();
     const fontSizeRatio = fontSize / this.fontSize;
+    if (this.#linePunctuation) this.#refreshPunctuationLayout();
     this.rubyList.forEach(ruby => {
       const rubyNode = ruby.rubyNode;
       if (ruby.bodyRun) {
@@ -1182,7 +1281,10 @@ export class CompressText extends TextGroup {
         textNode.fontSize = fontSize * this.fontSizeScale;
         textNode.lineHeight = this.getLineHeight();
         // 从本次排版的原字号测量计算，避免恢复候选时累计缩放。
-        ruby.width = ruby.originalWidth = ruby.normalWidth * fontSizeRatio;
+        const width = ruby.punctuationSpacing && this.letterSpacing && fontSizeRatio !== 1
+          ? textNode.getBounds('content', 'inner').width
+          : ruby.normalWidth * fontSizeRatio;
+        ruby.width = ruby.originalWidth = width;
       }
       ruby.height = ruby.originalHeight = ruby.text === '\n' ? 0 : this.getLineHeight();
     });
@@ -1212,6 +1314,7 @@ export class CompressText extends TextGroup {
    */
   addLine() {
     this.removeLineLastSpace(this.currentLine);
+    this.#recordLineTrims();
     this.currentX = 0;
     this.currentLine++;
     this.currentY = this.currentLine * this.getLineHeight();
@@ -1229,8 +1332,8 @@ export class CompressText extends TextGroup {
       if (ruby.line !== line) {
         continue;
       }
-      if (ruby.text === '\n') continue;
-      if (ruby.text !== ' ') {
+      if (ruby.text === '\n' || (this.#linePunctuation?.end && isInvisibleLayoutText(ruby.text))) continue;
+      if (ruby.text !== ' ' || (this.#linePunctuation && ruby.atomic)) {
         break;
       }
       const rubyNode = ruby.rubyNode;
@@ -1300,12 +1403,13 @@ export class CompressText extends TextGroup {
       width: 0,
       height: 0,
     };
-    this.rubyLineMap.forEach(lineList => {
-      const lastRuby = lineList.findLast(ruby => ruby.text !== '\n');
+    this.rubyLineMap.forEach((lineList, line) => {
+      const endTrim = this.#lineTrims?.get(line)?.end ?? 0;
+      const lastRuby = lineList.findLast(ruby => endTrim ? !isInvisibleLayoutText(ruby.text) : ruby.text !== '\n');
       if (!lastRuby) return;
       const lastRubyNode = lastRuby.rubyNode;
       const lastPaddingRight = lastRuby.paddingRight || 0;
-      this.bounds.width = Math.max(this.bounds.width, lastRubyNode.x! + lastRuby.width + lastPaddingRight);
+      this.bounds.width = Math.max(this.bounds.width, lastRubyNode.x! + lastRuby.width + lastPaddingRight - endTrim);
     });
     this.bounds.height = this.getLayoutHeight();
     this.bounds.width *= this.scaleX!;

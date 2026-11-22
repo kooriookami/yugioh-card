@@ -1,6 +1,7 @@
 import type { IGroup, IFill, IFontWeight, IGroupInputData, IStroke, ITextInputData, IText } from '@leafer-ui/interface';
 import type { BodyRun } from '../body-run.ts';
 import type { SideBearingMode } from '../glyph-metrics.ts';
+import type { PunctuationSpacing, PunctuationTrim } from './line-punctuation.ts';
 
 export interface TextSettings {
   text: string | number;
@@ -39,6 +40,7 @@ export interface TextSettings {
 
 export type CompressTextOptions = IGroupInputData & Partial<TextSettings> & {
   sideBearingMode?: SideBearingMode;
+  punctuationTrim?: PunctuationTrim;
 };
 export type TextPaint = Omit<ITextInputData, 'stroke'> & { stroke?: IStroke | null };
 export type TextLeafStyle = TextPaint & { text: string; fontSize: number; lineHeight: number; letterSpacing: number };
@@ -60,6 +62,7 @@ export interface RubyLayout extends ParsedRuby {
   line: number;
   paddingLeft?: number;
   paddingRight?: number;
+  punctuationSpacing?: PunctuationSpacing;
 }
 
 export interface Annotation {
@@ -68,6 +71,8 @@ export interface Annotation {
   width?: number;
   /** 供摆放、换行和压缩试算共用的最小占宽。 */
   minWidth?: number;
+  /** 注音扩字距时，可见字缝数与用于计算字距的字素间隙数之比。 */
+  stretchGapRatio?: number;
 }
 
 export interface TextItem<Ruby extends ParsedRuby = RubyLayout> {
