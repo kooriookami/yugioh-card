@@ -24,8 +24,9 @@ def check():
     cmap = font.getBestCmap()
     for char in '日あ':
         assert font['hmtx'][cmap[ord(char)]][0] == 1024, char
-    for char in '０１２３４５６７８９':
-        assert font['hmtx'][cmap[ord(char)]][0] == 702, char
+    digit_widths = (819, 660, 798, 779, 842, 776, 786, 798, 789, 792)
+    for char, width in zip('０１２３４５６７８９', digit_widths):
+        assert font['hmtx'][cmap[ord(char)]][0] == width, char
     fingerprint = hashlib.sha256(FONT.read_bytes()).hexdigest()
     print(f'Checked {len(glyphs)} glyph widths, {len(cmap)} characters; SHA-256 {fingerprint}')
 

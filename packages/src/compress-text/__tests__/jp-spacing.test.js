@@ -22,14 +22,15 @@ const make = (t, data = {}) => {
 };
 const children = ruby => ruby.bodyRun ? ruby.rubyNode.children : [ruby.rubyNode];
 
-test('loaded font metadata and donor digit widths come from the actual file', t => {
+test('loaded font metadata and restored digit widths come from the actual file', t => {
   const entry = fonts.fonts.get('ygo-jp');
   const font = getFontInfo(entry);
   assert.equal(getFontInfo(entry), font, 'one parse per loaded font entry');
   assert.equal(font.unitsPerEm, 1024);
   assert.equal(font.hasGlyphForCodePoint('日'.codePointAt(0)), true);
   assert.equal(font.hasGlyphForCodePoint('𠮷'.codePointAt(0)), false);
-  close(make(t, { text: '０', sideBearingMode: 'native' }).bounds.width, 702 * 38 / 1024);
+  close(make(t, { text: '０', sideBearingMode: 'native' }).bounds.width, 819 * 38 / 1024);
+  close(make(t, { text: '１', sideBearingMode: 'native' }).bounds.width, 660 * 38 / 1024);
   close(make(t, { text: '日', sideBearingMode: 'native' }).bounds.width, 38);
   close(make(t, { text: 'あ', sideBearingMode: 'native' }).bounds.width, 38);
 });

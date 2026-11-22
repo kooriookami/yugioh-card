@@ -125,7 +125,8 @@ try {
   check(equal(make('あ').bounds.width, 861 * 38 / 1024), 'あ：占宽为 861/1024 em');
   check(equal(make('三').bounds.width, 1027 * 38 / 1024)
     && equal(make('ー').bounds.width, 907 * 38 / 1024), '旧版度量恢复汉字补白，长音符按文档参与缩减');
-  check(equal(make('０').bounds.width, 702 * 38 / 1024), '全角数字保留供体 702 占宽');
+  check(equal(make('０').bounds.width, 819 * 38 / 1024)
+    && equal(make('１').bounds.width, 660 * 38 / 1024), '全角数字按 1.9.2 的逐字占宽排版');
   check(equal(make('日', 'native').bounds.width, 38), '原生模式保留字体原始占宽');
   for (const content of ['コーヒー', 'スーパー', 'ーー', '々〆゛゜ゝゞ']) {
     const text = make(content);
