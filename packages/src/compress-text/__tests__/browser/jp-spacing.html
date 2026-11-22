@@ -136,6 +136,24 @@ try {
     check(equal(text.bounds.width, make(content, 'native').bounds.width) && text.rubyList.every(ruby => !ruby.bodyRun), `原生度量保留：${content}`);
   }
   check(make('日日', 'legacy', { width: 65 }).currentLine === 0 && make('日日', 'native', { width: 65 }).currentLine === 1, '换行依据调整后的逻辑占宽');
+  const tg = make('「[TG(テックジーナス)]」').flatItemList.find(item => item.rt.text);
+  check(equal(tg.rt.rtNode.scaleX, 0.6) && tg.ruby.paddingLeft > 0 && tg.ruby.paddingLeft < 5
+    && equal(tg.ruby.width + tg.ruby.paddingLeft + tg.ruby.paddingRight, tg.rt.width * 0.6), 'TG 注音压到 60% 后再为正文补白');
+  const reading = 'テックジーナス';
+  const longTgText = make(`の「[TG(${reading.repeat(3)})]」モンスター`);
+  const longTgIndex = longTgText.flatItemList.findIndex(item => item.rt.text);
+  const longTg = longTgText.flatItemList[longTgIndex];
+  const previous = longTgText.flatItemList[longTgIndex - 1].ruby;
+  const following = longTgText.flatItemList[longTgIndex + 1].ruby;
+  const longTgBounds = longTg.rt.rtNode.getBounds('content', 'local');
+  check(equal(longTg.rt.rtNode.scaleX, 0.6) && longTg.ruby.paddingLeft > 5
+    && equal(longTgBounds.x, previous.rubyNode.x + previous.width)
+    && equal(longTgBounds.x + longTgBounds.width, following.rubyNode.x), '超长 TG 注音按实际占宽补白，与相邻文字分开');
+  const overLine = make(`「[TG(${reading.repeat(28)})]」`, 'legacy', { width: 600 });
+  const overLineRt = overLine.flatItemList.find(item => item.rt.text).rt;
+  const overLineBounds = overLineRt.rtNode.getBounds('content', 'local');
+  check(overLineRt.rtNode.scaleX < 0.6 && equal(overLine.bounds.width, 600)
+    && overLineBounds.x > 0 && overLineBounds.x + overLineBounds.width < 600, '超过一行的注音与引号共同适配行宽');
   const cluster = make('葛\u{E0100}か\u3099A\u0301', 'legacy', { width: 1 });
   check(cluster.rubyList.every(ruby => !ruby.bodyRun) && cluster.rubyList.map(ruby => ruby.text).join('') === '葛\u{E0100}か\u3099A\u0301', '字素簇与 IVS 保留完整');
   const small = make('[日あー(X)]\n[日あー(X)]', 'legacy', { height: 30, autoSmallSize: true, smallFontSize: 10, lineHeight: 1.1, letterSpacing: 2 });

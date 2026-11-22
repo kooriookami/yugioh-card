@@ -66,6 +66,8 @@ export interface Annotation {
   text: string;
   rtNode?: IText;
   width?: number;
+  /** 供摆放、换行和压缩试算共用的最小占宽。 */
+  minWidth?: number;
 }
 
 export interface TextItem<Ruby extends ParsedRuby = RubyLayout> {

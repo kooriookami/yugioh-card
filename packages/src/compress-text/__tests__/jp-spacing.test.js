@@ -216,8 +216,8 @@ test('short title annotations stretch to the final width of the body glyphs', t 
   }
 });
 
-test('wide annotations and single-character pairs keep native letter spacing', t => {
-  for (const input of ['[日(にちにち)]', '[日(にち)]', '[日日(に)]']) {
+test('fitting single-character pairs keep native letter spacing', t => {
+  for (const input of ['[日(にち)]', '[日日(に)]']) {
     const { ruby, rt } = make(t, { text: input }).flatItemList[0];
     assert.equal(rt.rtNode.letterSpacing, 0);
     assert.equal(rt.rtNode.scaleX, 1);
@@ -226,15 +226,67 @@ test('wide annotations and single-character pairs keep native letter spacing', t
   }
 });
 
-test('body compression reserves the natural width of adjacent annotations', t => {
+test('TG ruby adds padding after compressing the annotation to 60 percent', t => {
+  const text = make(t, { text: '「[TG(テックジーナス)]」' });
+  const { ruby, rt } = text.flatItemList.find(item => item.rt.text);
+  close(rt.rtNode.scaleX, 0.6);
+  assert.ok(ruby.paddingLeft > 0 && ruby.paddingLeft < 5);
+  close(ruby.paddingLeft, ruby.paddingRight);
+  close(ruby.width + ruby.paddingLeft + ruby.paddingRight, rt.width * 0.6);
+  close(rt.rtNode.x, ruby.rubyNode.x + ruby.width / 2);
+});
+
+test('long TG ruby reserves enough space for the surrounding text across wrapping', t => {
+  const reading = 'テックジーナス'.repeat(3);
+  const text = make(t, { text: `の「[TG(${reading})]」モンスター` });
+  for (const width of [1175, 205]) {
+    text.set({ width });
+    const index = text.flatItemList.findIndex(item => item.rt.text);
+    const { ruby, rt } = text.flatItemList[index];
+    const before = text.flatItemList[index - 1].ruby;
+    const after = text.flatItemList[index + 1].ruby;
+    const annotation = rt.rtNode.getBounds('content', 'local');
+    assert.equal(ruby.line, width === 1175 ? 0 : 1);
+    assert.equal(before.line, ruby.line);
+    assert.equal(after.line, ruby.line);
+    close(rt.rtNode.scaleX, 0.6);
+    assert.ok(ruby.paddingLeft > 5);
+    close(ruby.width + text.getPaddingWidth(ruby), annotation.width);
+    close(annotation.x, before.rubyNode.x + before.width);
+    close(annotation.x + annotation.width, after.rubyNode.x);
+  }
+});
+
+test('multiple oversized annotations share the line width with surrounding punctuation', t => {
+  const reading = 'テックジーナス';
+  const text = make(t, { text: `は「[TG(${reading.repeat(28)})][TG(${reading.repeat(10)})]」を加える。`, width: 600 });
+  const annotations = () => text.flatItemList.filter(item => item.rt.text);
+  const [first, second] = annotations();
+  const ranges = [first, second].map(({ ruby, rt }) => {
+    assert.equal(ruby.line, 1);
+    assert.ok(rt.rtNode.scaleX > 0 && rt.rtNode.scaleX < 0.6);
+    const bounds = rt.rtNode.getBounds('content', 'local');
+    close(ruby.width + text.getPaddingWidth(ruby), bounds.width);
+    return bounds;
+  });
+  assert.ok(ranges[0].x > 0);
+  close(ranges[0].x + ranges[0].width, ranges[1].x);
+  assert.ok(ranges[1].x + ranges[1].width < text.width);
+  close(text.bounds.width, text.width);
+
+  text.set({ width: 2300 });
+  for (const { rt } of annotations()) close(rt.rtNode.scaleX, 0.6);
+});
+
+test('segment compression and height fitting use the compressed annotation widths', t => {
   const input = '[日(にちにち)][日(にちにち)][日日(にちにち)]';
   for (const limits of [{ compressSegments: [1] }, { height: 45 }]) {
-    const text = make(t, { text: input, width: 157, ...limits });
+    const text = make(t, { text: input, width: 110, ...limits });
     let right = 0;
     for (const { ruby, rt } of text.flatItemList) {
       assert.equal(ruby.line, 0);
       assert.ok(ruby.rubyNode.scaleX < 1);
-      assert.equal(rt.rtNode.scaleX, 1);
+      assert.ok(rt.rtNode.scaleX >= 0.6 - 1e-7 && rt.rtNode.scaleX < 1);
       const bounds = rt.rtNode.getBounds('content', 'local');
       assert.ok(bounds.x >= right - 1e-7);
       right = bounds.x + bounds.width;

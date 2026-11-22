@@ -49,6 +49,7 @@ const normalizeSegmentNumbers = (value: unknown) => {
 
 const defaultLineHeightRatio = 1.15; // 默认正文与注音行高倍率。
 const rtStretchTargetWidthRatio = 0.9; // 短注音通过字距铺到正文宽度的这一比例。
+const minRtScaleX = 0.6; // 常规注音横向压缩的下限。
 const segmentScaleSteps = 1000; // 指定段倍率以千分之一为步长。
 const scaleXSearchPrecision = 0.01; // 高度压缩时二分搜索的停止精度。
 const scaleXSearchLimit = 32; // 每个字号档位的搜索预算，避免无解时持续到浮点下溢。
@@ -160,7 +161,7 @@ export class CompressText extends TextGroup {
       rtOffsetY: -9,
       rtColor: 'black',
       rtStrokeWidth: 0,
-      rtScaleXOverride: null, // 默认使用注音原宽，数值直接指定横向倍率。
+      rtScaleXOverride: null, // 默认按正文占宽适配，数值直接指定注音横向倍率。
       fontSizeScale: 1,
       autoSmallSize: false,
       smallFontSize: 18,
@@ -540,6 +541,32 @@ export class CompressText extends TextGroup {
     else rtNode.scaleX = this.rtScaleXOverride;
   }
 
+  /** 计算注音的最小占宽。整组超出一行时，按比例分配可用于注音的空间。 */
+  private fitAnnotationWidths() {
+    for (const items of this.parseList) {
+      let requiredPadding = 0;
+      for (const { ruby, rt } of items) {
+        if (rt.width === undefined) continue;
+        rt.minWidth = rt.width * minRtScaleX;
+        requiredPadding += getRtPadding(ruby.originalWidth, rt.minWidth) * 2;
+      }
+      if (!this.width || !requiredPadding) continue;
+
+      const bodyWidth = items.reduce((sum, { ruby, rt }) => {
+        const padding = rt.minWidth === undefined ? this.getPaddingWidth(ruby) : 0;
+        return sum + ruby.originalWidth + padding;
+      }, 0);
+      const availablePadding = Math.max(0, this.width - bodyWidth);
+      if (requiredPadding <= availablePadding) continue;
+
+      const ratio = availablePadding / requiredPadding;
+      for (const { ruby, rt } of items) {
+        if (rt.minWidth === undefined || rt.minWidth <= ruby.originalWidth) continue;
+        rt.minWidth = ruby.originalWidth + (rt.minWidth - ruby.originalWidth) * ratio;
+      }
+    }
+  }
+
   /**
    * 根据当前 parseList 重建平铺缓存。
    *
@@ -608,6 +635,7 @@ export class CompressText extends TextGroup {
     for (const { rt } of this.flatItemList) {
       if (rt.text) this.createRtNode(rt);
     }
+    this.fitAnnotationWidths();
     this.relayoutBody();
   }
 
@@ -753,13 +781,13 @@ export class CompressText extends TextGroup {
   calculateSegmentScaleX(segment: HardBreakSegment) {
     let segmentWidth = 0;
     let availableWidth = this.width;
-    const annotations: { bodyWidth: number; rtWidth: number }[] = [];
+    const annotations: { bodyWidth: number; minWidth: number }[] = [];
 
     for (const itemList of segment) {
       for (const { ruby, rt } of itemList) {
         segmentWidth += ruby.originalWidth;
-        if (rt.width === undefined) availableWidth -= this.getPaddingWidth(ruby);
-        else annotations.push({ bodyWidth: ruby.originalWidth, rtWidth: rt.width });
+        if (rt.minWidth === undefined) availableWidth -= this.getPaddingWidth(ruby);
+        else annotations.push({ bodyWidth: ruby.originalWidth, minWidth: rt.minWidth });
       }
     }
 
@@ -769,11 +797,11 @@ export class CompressText extends TextGroup {
     if (!Number.isFinite(maxStep) || maxStep <= 0) return undefined;
     if (!annotations.length) return maxStep / segmentScaleSteps;
 
-    // 注音占宽固定，随正文倍率变化的只有各组两侧需要补的空间。
+    // 试算正文倍率时，按注音压缩下限预留两侧空间。
     const fits = (scaleX: number) => {
       let occupied = segmentWidth * scaleX;
-      for (const { bodyWidth, rtWidth } of annotations) {
-        occupied += Math.max(0, rtWidth - bodyWidth * scaleX);
+      for (const { bodyWidth, minWidth } of annotations) {
+        occupied += getRtPadding(bodyWidth * scaleX, minWidth) * 2;
       }
       return occupied <= availableWidth;
     };
@@ -984,7 +1012,7 @@ export class CompressText extends TextGroup {
     }
   }
 
-  /** 按最终的正文占宽拉开短注音的字距，再将注音居中。 */
+  /** 按最终的正文占宽适配注音并居中。 */
   placeRt() {
     for (const { ruby, rt } of this.flatItemList) {
       const rtNode = rt.rtNode;
@@ -992,7 +1020,9 @@ export class CompressText extends TextGroup {
 
       let centerX = ruby.rubyNode.x! + ruby.width / 2;
       const targetWidth = ruby.width * rtStretchTargetWidthRatio;
-      if (rt.width !== undefined && rt.width < targetWidth && this.rtLetterSpacing === 0 && this.getTextCharLength(ruby.text) > 1) {
+      if (rt.width !== undefined && rt.minWidth !== undefined && rt.width > ruby.width) {
+        rtNode.scaleX = Math.max(ruby.width, rt.minWidth) / rt.width;
+      } else if (rt.width !== undefined && rt.width < targetWidth && this.rtLetterSpacing === 0 && this.getTextCharLength(ruby.text) > 1) {
         const gapCount = this.getTextCharLength(rt.text) - 1;
         if (gapCount > 0) {
           const maxSpacing = (this.getCurrentFontSize() - this.rtFontSize / 2) * this.fontSizeScale;
@@ -1156,6 +1186,7 @@ export class CompressText extends TextGroup {
       }
       ruby.height = ruby.originalHeight = ruby.text === '\n' ? 0 : this.getLineHeight();
     });
+    this.fitAnnotationWidths();
     if (this.compressSegments.length && this.width) this.updateSegmentScales();
     else this.relayoutBody();
   }
@@ -1213,9 +1244,9 @@ export class CompressText extends TextGroup {
 
   /** 正文缩窄时重新计算对应注音的预留空间。 */
   updateRtPadding({ ruby, rt }: TextItem) {
-    if (rt.width === undefined) return;
+    if (rt.minWidth === undefined) return;
 
-    const padding = getRtPadding(ruby.width, rt.width);
+    const padding = getRtPadding(ruby.width, rt.minWidth);
     ruby.paddingLeft = padding;
     ruby.paddingRight = padding;
   }

@@ -27,9 +27,9 @@ export const trialLayoutHeight = (segments: readonly HardBreakSegment[], width: 
       for (const { ruby, rt } of items) {
         const scaleX = getBodyScaleX(ruby.text, selectedScaleX, isLastSegment, lastSegmentScaleX);
         const bodyWidth = ruby.originalWidth * scaleX;
-        const padding = rt.width === undefined
+        const padding = rt.minWidth === undefined
           ? (ruby.paddingLeft || 0) + (ruby.paddingRight || 0)
-          : getRtPadding(bodyWidth, rt.width) * 2;
+          : getRtPadding(bodyWidth, rt.minWidth) * 2;
         itemWidth += bodyWidth + padding;
       }
       if (width && x && x + itemWidth > width) {
@@ -39,7 +39,7 @@ export const trialLayoutHeight = (segments: readonly HardBreakSegment[], width: 
       for (const { ruby, rt } of items) {
         const scaleX = getBodyScaleX(ruby.text, selectedScaleX, isLastSegment, lastSegmentScaleX);
         const bodyWidth = ruby.originalWidth * scaleX;
-        const rtPadding = rt.width === undefined ? undefined : getRtPadding(bodyWidth, rt.width);
+        const rtPadding = rt.minWidth === undefined ? undefined : getRtPadding(bodyWidth, rt.minWidth);
         const paddingLeft = rtPadding ?? (ruby.paddingLeft || 0);
         const paddingRight = rtPadding ?? (ruby.paddingRight || 0);
         x += bodyWidth + paddingLeft + paddingRight;
