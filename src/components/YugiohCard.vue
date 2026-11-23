@@ -134,17 +134,16 @@ const previewSlot = ref(null);
 const previewDialog = ref(null);
 const previewToggle = ref(null);
 const previewMode = ref('fit');
-const previewModes = ['fit', 'fitWidth', 'actual'];
+const previewModes = ['fit', 'actual'];
 const previewExpanded = ref(false);
 const previewSlotHeight = ref(0);
 const previewSize = reactive({ width: 0, height: 0 });
 const cardSize = reactive({ width: 0, height: 0 });
 const previewScale = computed(() => {
-  if (previewMode.value === 'actual' || !cardSize.width || !cardSize.height) return 1;
-  const fitWidth = (previewSize.width - 48) / cardSize.width;
-  const fitHeight = (previewSize.height - 48) / cardSize.height;
-  const scale = previewMode.value === 'fitWidth' ? fitWidth : Math.min(fitWidth, fitHeight);
-  return Math.max(0.01, Math.min(1, scale));
+  if (previewMode.value !== 'fit' || !cardSize.width || !cardSize.height) return 1;
+  const widthScale = (previewSize.width - 48) / cardSize.width;
+  const heightScale = (previewSize.height - 48) / cardSize.height;
+  return Math.max(0.01, Math.min(1, widthScale, heightScale));
 });
 
 let resizeObserver;
@@ -475,7 +474,6 @@ onBeforeUnmount(() => {
   height: clamp(25rem, 65vh, 46rem);
   overflow: auto;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
   background-color: var(--card-preview-background, #eeeae1);
   background-image:
     linear-gradient(var(--card-preview-grid, #ded7ca) 1px, transparent 1px),
@@ -485,7 +483,6 @@ onBeforeUnmount(() => {
 
 .preview-surface.is-fit-window {
   overflow: clip;
-  scrollbar-gutter: auto;
 }
 
 .preview-content {
