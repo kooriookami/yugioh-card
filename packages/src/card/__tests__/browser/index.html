@@ -83,6 +83,7 @@ const waitFor = async predicate => {
     await new Promise(requestAnimationFrame);
   }
 };
+const hasArtworkStatusIcon = card => card.leafer.children.some(node => node.tag === 'Image' && node.visible && node.url?.startsWith('data:image/svg+xml,'));
 class ObservedCard extends YugiohCard {
   draw() { this.drawCount = (this.drawCount || 0) + 1; super.draw(); }
 }
@@ -107,6 +108,7 @@ const initial = { name: a.nameNode.bounds.width, race: a.monsterTypeLineNode.las
 window.readyTest = { a, b, initial, results, failures };
 await new Promise(requestAnimationFrame);
 check(state === 'pending' && a.nameNode.rubyList.length > 0 && initial.name > 0, '字体清单返回前有可用 fallback 文字，ready 保持 pending');
+check(!hasArtworkStatusIcon(a), '卡图加载中不绘制状态图标');
 document.body.dataset.testState = 'waiting';
 status.textContent = '字体清单等待中，两张卡片使用备用字体。';
 startDisabled.value = false;
@@ -176,13 +178,14 @@ async function start() {
     a.setData({ artwork: '/ready-resources/retry.jpg' });
     try { await a.ready; check(false, '必需图片失败应拒绝'); }
     catch (error) { check(error.code === 'RESOURCE_FAILED' && error.resourceType === 'image', '必需图片失败严格拒绝 ready'); }
+    check(!hasArtworkStatusIcon(a), '卡图加载失败不绘制状态图标');
     a.setData({ artwork: '' });
     await a.ready;
-    check(!a.artworkStatusNode.visible, '移除失败的卡图后不残留错误占位');
+    check(!a.artworkNode.visible, '清空地址后隐藏卡图');
     await release('retry');
     a.setData({ artwork: '/ready-resources/retry.jpg' });
     await a.ready;
-    check(!a.artworkStatusNode.visible, '同一图片地址重试成功，错误占位已清除');
+    check(a.leafer.imageReady && a.artworkNode.visible && a.artworkNode.fill.url === '/ready-resources/retry.jpg', '同一图片地址重试成功并完成绘制');
     for (const data of [{ language: 'kr' }, {}]) {
       a.setData(data);
       const error = await a.ready.then(() => null, error => error);

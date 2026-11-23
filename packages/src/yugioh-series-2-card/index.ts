@@ -272,7 +272,6 @@ export class YugiohSeries2Card extends Card<YugiohSeries2CardData> {
   drawArtwork() {
     if (!this.artworkNode) {
       this.artworkNode = new Rect();
-      this.listenArtworkStatus(this.artworkNode);
       this.leafer.add(this.artworkNode);
     }
 

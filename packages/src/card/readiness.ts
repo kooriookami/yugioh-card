@@ -7,7 +7,7 @@ import { CardImages, collectResources, type ImageRequirements } from './resource
 import type { Card } from './index.ts';
 
 const projectFont = /^(?:ygo-|rd-|custom[12]$)/;
-type RenderCard = Pick<Card, 'leafer' | 'artworkStatusNode' | 'artworkNode' | 'draw' | 'drawArtworkStatus'>;
+type RenderCard = Pick<Card, 'leafer' | 'draw'>;
 type GetFonts = (retry: boolean) => FontResource | null;
 
 /** 资源可以共享；就绪周期、最终排版及视图等待只属于当前卡片。 */

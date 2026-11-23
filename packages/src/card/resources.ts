@@ -1,6 +1,5 @@
 import type { IImagePaint, ILeaferImage, IUI, IText } from '@leafer-ui/interface';
-import { ImageManager, ImageEvent } from 'leafer-unified';
-import { isBrowser } from '../utils/index.ts';
+import { ImageManager } from 'leafer-unified';
 import { fontFamilies } from '../utils/font-loader.ts';
 import { resourceError, type ResourceError } from '../utils/resource-error.ts';
 import type { Card } from './index.ts';
@@ -21,12 +20,12 @@ interface ImageRecord {
   loadId: number | undefined;
 }
 
-type CardResources = Pick<Card, 'leafer' | 'artworkStatusNode' | 'artworkNode' | 'drawArtworkStatus'>;
+type CardResources = Pick<Card, 'leafer'>;
 
-// 只遍历实际参与本卡预览的节点，状态占位图不属于导出所需资源。
+// 只遍历实际参与本卡预览的节点。
 export const visitVisible = (card: CardResources, visit: (node: IUI) => void) => {
   const walk = (node: IUI) => {
-    if (node === card.artworkStatusNode || !node.visible || node.opacity === 0) return;
+    if (!node.visible || node.opacity === 0) return;
     visit(node);
     node.children?.forEach(walk);
   };
@@ -96,7 +95,6 @@ export class CardImages {
         this.records.set(url, record);
         if (image.ready) {
           record.status = 'loaded';
-          this.showStatus(record, ImageEvent.LOADED);
         } else if (image.error && !retry) {
           record.status = 'failed';
           record.error = resourceError('image', url, image.error);
@@ -104,14 +102,10 @@ export class CardImages {
       } else {
         record.targets = targets;
         if (record.image.ready) {
-          if (record.status !== 'loaded') this.showStatus(record, ImageEvent.LOADED);
           record.status = 'loaded';
           record.error = null;
         } else if (retry && record.status === 'failed') this.load(url, record);
       }
-    }
-    if (this.card.artworkStatusNode && ![...this.records.values()].some(record => record.targets.some(({ node }) => node === this.card.artworkNode))) {
-      this.card.artworkStatusNode.visible = false;
     }
   }
 
@@ -121,29 +115,19 @@ export class CardImages {
     record.error = null;
     // Leafer 会缓存失败；显式的新一轮更新才重试，不在错误回调中无限重试。
     (image as { error: ILeaferImage['error'] | null }).error = null;
-    this.showStatus(record, ImageEvent.LOAD);
     record.loadId = image.load(() => {
       if (this.records.get(url) !== record) return;
       record.loadId = undefined;
       record.status = 'loaded';
       record.targets.forEach(({ node, attr }) => node.forceUpdate(attr));
-      this.showStatus(record, ImageEvent.LOADED);
       this.changed();
     }, cause => {
       if (this.records.get(url) !== record) return;
       record.loadId = undefined;
       record.status = 'failed';
       record.error = resourceError('image', url, cause);
-      this.showStatus(record, ImageEvent.ERROR);
       this.changed();
     });
-  }
-
-  showStatus(record: ImageRecord, status: string) {
-    const artworkNode = this.card.artworkNode;
-    if (isBrowser && artworkNode && record.targets.some(({ node }) => node === artworkNode)) {
-      this.card.drawArtworkStatus(artworkNode, status);
-    }
   }
 
   remove(url: string, record: ImageRecord) {

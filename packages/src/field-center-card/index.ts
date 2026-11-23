@@ -58,7 +58,6 @@ export class FieldCenterCard extends Card<FieldCenterCardData> {
   drawArtwork() {
     if (!this.artworkNode) {
       this.artworkNode = new Rect();
-      this.listenArtworkStatus(this.artworkNode);
       this.leafer.add(this.artworkNode);
     }
 

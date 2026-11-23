@@ -1,9 +1,7 @@
-import type { IImage, IImagePaint, ILeafer, ILeaferInputData, IRect } from '@leafer-ui/interface';
-import { Text, Image, ImageEvent, Leafer, useCanvas } from 'leafer-unified';
-import { isBrowser, isNode, leaferVisibility } from '../utils/index.ts';
+import type { ILeafer, ILeaferInputData, IRect } from '@leafer-ui/interface';
+import { Text, Leafer, useCanvas } from 'leafer-unified';
+import { isBrowser, isNode } from '../utils/index.ts';
 import { getBrowserCardFonts, getNodeFontResource, type SkiaCanvas } from '../utils/font-loader.ts';
-import loaderIconUrl from '../svg/loader.ts';
-import imageIconUrl from '../svg/image.ts';
 import { CardReadiness } from './readiness.ts';
 
 const fontPathMap: Partial<Record<string, string>> = {
@@ -31,7 +29,6 @@ export interface CardOptions<TData extends object = object> {
 
 export class Card<TData extends object = object> {
   leafer: ILeafer | null = null;
-  artworkStatusNode: IImage | null = null;
   declare artworkNode?: IRect | null;
   cardWidth = 100;
   cardHeight = 100;
@@ -96,48 +93,6 @@ export class Card<TData extends object = object> {
 
   draw() {
     // need to be overridden
-  }
-
-  listenArtworkStatus(artworkNode: IRect) {
-    if (isNode) {
-      return;
-    }
-    artworkNode.on(ImageEvent.LOAD, () => {
-      this.drawArtworkStatus(artworkNode, ImageEvent.LOAD);
-    });
-    artworkNode.on(ImageEvent.LOADED, () => {
-      this.drawArtworkStatus(artworkNode, ImageEvent.LOADED);
-    });
-    artworkNode.on(ImageEvent.ERROR, () => {
-      this.drawArtworkStatus(artworkNode, ImageEvent.ERROR);
-    });
-  }
-
-  drawArtworkStatus(artworkNode: IRect & { url?: string }, status: string) {
-    const { width, height, x, y, zIndex } = artworkNode;
-    const url = artworkNode.url || (artworkNode.fill as IImagePaint | undefined)?.url;
-    if (!this.artworkStatusNode) {
-      this.artworkStatusNode = new Image();
-      this.leafer!.add(this.artworkStatusNode);
-    }
-
-    let statusUrl = '';
-    if (status === ImageEvent.LOAD) {
-      statusUrl = loaderIconUrl;
-    } else if (status === ImageEvent.ERROR) {
-      statusUrl = imageIconUrl;
-    }
-
-    this.artworkStatusNode.set({
-      url: statusUrl,
-      width: 120,
-      height: 120,
-      around: 'center',
-      x: x! + width! / 2,
-      y: y! + height! / 2,
-      visible: leaferVisibility([ImageEvent.LOAD, ImageEvent.ERROR].includes(status) && url),
-      zIndex: zIndex! + 1,
-    });
   }
 
   applyCardScale() {

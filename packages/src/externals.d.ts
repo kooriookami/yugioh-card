@@ -1,6 +1,6 @@
 // The browser and Node entry points expose the same Leafer API used by the library.
 declare module 'leafer-unified' {
-  export { Group, Image, ImageEvent, ImageManager, Leafer, LeaferEvent, Rect, Resource, Text, useCanvas } from 'leafer';
+  export { Group, Image, ImageManager, Leafer, LeaferEvent, Rect, Resource, Text, useCanvas } from 'leafer';
 }
 
 declare module 'lodash-unified' {

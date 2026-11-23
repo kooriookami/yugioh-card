@@ -266,7 +266,6 @@ export class RushDuelCard extends Card<RushDuelCardData> {
   drawArtwork() {
     if (!this.artworkNode) {
       this.artworkNode = new Rect();
-      this.listenArtworkStatus(this.artworkNode);
       this.leafer.add(this.artworkNode);
     }
 

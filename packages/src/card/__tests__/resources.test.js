@@ -12,12 +12,11 @@ test('combined resource discovery preserves visible fonts, image paints and all 
   const text = new Text({ text: 'A', fontFamily: '"MiXeD", serif' });
   const first = new Rect({ fill: { type: 'image', url: 'resource-test:shared' }, stroke: { type: 'image', url: 'resource-test:stroke' } });
   const second = new Rect({ fill: [{ type: 'image', url: 'resource-test:shared' }, { type: 'image', url: 'resource-test:disabled', visible: false }] });
-  const status = new Rect({ fill: { type: 'image', url: 'resource-test:status' } });
   hidden.add(new Text({ text: 'hidden', fontFamily: 'ignored' }));
   hidden.add(new Rect({ fill: { type: 'image', url: 'resource-test:hidden' } }));
-  root.addMany(text, first, second, hidden, status, new Text({ text: 'transparent', fontFamily: 'ignored', opacity: 0 }));
+  root.addMany(text, first, second, hidden, new Text({ text: 'transparent', fontFamily: 'ignored', opacity: 0 }));
   try {
-    const card = { leafer: root, artworkStatusNode: status };
+    const card = { leafer: root };
     const result = collectResources(card);
     assert.deepEqual(result.fonts, collectFonts(card));
     assert.deepEqual([...result.fonts], ['MiXeD', 'serif']);
