@@ -2,6 +2,8 @@
 
 ### 2.0.0-beta.1
 
+_2026-11-21_
+
 - **破坏性更新**。统一五种卡片的数据字段命名，升级时需更新构造参数中的 `data`、`setData()` 调用和已保存的 JSON。 [1.x → 2.0 迁移指南](docs/migration/index.md)
 - 新增 `card.ready`，在浏览器和 Node.js 中等待当前卡片的字体、图片和渲染完成，便于单张和批量导出
 - 正文支持左对齐和右对齐，并可通过 `compressCardTextSegments` 指定多个段落各自压成一行
