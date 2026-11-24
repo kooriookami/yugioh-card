@@ -19,7 +19,7 @@
 <p align="center">Render Yu-Gi-Oh! cards on Canvas with LeaferJS</p>
 
 <p align="center">
-  <img src="src/assets/image/banner.jpg">
+  <img src="docs/public/banner.webp">
 </p>
 
 Currently there are 5 types of cards: 🚀🚀🚀🚀🚀

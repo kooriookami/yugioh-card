@@ -5,7 +5,7 @@ hero:
   text: 遊戯王カード描画ライブラリ
   tagline: LeaferJS で 5 種類のカードを描画し、ブラウザでのプレビューと Node.js での一括書き出しに対応します。
   image:
-    src: /banner.jpg
+    src: /banner.webp
     alt: 複数の言語スタイルで描画した遊戯王カード
     width: 1920
     height: 698

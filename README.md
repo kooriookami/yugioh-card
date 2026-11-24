@@ -19,7 +19,7 @@
 <p align="center">一个基于 LeaferJS、使用 Canvas 渲染游戏王卡片的工具</p>
 
 <p align="center">
-  <img src="src/assets/image/banner.jpg">
+  <img src="docs/public/banner.webp">
 </p>
 
 目前有 5 种卡片：🚀🚀🚀🚀🚀

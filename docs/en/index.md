@@ -5,7 +5,7 @@ hero:
   text: Yu-Gi-Oh! card rendering
   tagline: Render five card layouts with LeaferJS. Preview in the browser and export batches in Node.js.
   image:
-    src: /banner.jpg
+    src: /banner.webp
     alt: Yu-Gi-Oh! cards in several language styles
     width: 1920
     height: 698

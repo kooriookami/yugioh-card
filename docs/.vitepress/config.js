@@ -124,11 +124,6 @@ export default defineConfig({
             dest: 'card-assets',
             rename: { stripBase: 3 },
           },
-          {
-            src: '../src/assets/image/banner.jpg',
-            dest: '.',
-            rename: { stripBase: 3 },
-          },
         ],
       }),
     ],

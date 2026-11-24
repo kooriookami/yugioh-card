@@ -5,7 +5,7 @@ hero:
   text: 游戏王卡片渲染库
   tagline: 基于 LeaferJS，支持五种卡片版式、浏览器实时预览和 Node.js 批量导出。
   image:
-    src: /banner.jpg
+    src: /banner.webp
     alt: 游戏王卡片的多语言版式展示
     width: 1920
     height: 698
