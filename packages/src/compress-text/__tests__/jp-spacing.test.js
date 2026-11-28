@@ -376,7 +376,7 @@ test('Series 2 attack and defense labels use native Japanese advances across fon
   const labels = () => card.battleStatsNode.children.map(text => text.rubyList.find(ruby => ruby.text === '攻' || ruby.text === '守'));
   const normalWidths = labels().map(ruby => ruby.normalWidth);
   for (const font of ['custom1', 'custom2', '']) {
-    card.setData({ fontPreset: font });
+    card.setData({ textStylePreset: font });
     await card.ready;
     labels().forEach((ruby, index) => {
       assert.equal(ruby.bodyRun, null);

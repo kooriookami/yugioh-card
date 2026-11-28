@@ -67,14 +67,14 @@ test('all five card classes complete unchanged updates and export real assets', 
 });
 
 test('partial updates keep unset fields and accept explicit falsy values', async t => {
-  const card = makeCard(t, YugiohCard, { language: 'en', cardText: 'Previous text', atk: 2500, showStatsLine: true });
+  const card = makeCard(t, YugiohCard, { language: 'en', cardText: 'Previous text', atk: 2500, showBattleStats: true });
   await card.ready;
-  card.setData({ language: undefined, renderScale: undefined, atk: 0, showStatsLine: false, cardText: '' });
+  card.setData({ language: undefined, renderScale: undefined, atk: 0, showBattleStats: false, cardText: '' });
   await card.ready;
   assert.equal(card.data.language, 'en');
   assert.equal(card.data.renderScale, 0.12);
   assert.equal(card.data.atk, 0);
-  assert.equal(card.data.showStatsLine, false);
+  assert.equal(card.data.showBattleStats, false);
   assert.equal(card.cardTextNode.text, '');
 });
 

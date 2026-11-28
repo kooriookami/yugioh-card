@@ -38,7 +38,7 @@ Yugioh Card 2.0 ではカードデータのフィールドを変更しました�
 | `cardType` | `monsterFrame` |
 | `monsterType` | `monsterTypeLine` |
 | `description` | `cardText` |
-| `descriptionZoom` | `cardTextFontSizeScale` |
+| `descriptionZoom` | `bodyTextFontSizeScale` |
 | `descriptionWeight` | `bodyTextStrokeWidth` |
 | `package` | `cardNumber` |
 | `laser` | `cornerMark` |
@@ -54,15 +54,15 @@ Yugioh Card 2.0 ではカードデータのフィールドを変更しました�
 | `gradientColor1` | `nameGradientColor1` |
 | `gradientColor2` | `nameGradientColor2` |
 | `copyright` | `copyrightLanguage` |
+| `font` | `textStylePreset` |
 
 ### 遊戯王 {#ygo}
 
 | 1.x | 2.0 |
 | --- | --- |
-| `font` | `fontPreset` |
 | `pendulumType` | `pendulumFrame` |
 | `pendulumDescription` | `pendulumEffect` |
-| `atkBar` | `showStatsLine` |
+| `atkBar` | `showBattleStats` |
 | `arrowList` | `linkArrows` |
 | `rare` | `rarity` |
 | `twentieth` | `show20thAnniversaryMark` |
@@ -95,7 +95,7 @@ Yugioh Card 2.0 ではカードデータのフィールドを変更しました�
 
 `cardTextAlign` には `'left'` と `'right'` も指定できます。`compressCardTextSegments: [1, 3]` を指定すると、第1段と第3段がそれぞれ1行に収まります。
 
-第2期のデータから `rare` を削除できます。この版式では `fontPreset` でフォントを選べます。ラッシュデュエルの保存データには `password` を引き続き保持できます。
+第2期のデータから `rare` を削除できます。ラッシュデュエルの保存データには `password` を引き続き保持できます。
 
 ## 移行後の確認 {#checklist}
 

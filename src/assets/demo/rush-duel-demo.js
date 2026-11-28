@@ -15,7 +15,7 @@ export default {
   cardText: '以高攻击力著称的传说之龙。任何对手都能将之粉碎，其破坏力不可估量。',
   compressCardTextSegments: [],
   cardTextAlign: 'justify',
-  cardTextFontSizeScale: 1,
+  bodyTextFontSizeScale: 1,
   bodyTextStrokeWidth: 0,
   cardNumber: 'RD/KP01-SC000',
   password: '120120000',

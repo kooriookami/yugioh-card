@@ -47,8 +47,8 @@ Import `RushDuelCard` from `yugioh-card`. Pass card fields in the constructor's 
 | `cardText` | `string` | `''` | Card Text. `\n` starts a new segment |
 | `compressCardTextSegments` | `number[]` | `[]` | Fit each selected segment on one line. Numbering starts at `1` |
 | `cardTextAlign` | `enum` | `'justify'` | `left` Left, `center` Centered, `right` Right, `justify` Justified |
-| `cardTextFontSizeScale` | `number` | `1` | Card Text font size multiplier |
-| `bodyTextStrokeWidth` | `number` | `0` | Body text stroke width |
+| `bodyTextFontSizeScale` | `number` | `1` | Font size multiplier for Card Text and its ruby text |
+| `bodyTextStrokeWidth` | `number` | `0` | Stroke width for Card Text, the monster type line, and their ruby text |
 | `cardNumber` | `string` | `''` | Set number |
 | `password` | `string` | `''` | Password field for stored data |
 | `showLegendMark` | `boolean` | `false` | Show the LEGEND mark |

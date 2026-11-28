@@ -124,10 +124,10 @@ Rush Duel 的 `password` 仅作为数据字段保留，类型为字符串，默�
 | 正面的 `type` | `cardLayout` | 选择怪兽、魔法、陷阱或灵摆版式。项目把 `pendulum` 作为独立的排版分支，规则书则将灵摆归为怪兽卡。[英文规则书](https://img.yugioh-card.com/en/downloads/rulebook/SD_RuleBook_EN_10.pdf) · [版式选择](../packages/src/yugioh-card/index.ts) |
 | `cardType`、`pendulumType` | `monsterFrame`、`pendulumFrame` | 选择对应版式的底框，沿用现有枚举。用 **frame** 与类型栏文字区分，命名参考社区 API 的 `frameType`。[YGOPRODeck API](https://ygoprodeck.com/api-guide/) |
 | 卡背的 `type` | `backDesign` | 选择卡背图样，沿用现有枚举。 |
-| `font` | `fontPreset` | 选择一组字体样式。现有 `custom1`、`custom2` 是预设值。 |
+| `font` | `textStylePreset` | 选择包含字体、字号、行高和位置的文字样式预设。普通游戏王卡和第 2 期支持 `custom1`、`custom2`。 |
 | `color`、`align` | `nameColor`、`nameTextAlign` | 卡名的颜色和对齐方向，沿用现有类型和默认值。 |
 | `gradientColor1`、`gradientColor2` | `nameGradientColor1`、`nameGradientColor2` | 卡名渐变的两个颜色。 |
-| `descriptionZoom` | `cardTextFontSizeScale` | 主文本的字号倍率，影响测量、行高和换行。普通游戏王卡主文本和灵摆文本继续共用。 |
+| `descriptionZoom` | `bodyTextFontSizeScale` | 卡片正文及其注音的字号倍率，影响测量、行高和换行。普通游戏王卡的灵摆效果文本及其注音共用该倍率。 |
 | `descriptionAlign` | `cardTextAlign` | 三种正面卡的主文本对齐。支持 `'left'`（左对齐）、`'center'`（居中）、`'right'`（右对齐）和 `'justify'`（两端对齐，默认）。 |
 | `firstLineCompress` | `compressCardTextSegments` | 三种正面卡的主文本段号数组，默认 `[]`。尝试把指定的每一段各压进一行。 |
 | `descriptionWeight` | `bodyTextStrokeWidth` | 正文描边宽度，覆盖主文本、怪兽类型栏、普通游戏王卡的灵摆文本，以及这些区域对应的注音。 |
@@ -145,7 +145,7 @@ Rush Duel 的 `password` 仅作为数据字段保留，类型为字符串，默�
 
 | 1.x 名称 | 2.0 名称 | 默认值 | 含义与适用范围 |
 | --- | --- | --- | --- |
-| `atkBar` | `showStatsLine` | `true` | 在普通游戏王卡支持的版式中显示 ATK / DEF 或 ATK / LINK 一行。主文本随该行的显隐调整可用高度。[正文排版](../packages/src/yugioh-card/index.ts#L554) |
+| `atkBar` | `showBattleStats` | `true` | 在普通游戏王卡的怪兽和灵摆版式中显示攻守栏的分隔线、标签与数值。正文随攻守栏的显隐调整可用高度。[攻守栏绘制](../packages/src/yugioh-card/index.ts#L625) |
 | `konami` | `showKonamiLogo` | `true` | 显示卡背上的 KONAMI 标志。[卡背绘制](../packages/src/yugioh-back-card/index.ts) |
 | `register` | `showRegisteredMark` | `true` | 显示卡背上的 ® 标记。[卡背绘制](../packages/src/yugioh-back-card/index.ts) |
 | `twentieth` | `show20thAnniversaryMark` | `false` | 显示普通游戏王卡的 20 周年标记。[周年标记绘制](../packages/src/yugioh-card/index.ts#L782) |

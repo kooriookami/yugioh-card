@@ -1,6 +1,6 @@
 export default {
   language: 'jp',
-  fontPreset: '',
+  textStylePreset: '',
   name: '[青眼の白龍(ブルーアイズ・ホワイト・ドラゴン)]',
   nameColor: '',
   nameTextAlign: 'left',
@@ -20,7 +20,7 @@ export default {
     'どんな[相(あい)][手(て)]でも[粉(ふん)][砕(さい)]する、その[破(は)][壊(かい)][力(りょく)]は[計(はか)]り[知(し)]れない。',
   compressCardTextSegments: [],
   cardTextAlign: 'justify',
-  cardTextFontSizeScale: 1,
+  bodyTextFontSizeScale: 1,
   bodyTextStrokeWidth: 0,
   cardNumber: 'LB-01',
   password: '89631139',

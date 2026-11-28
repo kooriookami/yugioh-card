@@ -24,7 +24,7 @@ export interface RushDuelCardData {
   cardText: string;
   compressCardTextSegments: number[];
   cardTextAlign: 'left' | 'center' | 'right' | 'justify';
-  cardTextFontSizeScale: number;
+  bodyTextFontSizeScale: number;
   bodyTextStrokeWidth: number;
   cardNumber: string;
   password: string;
@@ -72,7 +72,7 @@ export class RushDuelCard extends Card<RushDuelCardData> {
     cardText: '',
     compressCardTextSegments: [],
     cardTextAlign: 'justify',
-    cardTextFontSizeScale: 1,
+    bodyTextFontSizeScale: 1,
     bodyTextStrokeWidth: 0,
     cardNumber: '',
     password: '',
@@ -362,7 +362,7 @@ export class RushDuelCard extends Card<RushDuelCardData> {
       punctuationTrim: cardText.punctuationTrim ? 'both' : undefined,
       fontFamily: cardText.fontFamily,
       fontSize: cardText.fontSize,
-      fontSizeScale: this.data.cardTextFontSizeScale,
+      fontSizeScale: this.data.bodyTextFontSizeScale,
       textAlign: this.data.cardTextAlign,
       compressSegments: this.data.compressCardTextSegments,
       strokeWidth: this.data.bodyTextStrokeWidth,

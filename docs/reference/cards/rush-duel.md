@@ -47,8 +47,8 @@ import CardExample from '../../.vitepress/components/CardExample.vue';
 | `cardText` | `string` | `''` | 卡片正文，`\n` 分段 |
 | `compressCardTextSegments` | `number[]` | `[]` | 指定段各压成一行，段号从 `1` 开始 |
 | `cardTextAlign` | `enum` | `'justify'` | `left` 左对齐、`center` 居中、`right` 右对齐、`justify` 两端对齐 |
-| `cardTextFontSizeScale` | `number` | `1` | 正文字号倍率 |
-| `bodyTextStrokeWidth` | `number` | `0` | 正文描边宽度 |
+| `bodyTextFontSizeScale` | `number` | `1` | 卡片正文及其注音的字号倍率 |
+| `bodyTextStrokeWidth` | `number` | `0` | 卡片正文、怪兽种族与类型行及其注音的描边宽度 |
 | `cardNumber` | `string` | `''` | 收录编号 |
 | `password` | `string` | `''` | 保存用的密码字段 |
 | `showLegendMark` | `boolean` | `false` | 显示 LEGEND 标记 |

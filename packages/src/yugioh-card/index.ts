@@ -15,7 +15,7 @@ import custom2Style from './style/custom2-style.ts';
 
 export interface YugiohCardData {
   language: 'sc' | 'tc' | 'jp' | 'kr' | 'en' | 'astral';
-  fontPreset: '' | 'custom1' | 'custom2';
+  textStylePreset: '' | 'custom1' | 'custom2';
   name: string;
   nameColor: string;
   nameTextAlign: 'left' | 'center' | 'right';
@@ -33,14 +33,14 @@ export interface YugiohCardData {
   pendulumScale: number;
   pendulumEffect: string;
   monsterTypeLine: string;
-  showStatsLine: boolean;
+  showBattleStats: boolean;
   atk: number;
   def: number;
   linkArrows: number[];
   cardText: string;
   compressCardTextSegments: number[];
   cardTextAlign: 'left' | 'center' | 'right' | 'justify';
-  cardTextFontSizeScale: number;
+  bodyTextFontSizeScale: number;
   bodyTextStrokeWidth: number;
   cardNumber: string;
   password: string;
@@ -90,7 +90,7 @@ export class YugiohCard extends Card<YugiohCardData> {
 
   data: YugiohCardData = {
     language: 'sc',
-    fontPreset: '',
+    textStylePreset: '',
     name: '',
     nameColor: '',
     nameTextAlign: 'left',
@@ -108,14 +108,14 @@ export class YugiohCard extends Card<YugiohCardData> {
     pendulumScale: 0,
     pendulumEffect: '',
     monsterTypeLine: '',
-    showStatsLine: true,
+    showBattleStats: true,
     atk: 0,
     def: 0,
     linkArrows: [],
     cardText: '',
     compressCardTextSegments: [],
     cardTextAlign: 'justify',
-    cardTextFontSizeScale: 1,
+    bodyTextFontSizeScale: 1,
     bodyTextStrokeWidth: 0,
     cardNumber: '',
     password: '',
@@ -445,7 +445,7 @@ export class YugiohCard extends Card<YugiohCardData> {
       fontFamily: pendulumEffect.fontFamily,
       sideBearingMode: pendulumEffect.sideBearingMode,
       fontSize: pendulumEffect.fontSize,
-      fontSizeScale: this.data.cardTextFontSizeScale,
+      fontSizeScale: this.data.bodyTextFontSizeScale,
       strokeWidth: this.data.bodyTextStrokeWidth,
       lineHeight: pendulumEffect.lineHeight,
       letterSpacing: pendulumEffect.letterSpacing || 0,
@@ -580,7 +580,7 @@ export class YugiohCard extends Card<YugiohCardData> {
     }
 
     let fontFamily = cardText.fontFamily;
-    if (this.data.language === 'en' && !this.data.fontPreset &&
+    if (this.data.language === 'en' && !this.data.textStylePreset &&
       ((this.data.cardLayout === 'monster' && this.data.monsterFrame === 'normal') || (this.data.cardLayout === 'pendulum' && this.data.pendulumFrame === 'normal-pendulum'))) {
       fontFamily = 'ygo-en-italic';
     }
@@ -590,7 +590,7 @@ export class YugiohCard extends Card<YugiohCardData> {
       if (this.showMonsterTypeLine) {
         height -= monsterTypeHeight;
       }
-      if (this.data.showStatsLine) {
+      if (this.data.showBattleStats) {
         height -= 60;
       }
     }
@@ -601,7 +601,7 @@ export class YugiohCard extends Card<YugiohCardData> {
       fontFamily,
       sideBearingMode: cardText.sideBearingMode,
       fontSize: cardText.fontSize,
-      fontSizeScale: this.data.cardTextFontSizeScale,
+      fontSizeScale: this.data.bodyTextFontSizeScale,
       textAlign: this.data.cardTextAlign,
       compressSegments: this.data.compressCardTextSegments,
       strokeWidth: this.data.bodyTextStrokeWidth,
@@ -706,7 +706,7 @@ export class YugiohCard extends Card<YugiohCardData> {
     });
 
     this.battleStatsNode.set({
-      visible: this.showStatsLine,
+      visible: this.showBattleStats,
       zIndex: 30,
     });
   }
@@ -820,10 +820,10 @@ export class YugiohCard extends Card<YugiohCardData> {
   }
 
   get style() {
-    const { fontPreset } = this.data;
-    if (fontPreset === 'custom1') return custom1Style;
-    if (fontPreset === 'custom2') return custom2Style;
-    if (!fontPreset) return this.#languageStyle ?? ({} as YugiohStyle);
+    const { textStylePreset } = this.data;
+    if (textStylePreset === 'custom1') return custom1Style;
+    if (textStylePreset === 'custom2') return custom2Style;
+    if (!textStylePreset) return this.#languageStyle ?? ({} as YugiohStyle);
     return {} as YugiohStyle;
   }
 
@@ -945,8 +945,8 @@ export class YugiohCard extends Card<YugiohCardData> {
     return ['monster', 'pendulum'].includes(this.data.cardLayout) && this.data.monsterTypeLine;
   }
 
-  get showStatsLine() {
-    if (!this.data.showStatsLine) {
+  get showBattleStats() {
+    if (!this.data.showBattleStats) {
       return false;
     } else if (this.data.language === 'astral') {
       if ((this.data.cardLayout === 'monster' && this.data.monsterFrame !== 'link') || this.data.cardLayout === 'pendulum') {

@@ -30,7 +30,7 @@ import CardExample from '../../.vitepress/components/CardExample.vue';
 | 字段 | 类型 | 默认值 | 说明与可选值 |
 | --- | --- | --- | --- |
 | `language` | `enum` | `'sc'` | `sc` 简体中文、`tc` 繁体中文、`jp` 日文、`kr` 韩文、`en` 英文、`astral` 星光界文 |
-| `fontPreset` | `enum` | `''` | `''` 语言默认预设、`custom1` 自定义预设 1、`custom2` 自定义预设 2 |
+| `textStylePreset` | `enum` | `''` | 字体与文字排版预设。`''` 使用语言默认样式，`custom1` 和 `custom2` 使用对应的自定义预设 |
 | `name` | `string` | `''` | 卡名 |
 | `nameColor` | `string` | `''` | 卡名颜色，空字符串用默认色 |
 | `nameTextAlign` | `enum` | `'left'` | `left` 左对齐、`center` 居中、`right` 右对齐 |
@@ -48,15 +48,15 @@ import CardExample from '../../.vitepress/components/CardExample.vue';
 | `pendulumScale` | `number` | `0` | 灵摆刻度，两侧共用 |
 | `pendulumEffect` | `string` | `''` | 灵摆效果文本 |
 | `monsterTypeLine` | `string` | `''` | 怪兽的种族与类型行 |
-| `showStatsLine` | `boolean` | `true` | 显示攻守栏线与标签 |
+| `showBattleStats` | `boolean` | `true` | 显示 ATK / DEF 或 ATK / LINK 栏的分隔线、标签和数值 |
 | `atk` | `number` | `0` | 攻击力。`-1` 显示 `?`，`-2` 显示 `∞` |
 | `def` | `number` | `0` | 守备力。`-1` 显示 `?`，`-2` 显示 `∞` |
 | `linkArrows` | `number[]` | `[]` | [连接标记位置](#link-arrows) |
 | `cardText` | `string` | `''` | 卡片正文，`\n` 分段 |
 | `compressCardTextSegments` | `number[]` | `[]` | 指定段各压成一行，段号从 `1` 开始 |
 | `cardTextAlign` | `enum` | `'justify'` | `left` 左对齐、`center` 居中、`right` 右对齐、`justify` 两端对齐 |
-| `cardTextFontSizeScale` | `number` | `1` | 正文字号倍率 |
-| `bodyTextStrokeWidth` | `number` | `0` | 正文描边宽度 |
+| `bodyTextFontSizeScale` | `number` | `1` | 卡片正文、灵摆效果文本及其注音的字号倍率 |
+| `bodyTextStrokeWidth` | `number` | `0` | 卡片正文、灵摆效果文本、怪兽种族与类型行及其注音的描边宽度 |
 | `cardNumber` | `string` | `''` | 收录编号 |
 | `password` | `string` | `''` | 卡片密码，字符串保留前导零 |
 | `copyrightLanguage` | `enum` | `''` | `''` 隐藏版权标记、`sc` 简体中文、`jp` 日文、`en` 英文 |

@@ -38,7 +38,7 @@
 | `cardType` | `monsterFrame` |
 | `monsterType` | `monsterTypeLine` |
 | `description` | `cardText` |
-| `descriptionZoom` | `cardTextFontSizeScale` |
+| `descriptionZoom` | `bodyTextFontSizeScale` |
 | `descriptionWeight` | `bodyTextStrokeWidth` |
 | `package` | `cardNumber` |
 | `laser` | `cornerMark` |
@@ -54,15 +54,15 @@
 | `gradientColor1` | `nameGradientColor1` |
 | `gradientColor2` | `nameGradientColor2` |
 | `copyright` | `copyrightLanguage` |
+| `font` | `textStylePreset` |
 
 ### 游戏王 {#ygo}
 
 | 1.x | 2.0 |
 | --- | --- |
-| `font` | `fontPreset` |
 | `pendulumType` | `pendulumFrame` |
 | `pendulumDescription` | `pendulumEffect` |
-| `atkBar` | `showStatsLine` |
+| `atkBar` | `showBattleStats` |
 | `arrowList` | `linkArrows` |
 | `rare` | `rarity` |
 | `twentieth` | `show20thAnniversaryMark` |
@@ -95,7 +95,7 @@
 
 `cardTextAlign` 还支持 `'left'` 和 `'right'`。使用 `compressCardTextSegments: [1, 3]` 可以指定第 1 段与第 3 段各压成一行。
 
-第 2 期数据中可删除旧的 `rare`。此版式可通过 `fontPreset` 选择字体预设。超速决斗的 `password` 可保留在存储数据中。
+第 2 期数据中可删除旧的 `rare`。超速决斗的 `password` 可保留在存储数据中。
 
 ## 升级后验证 {#checklist}
 

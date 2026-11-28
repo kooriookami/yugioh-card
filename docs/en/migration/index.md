@@ -38,7 +38,7 @@ This is a partial data object for a monster card. Segment numbers start at `1` a
 | `cardType` | `monsterFrame` |
 | `monsterType` | `monsterTypeLine` |
 | `description` | `cardText` |
-| `descriptionZoom` | `cardTextFontSizeScale` |
+| `descriptionZoom` | `bodyTextFontSizeScale` |
 | `descriptionWeight` | `bodyTextStrokeWidth` |
 | `package` | `cardNumber` |
 | `laser` | `cornerMark` |
@@ -54,15 +54,15 @@ This is a partial data object for a monster card. Segment numbers start at `1` a
 | `gradientColor1` | `nameGradientColor1` |
 | `gradientColor2` | `nameGradientColor2` |
 | `copyright` | `copyrightLanguage` |
+| `font` | `textStylePreset` |
 
 ### Yu-Gi-Oh! {#ygo}
 
 | 1.x | 2.0 |
 | --- | --- |
-| `font` | `fontPreset` |
 | `pendulumType` | `pendulumFrame` |
 | `pendulumDescription` | `pendulumEffect` |
-| `atkBar` | `showStatsLine` |
+| `atkBar` | `showBattleStats` |
 | `arrowList` | `linkArrows` |
 | `rare` | `rarity` |
 | `twentieth` | `show20thAnniversaryMark` |
@@ -95,7 +95,7 @@ Use `linkArrows` in place of `arrowList`. The Link Rating counts unique valid di
 
 `cardTextAlign` also accepts `'left'` and `'right'`. Set `compressCardTextSegments: [1, 3]` to fit the first and third segments on one line each.
 
-Remove `rare` from Series 2 data. This layout has a `fontPreset` option. You can keep `password` in stored Rush Duel data.
+Remove `rare` from Series 2 data. You can keep `password` in stored Rush Duel data.
 
 ## Check the upgrade {#checklist}
 

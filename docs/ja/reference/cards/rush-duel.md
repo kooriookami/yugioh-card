@@ -47,8 +47,8 @@ import CardExample from '../../../.vitepress/components/CardExample.vue';
 | `cardText` | `string` | `''` | カードテキスト。`\n` で段を区切る |
 | `compressCardTextSegments` | `number[]` | `[]` | 指定した段を各1行に収める。段番号は `1` から |
 | `cardTextAlign` | `enum` | `'justify'` | `left` 左揃え、`center` 中央揃え、`right` 右揃え、`justify` 両端揃え |
-| `cardTextFontSizeScale` | `number` | `1` | カードテキストの文字サイズ倍率 |
-| `bodyTextStrokeWidth` | `number` | `0` | 本文の縁取り幅 |
+| `bodyTextFontSizeScale` | `number` | `1` | カードテキストとそのルビの文字サイズ倍率 |
+| `bodyTextStrokeWidth` | `number` | `0` | カードテキスト、種族・種類行、およびそれぞれのルビの縁取り幅 |
 | `cardNumber` | `string` | `''` | 収録番号 |
 | `password` | `string` | `''` | 保存データ用のパスワード |
 | `showLegendMark` | `boolean` | `false` | LEGEND マークを表示 |

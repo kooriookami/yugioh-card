@@ -30,7 +30,7 @@ import CardExample from '../../../.vitepress/components/CardExample.vue';
 | フィールド | 型 | 既定値 | 用途と選択肢 |
 | --- | --- | --- | --- |
 | `language` | `enum` | `'sc'` | `sc` 簡体字中国語、`tc` 繁体字中国語、`jp` 日本語、`kr` 韓国語、`en` 英語、`astral` アストラル文字 |
-| `fontPreset` | `enum` | `''` | `''` 言語の既定値、`custom1` カスタム1、`custom2` カスタム2 |
+| `textStylePreset` | `enum` | `''` | フォントと文字組みのプリセット。`''` 言語の既定値、`custom1` カスタム1、`custom2` カスタム2 |
 | `name` | `string` | `''` | カード名 |
 | `nameColor` | `string` | `''` | カード名の色。空文字列で既定色 |
 | `nameTextAlign` | `enum` | `'left'` | `left` 左揃え、`center` 中央揃え、`right` 右揃え |
@@ -48,15 +48,15 @@ import CardExample from '../../../.vitepress/components/CardExample.vue';
 | `pendulumScale` | `number` | `0` | 左右共通のペンデュラムスケール |
 | `pendulumEffect` | `string` | `''` | ペンデュラム効果のテキスト |
 | `monsterTypeLine` | `string` | `''` | モンスターの種族・種類の行 |
-| `showStatsLine` | `boolean` | `true` | 攻守欄の罫線とラベルを表示 |
+| `showBattleStats` | `boolean` | `true` | ATK / DEF または ATK / LINK 欄の罫線、ラベル、数値を表示 |
 | `atk` | `number` | `0` | 攻撃力。`-1` は `?`、`-2` は `∞` を表示 |
 | `def` | `number` | `0` | 守備力。`-1` は `?`、`-2` は `∞` を表示 |
 | `linkArrows` | `number[]` | `[]` | [リンクマーカーの位置](#link-arrows) |
 | `cardText` | `string` | `''` | カードテキスト。`\n` で段を区切る |
 | `compressCardTextSegments` | `number[]` | `[]` | 指定した段を各1行に収める。段番号は `1` から |
 | `cardTextAlign` | `enum` | `'justify'` | `left` 左揃え、`center` 中央揃え、`right` 右揃え、`justify` 両端揃え |
-| `cardTextFontSizeScale` | `number` | `1` | カードテキストの文字サイズ倍率 |
-| `bodyTextStrokeWidth` | `number` | `0` | 本文の縁取り幅 |
+| `bodyTextFontSizeScale` | `number` | `1` | カードテキスト、ペンデュラム効果、およびそれぞれのルビの文字サイズ倍率 |
+| `bodyTextStrokeWidth` | `number` | `0` | カードテキスト、ペンデュラム効果、種族・種類行、およびそれぞれのルビの縁取り幅 |
 | `cardNumber` | `string` | `''` | 収録番号 |
 | `password` | `string` | `''` | カードのパスワード。先頭のゼロを保つ文字列 |
 | `copyrightLanguage` | `enum` | `''` | `''` 著作権表記を非表示、`sc` 簡体字中国語、`jp` 日本語、`en` 英語 |

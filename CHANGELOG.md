@@ -1,5 +1,13 @@
 ## Changelog
 
+### 2.0.0-beta.3
+
+_2026-11-28_
+
+- **破坏性更新**。`cardTextFontSizeScale` 改为 `bodyTextFontSizeScale`，`showStatsLine` 改为 `showBattleStats`，`fontPreset` 改为 `textStylePreset`。构造参数中的 `data`、`setData()` 调用和已保存的 JSON 需使用新字段名
+- Playground 移除「适应宽度」。预览提供「适应窗口」和「100%」，滚动条按需显示
+- 文档首页和中英文 README 换用无损透明 WebP 横幅，适配浅色和深色背景
+
 ### 2.0.0-beta.2
 
 _2026-11-23_

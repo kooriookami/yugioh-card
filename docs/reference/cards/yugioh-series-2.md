@@ -28,7 +28,7 @@ import CardExample from '../../.vitepress/components/CardExample.vue';
 | 字段 | 类型 | 默认值 | 说明与可选值 |
 | --- | --- | --- | --- |
 | `language` | `enum` | `'jp'` | `jp` 日文 |
-| `fontPreset` | `enum` | `''` | `''` 语言默认预设、`custom1` 自定义预设 1、`custom2` 自定义预设 2 |
+| `textStylePreset` | `enum` | `''` | 字体与文字排版预设。`''` 使用语言默认样式，`custom1` 和 `custom2` 使用对应的自定义预设 |
 | `name` | `string` | `''` | 卡名 |
 | `nameColor` | `string` | `''` | 卡名颜色，空字符串用默认色 |
 | `nameTextAlign` | `enum` | `'left'` | `left` 左对齐、`center` 居中、`right` 右对齐 |
@@ -47,8 +47,8 @@ import CardExample from '../../.vitepress/components/CardExample.vue';
 | `cardText` | `string` | `''` | 卡片正文，`\n` 分段 |
 | `compressCardTextSegments` | `number[]` | `[]` | 指定段各压成一行，段号从 `1` 开始 |
 | `cardTextAlign` | `enum` | `'justify'` | `left` 左对齐、`center` 居中、`right` 右对齐、`justify` 两端对齐 |
-| `cardTextFontSizeScale` | `number` | `1` | 正文字号倍率 |
-| `bodyTextStrokeWidth` | `number` | `0` | 正文描边宽度 |
+| `bodyTextFontSizeScale` | `number` | `1` | 卡片正文及其注音的字号倍率 |
+| `bodyTextStrokeWidth` | `number` | `0` | 卡片正文、怪兽种族与类型行及其注音的描边宽度 |
 | `cardNumber` | `string` | `''` | 收录编号 |
 | `password` | `string` | `''` | 卡片密码，字符串保留前导零 |
 | `copyrightLanguage` | `enum` | `''` | `''` 隐藏版权标记、`jp` 日文 |

@@ -149,7 +149,7 @@ test('OCG only trims line-edge punctuation in Japanese, including after language
     data: { cardText: edgeText, pendulumEffect: edgeText, monsterTypeLine: 'ABC', cardTextAlign: 'left', renderScale: 0.15 },
   });
   t.after(() => card.leafer.destroy(true));
-  for (const [language, fontPreset, right] of [
+  for (const [language, textStylePreset, right] of [
     ['jp', 'custom1', 149],
     ['en', 'custom1', 149],
     ['jp', 'custom1', 149],
@@ -163,7 +163,7 @@ test('OCG only trims line-edge punctuation in Japanese, including after language
     ['jp', '', 149],
   ]) {
     const japanese = language === 'jp';
-    card.setData({ cardLayout: 'pendulum', language, fontPreset });
+    card.setData({ cardLayout: 'pendulum', language, textStylePreset });
     await card.ready;
     for (const text of [card.cardTextNode, card.pendulumEffectNode, card.monsterTypeLineNode]) {
       const inset = japanese ? bearing(text.fontFamily, '【', 'start', text.fontSize) : 0;

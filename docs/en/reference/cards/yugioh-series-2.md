@@ -28,7 +28,7 @@ Import `YugiohSeries2Card` from `yugioh-card`. Pass card fields in the construct
 | Field | Type | Default | Meaning and values |
 | --- | --- | --- | --- |
 | `language` | `enum` | `'jp'` | `jp` Japanese |
-| `fontPreset` | `enum` | `''` | `''` Language default, `custom1` Custom preset 1, `custom2` Custom preset 2 |
+| `textStylePreset` | `enum` | `''` | Font and text layout preset. `''` Language default, `custom1` Custom preset 1, `custom2` Custom preset 2 |
 | `name` | `string` | `''` | Card name |
 | `nameColor` | `string` | `''` | Name color. Empty uses the default |
 | `nameTextAlign` | `enum` | `'left'` | `left` Left, `center` Centered, `right` Right |
@@ -47,8 +47,8 @@ Import `YugiohSeries2Card` from `yugioh-card`. Pass card fields in the construct
 | `cardText` | `string` | `''` | Card Text. `\n` starts a new segment |
 | `compressCardTextSegments` | `number[]` | `[]` | Fit each selected segment on one line. Numbering starts at `1` |
 | `cardTextAlign` | `enum` | `'justify'` | `left` Left, `center` Centered, `right` Right, `justify` Justified |
-| `cardTextFontSizeScale` | `number` | `1` | Card Text font size multiplier |
-| `bodyTextStrokeWidth` | `number` | `0` | Body text stroke width |
+| `bodyTextFontSizeScale` | `number` | `1` | Font size multiplier for Card Text and its ruby text |
+| `bodyTextStrokeWidth` | `number` | `0` | Stroke width for Card Text, the monster type line, and their ruby text |
 | `cardNumber` | `string` | `''` | Set number |
 | `password` | `string` | `''` | Card password. A string preserves leading zeros |
 | `copyrightLanguage` | `enum` | `''` | `''` Hide the copyright mark, `jp` Japanese |

@@ -10,7 +10,7 @@ import custom2Style from './style/custom2-style.ts';
 
 export interface YugiohSeries2CardData {
   language: 'jp';
-  fontPreset: '' | 'custom1' | 'custom2';
+  textStylePreset: '' | 'custom1' | 'custom2';
   name: string;
   nameColor: string;
   nameTextAlign: 'left' | 'center' | 'right';
@@ -29,7 +29,7 @@ export interface YugiohSeries2CardData {
   cardText: string;
   compressCardTextSegments: number[];
   cardTextAlign: 'left' | 'center' | 'right' | 'justify';
-  cardTextFontSizeScale: number;
+  bodyTextFontSizeScale: number;
   bodyTextStrokeWidth: number;
   cardNumber: string;
   password: string;
@@ -60,7 +60,7 @@ export class YugiohSeries2Card extends Card<YugiohSeries2CardData> {
 
   data: YugiohSeries2CardData = {
     language: 'jp',
-    fontPreset: '',
+    textStylePreset: '',
     name: '',
     nameColor: '',
     nameTextAlign: 'left',
@@ -79,7 +79,7 @@ export class YugiohSeries2Card extends Card<YugiohSeries2CardData> {
     cardText: '',
     compressCardTextSegments: [],
     cardTextAlign: 'justify',
-    cardTextFontSizeScale: 1,
+    bodyTextFontSizeScale: 1,
     bodyTextStrokeWidth: 0,
     cardNumber: '',
     password: '',
@@ -374,7 +374,7 @@ export class YugiohSeries2Card extends Card<YugiohSeries2CardData> {
       fontFamily: cardText.fontFamily,
       sideBearingMode: cardText.sideBearingMode,
       fontSize: cardText.fontSize,
-      fontSizeScale: this.data.cardTextFontSizeScale,
+      fontSizeScale: this.data.bodyTextFontSizeScale,
       textAlign: this.data.cardTextAlign,
       compressSegments: this.data.compressCardTextSegments,
       strokeWidth: this.data.bodyTextStrokeWidth,
@@ -511,10 +511,10 @@ export class YugiohSeries2Card extends Card<YugiohSeries2CardData> {
 
   get style() {
     let style = {} as Series2Style;
-    if (this.data.fontPreset) {
-      if (this.data.fontPreset === 'custom1') {
+    if (this.data.textStylePreset) {
+      if (this.data.textStylePreset === 'custom1') {
         style = custom1Style;
-      } else if (this.data.fontPreset === 'custom2') {
+      } else if (this.data.textStylePreset === 'custom2') {
         style = custom2Style;
       }
     } else {

@@ -30,7 +30,7 @@ Import `YugiohCard` from `yugioh-card`. Pass card fields in the constructor's `d
 | Field | Type | Default | Meaning and values |
 | --- | --- | --- | --- |
 | `language` | `enum` | `'sc'` | `sc` Simplified Chinese, `tc` Traditional Chinese, `jp` Japanese, `kr` Korean, `en` English, `astral` Astral script |
-| `fontPreset` | `enum` | `''` | `''` Language default, `custom1` Custom preset 1, `custom2` Custom preset 2 |
+| `textStylePreset` | `enum` | `''` | Font and text layout preset. `''` Language default, `custom1` Custom preset 1, `custom2` Custom preset 2 |
 | `name` | `string` | `''` | Card name |
 | `nameColor` | `string` | `''` | Name color. Empty uses the default |
 | `nameTextAlign` | `enum` | `'left'` | `left` Left, `center` Centered, `right` Right |
@@ -48,15 +48,15 @@ Import `YugiohCard` from `yugioh-card`. Pass card fields in the constructor's `d
 | `pendulumScale` | `number` | `0` | Pendulum Scale on both sides |
 | `pendulumEffect` | `string` | `''` | Pendulum Effect text |
 | `monsterTypeLine` | `string` | `''` | Monster type line |
-| `showStatsLine` | `boolean` | `true` | Show the stats line and labels |
+| `showBattleStats` | `boolean` | `true` | Show the divider, labels, and values for ATK / DEF or ATK / LINK |
 | `atk` | `number` | `0` | ATK. `-1` shows `?` and `-2` shows `∞` |
 | `def` | `number` | `0` | DEF. `-1` shows `?` and `-2` shows `∞` |
 | `linkArrows` | `number[]` | `[]` | [Link Arrow positions](#link-arrows) |
 | `cardText` | `string` | `''` | Card Text. `\n` starts a new segment |
 | `compressCardTextSegments` | `number[]` | `[]` | Fit each selected segment on one line. Numbering starts at `1` |
 | `cardTextAlign` | `enum` | `'justify'` | `left` Left, `center` Centered, `right` Right, `justify` Justified |
-| `cardTextFontSizeScale` | `number` | `1` | Card Text font size multiplier |
-| `bodyTextStrokeWidth` | `number` | `0` | Body text stroke width |
+| `bodyTextFontSizeScale` | `number` | `1` | Font size multiplier for Card Text, Pendulum Effect, and their ruby text |
+| `bodyTextStrokeWidth` | `number` | `0` | Stroke width for Card Text, Pendulum Effect, the monster type line, and their ruby text |
 | `cardNumber` | `string` | `''` | Set number |
 | `password` | `string` | `''` | Card password. A string preserves leading zeros |
 | `copyrightLanguage` | `enum` | `''` | `''` Hide the copyright mark, `sc` Simplified Chinese, `jp` Japanese, `en` English |
